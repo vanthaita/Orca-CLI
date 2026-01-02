@@ -14,6 +14,7 @@ import {
   WindowsIcon,
   HelpSection,
   FaqSection,
+  DownloadLinks,
 } from "../component";
 
 const Home = () => {
@@ -175,7 +176,11 @@ const Home = () => {
                   subLabel="See Release Assets"
                 />
               </div>
+              <div className="mt-8 border-t border-dashed border-white/10 pt-8">
+                <DownloadLinks />
+              </div>
             </div>
+
           </section>
 
           <section className="grid gap-16 py-10">
@@ -342,7 +347,7 @@ const Home = () => {
           </footer>
         </main>
       </div>
-    </div>
+    </div >
   );
 };
 
