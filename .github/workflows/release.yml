@@ -9,8 +9,26 @@ permissions:
   contents: write
 
 jobs:
+  test:
+    name: Test (CLI)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            cli
+
+      - name: Test
+        working-directory: cli
+        run: cargo test --locked
+
   build-and-upload:
     name: Build & Upload (${{ matrix.target }})
+    needs: test
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -82,6 +100,7 @@ jobs:
         shell: pwsh
         run: |
           $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
+          wix extension add WixToolset.Util.wixext
           wix build installer\Orca.wxs -ext WixToolset.Util.wixext -d Version=$env:VERSION -o OrcaSetup-$env:VERSION.msi
 
       - name: Upload to GitHub Release
