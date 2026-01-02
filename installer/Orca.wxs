@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+  <Package
+    Name="Orca"
+    Manufacturer="vanthaita"
+    Version="$(var.Version)"
+    UpgradeCode="6E7B76E3-2D0A-45A0-8E6C-0E0B3F8C8C15"
+    InstallerVersion="500"
+    Compressed="yes"
+    Scope="perMachine"
+    InstallPrivileges="elevated"
+  >
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Orca is already installed." />
+
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="ProgramFilesFolder">
+      <Directory Id="INSTALLDIR" Name="Orca">
+        <Directory Id="INSTALLFOLDER" Name="bin" />
+      </Directory>
+    </StandardDirectory>
+
+    <Feature Id="MainFeature" Title="Orca" Level="1">
+      <ComponentGroupRef Id="OrcaComponents" />
+    </Feature>
+
+    <ComponentGroup Id="OrcaComponents" Directory="INSTALLFOLDER">
+      <Component Id="OrcaExeComponent" Guid="*">
+        <File Id="OrcaExe" Source="dist\orca.exe" KeyPath="yes" />
+        <util:Environment
+          Id="OrcaPath"
+          Name="PATH"
+          Value="[INSTALLFOLDER]"
+          Part="last"
+          Action="set"
+          System="yes"
+        />
+      </Component>
+    </ComponentGroup>
+  </Package>
+</Wix>

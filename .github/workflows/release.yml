@@ -32,6 +32,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Compute version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
@@ -62,8 +69,30 @@ jobs:
           Copy-Item -Force "cli/target/${{ matrix.target }}/release/${{ matrix.bin }}" "dist/${{ matrix.bin }}"
           Compress-Archive -Path "dist/${{ matrix.bin }}" -DestinationPath "orca-${{ matrix.target }}.zip" -Force
 
+      - name: Install WiX (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          dotnet tool install --global wix --version 4.*
+          $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
+          wix --version
+
+      - name: Build MSI (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
+          wix build installer\Orca.wxs -d Version=$env:VERSION -o OrcaSetup.msi
+
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             orca-${{ matrix.target }}.${{ matrix.archive }}
+
+      - name: Upload MSI to GitHub Release
+        if: matrix.os == 'windows-latest'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            OrcaSetup.msi
