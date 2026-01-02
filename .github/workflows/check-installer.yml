@@ -34,6 +34,12 @@ jobs:
         working-directory: cli
         run: cargo build --release --locked --target x86_64-pc-windows-msvc
 
+      - name: Prepare Dist
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item -Force "cli/target/x86_64-pc-windows-msvc/release/orca.exe" "dist/orca.exe"
+
       - name: Install WiX
         shell: pwsh
         run: |
