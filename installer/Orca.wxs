@@ -8,7 +8,6 @@
     InstallerVersion="500"
     Compressed="yes"
     Scope="perMachine"
-    InstallPrivileges="elevated"
   >
     <MajorUpgrade DowngradeErrorMessage="A newer version of Orca is already installed." />
 
