@@ -26,7 +26,7 @@
     <ComponentGroup Id="OrcaComponents" Directory="INSTALLFOLDER">
       <Component Id="OrcaExeComponent" Guid="*">
         <File Id="OrcaExe" Source="dist\orca.exe" KeyPath="yes" />
-        <util:Environment
+        <Environment
           Id="OrcaPath"
           Name="PATH"
           Value="[INSTALLFOLDER]"
