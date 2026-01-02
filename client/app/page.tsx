@@ -12,6 +12,8 @@ import {
   ReleaseButton,
   TerminalWindow,
   WindowsIcon,
+  HelpSection,
+  FaqSection,
 } from "../component";
 
 const Home = () => {
@@ -68,6 +70,18 @@ const Home = () => {
               href="#how-it-works"
             >
               Overview
+            </Link>
+            <Link
+              className="text-sm font-medium text-neutral-400 hover:text-white transition-colors"
+              href="#help"
+            >
+              Guide
+            </Link>
+            <Link
+              className="text-sm font-medium text-neutral-400 hover:text-white transition-colors"
+              href="#faq"
+            >
+              FAQ
             </Link>
             <Link
               className="text-sm font-medium text-neutral-400 hover:text-white transition-colors"
@@ -276,6 +290,12 @@ const Home = () => {
               </DashedCard>
             </div>
           </section>
+
+
+
+          <HelpSection />
+
+          <FaqSection />
 
           <section className="relative overflow-hidden">
             <div className="relative z-10">
