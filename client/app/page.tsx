@@ -83,7 +83,7 @@ const Home = () => {
         <main className="mt-2 grid gap-16" id="top">
           <section className="grid gap-16">
             <div className="inline-flex w-fit items-center gap-3 border-b border-white/10 pb-2 text-xs font-mono uppercase tracking-widest text-emerald-400">
-              <span>v0.1.1</span>
+              <span>v0.1.2</span>
               <span className="h-3 w-px bg-white/20"></span>
               <span>Rust CLI</span>
             </div>
