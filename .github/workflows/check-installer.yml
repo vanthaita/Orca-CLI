@@ -1,0 +1,55 @@
+name: Check Installer Build
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'installer/**'
+      - '.github/workflows/check-installer.yml'
+      - '.github/workflows/release.yml'
+      - 'cli/**'
+
+jobs:
+  build-installer:
+    name: Build MSI (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute dummy version
+        shell: bash
+        run: |
+          echo "VERSION=0.0.0" >> "$GITHUB_ENV"
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            cli
+
+      - name: Build
+        working-directory: cli
+        run: cargo build --release --locked --target x86_64-pc-windows-msvc
+
+      - name: Install WiX
+        shell: pwsh
+        run: |
+          dotnet tool install --global wix --version 4.*
+          $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
+          wix --version
+
+      - name: Build MSI
+        shell: pwsh
+        run: |
+          $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
+          wix extension add WixToolset.Util.wixext/4.0.6
+          wix build installer\Orca.wxs -ext WixToolset.Util.wixext -d Version=$env:VERSION -o OrcaSetup.msi
+
+      - name: Upload MSI Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OrcaSetup.msi
+          path: OrcaSetup.msi
