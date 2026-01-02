@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Orca Cli",
-  description: "Minimalist landing for Orca Cli (download & quick start)",
+  title: "Orca CLI",
+  description: "Minimal landing for Orca CLI (download & quick start)",
 };
 
 export default function RootLayout({
