@@ -11,18 +11,18 @@ concurrency:
 
 jobs:
   rust:
-    name: Rust (cli-commit)
+    name: Rust (Orca)
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: cli-commit
+        working-directory: orca
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2  
         with:
           workspaces: |
-            cli-commit
+            orca
       - name: Build
         run: cargo build --locked
       - name: Test
