@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState, useEffect } from "react";
 
 function WindowsIcon({ className }: { className?: string }) {
@@ -15,101 +16,79 @@ function WindowsIcon({ className }: { className?: string }) {
   );
 }
 
-// Sawtooth border utility using CSS background patterns
-function SawtoothCard({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+function LinuxIcon({ className }: { className?: string }) {
   return (
-    <div
-      className={`relative bg-neutral-900 border-2 border-transparent ${className}`}
-      style={{
-        borderImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0 L10 10 L20 0' fill='none' stroke='%23333' stroke-width='2'/%3E%3C/svg%3E") 20 / 20px repeat`,
-        clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px))", // Corner cut effect for extra tech feel combined with sawtooth assumption, but user asked for sawtooth border specifically.
-        // Let's stick to a cleaner implementation. The user asked for "border răng cưa".
-        // A simple way is a border-image slice.
-      }}
-    >
-      {/* 
-        Actually, simpler implementation for "Sawtooth" without complex SVG data URIs that might fail CSP or look bad: 
-        Just standard dashed for now? No, user explicitly asked for sawtooth.
-        Let's try a CSS mask approach or just use the border-image.
-        I will use a dashed border with a specific gap to simulate it, or a zigzag background. 
-        Reverting to a simpler "Tech" border (cut corners) which is often synonymous with "rugged" 
-        unless they explicitly mean ZIGZAG lines. 
-        "Sawtooth" usually means zigzag. 
-      */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage: `
-              linear-gradient(135deg, rgba(255,255,255,0.1) 25%, transparent 25%), 
-              linear-gradient(225deg, rgba(255,255,255,0.1) 25%, transparent 25%), 
-              linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%), 
-              linear-gradient(315deg, rgba(255,255,255,0.1) 25%, transparent 25%)
-            `,
-          backgroundPosition: '10px 0, 10px 0, 0 0, 0 0',
-          backgroundSize: '20px 20px',
-          backgroundRepeat: 'repeat'
-        }}
-      />
-      {/* 
-         Let's try a different approach: A dedicated border image is best. 
-         I will use the `border-image` property with a zigzag SVG.
-      */}
-      <div
-        className="absolute inset-0 -z-10 bg-black/40"
-        style={{
-          // Fallback or solid background
-        }}
-      />
-      {children}
-    </div>
+    <Image
+      src="/linux.svg"
+      alt="Linux"
+      width={300}
+      height={300}
+      className={className}
+    />
   );
 }
 
-// Improved Sawtooth Implementation
-function JaggedCard({ children, title, className = "" }: { children: React.ReactNode; title?: string; className?: string }) {
+function MacIcon({ className }: { className?: string }) {
   return (
-    <div className={`relative group ${className}`}>
-      {/* Border container */}
-      <div className="absolute inset-0 bg-neutral-800"
-        style={{
-          clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, 5% 0%, 5% 2%, 10% 0%, 15% 2%, 20% 0%, 25% 2%, 30% 0%, 35% 2%, 40% 0%, 45% 2%, 50% 0%, 55% 2%, 60% 0%, 65% 2%, 70% 0%, 75% 2%, 80% 0%, 85% 2%, 90% 0%, 95% 2%, 100% 0%)"
-          // This is hard to maintain manually. 
-          // Let's go with a specialized CSS class approach using linear-gradient for the zigzag pattern.
-        }}>
-      </div>
+    <Image
+      src="/mac.svg"
+      alt="Mac"
+      width={300}
+      height={300}
+      className={className}
+    />
+  );
+}
 
-      {/* Actual content container with zigzag border */}
-      <div className="relative h-full bg-black/40 p-1">
-        <div className="absolute inset-0 pointer-events-none border-[1px] border-white/20"
-          style={{
-            // jagged border effect via multiple gradients
-            mask: "conic-gradient(from -45deg at bottom, #0000, #000 1deg 90deg, #0000 91deg) 50% / 20px 100%"
-          }}
-        />
-
-        {/* 
-                Simpler approach for reliability:
-                Use a background pattern that simulation a zigzag border on the edges.
-             */}
-        <div className="h-full border border-white/10 bg-neutral-900/50 p-5 relative overflow-hidden">
-          {/* Sawtooth / Zigzag top border decoration */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAxMCIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPHBhdGggZD0iTTAgMTAgTDEwIDAgTDIwIDEwIiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4yKSIgc3Ryb2tlLXdpZHRoPSIyIiAvPgo8L3N2Zz4=')] bg-repeat-x opacity-50"></div>
-
-          {/* Sawtooth / Zigzag bottom border decoration */}
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAxMCIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPHBhdGggZD0iTTAgMCBMMTAgMTAgTDIwIDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjIpIiBzdHJva2Utd2lkdGg9IjIiIC8+Cjwvc3ZnPg==')] bg-repeat-x opacity-50"></div>
-
-          {title && <div className="text-sm font-semibold mb-2">{title}</div>}
-          {children}
+function TerminalWindow({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`overflow-hidden rounded-lg border border-white/10 bg-[#0c0c0c] shadow-2xl font-mono text-sm leading-relaxed flex flex-col ${className}`}>
+      <div className="flex items-center gap-2 border-b border-white/5 bg-white/5 px-4 py-3 shrink-0">
+        <div className="flex gap-2">
+          <div className="h-3 w-3 rounded-full bg-red-500/80" />
+          <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
+          <div className="h-3 w-3 rounded-full bg-green-500/80" />
         </div>
+        <div className="ml-4 text-xs font-medium text-white/40">{title}</div>
+      </div>
+      <div className="p-6 text-neutral-300 font-mono">
+        {children}
       </div>
     </div>
   )
+}
+
+function DashedCard({ children, title, className = "" }: { children: React.ReactNode; title?: string; className?: string }) {
+  return (
+    <div className={`relative group ${className}`}>
+      <div
+        className="h-full border-2 border-dashed border-white/20 bg-neutral-900/50 p-5 relative overflow-hidden transition-colors hover:border-emerald-500/30"
+        style={{
+          borderStyle: 'dashed',
+          borderWidth: '2px',
+          borderColor: 'rgba(255,255,255,0.2)'
+        }}
+      >
+        {title && <div className="text-sm font-semibold mb-2">{title}</div>}
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function ReleaseButton({ href, icon: Icon, label, subLabel }: { href: string; icon: any; label: string; subLabel?: string }) {
+  return (
+    <a
+      href={href}
+      className="group relative flex items-center justify-center gap-4 border-2 border-dashed border-white/20 bg-neutral-900/50 p-4 transition-all hover:bg-neutral-800 hover:border-emerald-500/40"
+    >
+      <Icon className="h-8 w-8 text-white group-hover:text-emerald-400 transition-colors" />
+      <div className="text-left">
+        <div className="font-bold text-white group-hover:text-emerald-400 transition-colors">{label}</div>
+        {subLabel && <div className="text-xs text-neutral-500">{subLabel}</div>}
+      </div>
+    </a>
+  );
 }
 
 function CodeCard({
@@ -124,15 +103,7 @@ function CodeCard({
   const [copied, setCopied] = useState(false);
 
   return (
-    <div className="group relative overflow-hidden bg-neutral-900/80 p-5">
-      {/* Sawtooth borders (Top/Bottom) */}
-      <div className="absolute top-0 left-0 right-0 h-2 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMCA1IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIj48cGF0aCBkPSJNMCA1IEw1IDAgTDEwIDUiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjE1KSIgc3Ryb2tlLXdpZHRoPSIxIiAvPjwvc3ZnPg==')] bg-repeat-x"></div>
-      <div className="absolute bottom-0 left-0 right-0 h-2 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMCA1IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIj48cGF0aCBkPSJNMCAwIEw1IDUgTDEwIDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjE1KSIgc3Ryb2tlLXdpZHRoPSIxIiAvPjwvc3ZnPg==')] bg-repeat-x"></div>
-
-      {/* Side borders */}
-      <div className="absolute top-0 bottom-0 left-0 w-px bg-white/10"></div>
-      <div className="absolute top-0 bottom-0 right-0 w-px bg-white/10"></div>
-
+    <div className="group relative overflow-hidden bg-neutral-900/80 p-5 border-2 border-dashed border-white/20">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-xs font-semibold tracking-wide text-neutral-300">
@@ -143,7 +114,6 @@ function CodeCard({
         <button
           type="button"
           className="shrink-0 border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-neutral-100 transition hover:bg-white/10"
-          style={{ clipPath: "polygon(10% 0, 100% 0, 100% 100%, 0 100%, 0 100%, 0 25%)" }}
           onClick={async () => {
             try {
               await navigator.clipboard.writeText(code);
@@ -158,7 +128,7 @@ function CodeCard({
         </button>
       </div>
 
-      <pre className="mt-4 overflow-x-auto border-t border-white/10 bg-black/50 p-4 text-sm leading-6 text-neutral-100">
+      <pre className="mt-4 overflow-x-auto border-t border-dashed border-white/10 bg-black/50 p-4 text-sm leading-6 text-neutral-100">
         <code>{code}</code>
       </pre>
     </div>
@@ -201,10 +171,18 @@ export default function Home() {
   const dailyWorkflow = useMemo(
     () =>
       [
-        "orca commit",
-        "orca plan --out plan.json",
-        "orca publish-current --pr",
+        "# Setup & Health Check",
+        "orca setup --name \"Your Name\" --email \"you@example.com\"",
         "orca doctor",
+        "",
+        "# AI-Powered Commit Workflow",
+        "orca commit                    # Intelligent commit grouping",
+        "orca plan --out plan.json      # Generate execution plan",
+        "orca apply --file plan.json    # Apply saved plan",
+        "",
+        "# Publish to GitHub",
+        "orca publish-current --pr      # Push & create PR",
+        "orca publish plan.json --pr    # Apply plan & publish",
       ].join("\n"),
     []
   );
@@ -220,10 +198,9 @@ export default function Home() {
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CjxwYXRoIGQ9Ik0wIDQwIEw0MCAwIE0wIDAgTDQwIDQwIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiIHN0cm9rZS13aWR0aD0iMSIvPgo8L3N2Zz4=')] opacity-20"></div>
       </div>
 
-      <div className="relative mx-auto max-w-6xl px-6 py-14 sm:py-20">
+      <div className="relative mx-auto max-w-[80rem] px-6 py-14 sm:py-20">
         <header className="flex items-center justify-between gap-4">
           <a className="flex items-center gap-3 group" href="#top">
-            {/* Logo simplified to just Text */}
             <div className="leading-tight">
               <div className="text-2xl font-black tracking-tighter text-white uppercase italic group-hover:text-emerald-400 transition-colors">
                 Orca
@@ -249,23 +226,23 @@ export default function Home() {
           </nav>
         </header>
 
-        <main className="mt-20 grid gap-16" id="top">
-          <section className="grid gap-10">
+        <main className="mt-2 grid gap-16" id="top">
+          <section className="grid gap-16">
             <div className="inline-flex w-fit items-center gap-3 border-b border-white/10 pb-2 text-xs font-mono uppercase tracking-widest text-emerald-400">
               <span>v0.1.0</span>
               <span className="h-3 w-px bg-white/20"></span>
               <span>Rust CLI</span>
             </div>
 
-            <div className="grid items-start gap-12 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="grid items-center gap-16 xl:grid-cols-[1.1fr_1.3fr]">
               <div className="grid gap-8">
-                <h1 className="text-balance text-5xl font-bold leading-none tracking-tight sm:text-7xl">
+                <h1 className="text-balance text-6xl font-bold leading-none tracking-tight sm:text-8xl">
                   Command the <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Deep Work.</span>
                 </h1>
-                <p className="max-w-xl text-pretty text-lg leading-relaxed text-neutral-400">
-                  Orca is a focused CLI for high-velocity engineering. Keep commits atomic,
-                  plans visible, and deployments fluid.
+                <p className="max-w-xl text-pretty text-xl leading-relaxed text-neutral-400">
+                  Orca is an AI-powered CLI that intelligently groups your changes into semantic commits using Gemini.
+                  Automate git workflows, generate execution plans, and streamline your GitHub releases.
                 </p>
 
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -283,7 +260,7 @@ export default function Home() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    View all downloads →
+                    View release notes →
                   </a>
                 </div>
                 {isWindows && (
@@ -293,13 +270,118 @@ export default function Home() {
                 )}
               </div>
 
-              <div id="download" className="relative group">
+              {/* Display Image instead of Quick Start Code */}
+              <div id="hero-image" className="relative group perspective-1000">
                 <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 blur opacity-50"></div>
-                <CodeCard
-                  label="QUICK START"
-                  helper="Get up and running in seconds."
-                  code={quickStart}
+                <div className="relative border-2 border-dashed border-white/20 bg-neutral-900/50 p-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="https://res.cloudinary.com/dq2z27agv/image/upload/q_auto,f_webp,w_1200/v1767370505/pejzaqh8mx1yc076ncoz.png"
+                    alt="Orca CLI Preview"
+                    className="w-full h-auto shadow-2xl"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* New Download Section */}
+            <div className="grid gap-8 border-t border-dashed border-white/10 pt-16">
+              <h2 className="text-xl font-bold tracking-tight uppercase text-neutral-300 mb-4">Install on your platform</h2>
+              <div className="grid gap-6 sm:grid-cols-3">
+                <ReleaseButton
+                  href={msiUrl}
+                  icon={WindowsIcon}
+                  label="Windows"
+                  subLabel="MSI Installer (x64)"
                 />
+                <ReleaseButton
+                  href={releaseUrl} // Linking to release page as generic direct link might be guessing
+                  icon={LinuxIcon}
+                  label="Linux"
+                  subLabel="See Release Assets"
+                />
+                <ReleaseButton
+                  href={releaseUrl}
+                  icon={MacIcon}
+                  label="macOS"
+                  subLabel="See Release Assets"
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className="grid gap-16 py-10">
+            <div className="text-center max-w-2xl mx-auto">
+              <h2 className="text-3xl font-bold tracking-tight mb-4">Focus on the code, not the rituals</h2>
+              <p className="text-neutral-400">Orca automates the tedious parts of git and release management.</p>
+            </div>
+
+            <div className="grid gap-12 lg:grid-cols-2">
+              {/* Orca Commit Example */}
+              <div className="grid gap-6 h-full">
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-xl font-bold text-emerald-400 font-mono">01. orca commit</h3>
+                  <p className="text-sm text-neutral-400">Intelligent context grouping and commit message generation.</p>
+                </div>
+                <TerminalWindow title="User@Orca-Dev: ~/projects/orca" className="h-full">
+                  <div className="space-y-4">
+                    <span className="text-green-400">➜</span> <span className="text-cyan-400">~/projects/orca</span> <span className="text-neutral-400">git:(main)</span> orca commit
+                    <div className="text-neutral-500 mt-2">== orca: commit ==</div>
+                    <div className="text-emerald-400">Gemini plan received</div>
+
+                    <div className="underline decoration-neutral-700 underline-offset-4">Proposed plan</div>
+
+                    {/* Commit #1 */}
+                    <div>
+                      <div className="text-blue-400 font-bold">Commit #1 (2 file(s))</div>
+                      <div className="pl-4 border-l border-white/10 mt-1 space-y-1">
+                        <div><span className="text-neutral-500">message:</span> <span className="text-emerald-300">feat(installer): Add Windows MSI build and release pipeline</span></div>
+                        <div>
+                          <span className="text-neutral-500">files:</span>
+                          <div className="pl-4 text-neutral-400 text-xs">
+                            - .github/workflows/release.yml<br />
+                            - installer/
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="pt-2">
+                      Apply this plan? This will run git add/commit commands: <span className="text-white font-bold">yes</span>
+                    </div>
+                    <div className="text-emerald-500">Commits created</div>
+                  </div>
+                </TerminalWindow>
+              </div>
+
+              <div className="grid gap-6 h-full">
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-xl font-bold text-emerald-400 font-mono">02. orca publish</h3>
+                  <p className="text-sm text-neutral-400">Automated branch creation, push, and PR flow.</p>
+                </div>
+                <TerminalWindow title="User@Orca-Dev: ~/projects/orca" className="h-full mb-24">
+                  <div>
+                    <span className="text-green-400">➜</span> <span className="text-cyan-400">~/projects/orca</span> <span className="text-neutral-400">git:(main)</span> orca publish
+                  </div>
+                  <div className="mt-4">
+                    <span className="text-blue-400">ℹ</span> Checking branch status... <span className="text-green-500">OK</span>
+                  </div>
+                  <div>
+                    <span className="text-blue-400">ℹ</span> Pushing to <span className="text-yellow-400">origin/feat/ui-update</span>... <span className="text-green-500">Done</span>
+                  </div>
+                  <div className="mt-4">
+                    <span className="text-blue-400">ℹ</span> Creating Pull Request...
+                  </div>
+                  <div className="mt-2 p-2 bg-emerald-900/20 text-emerald-300 rounded text-xs">
+                    Title: feat(ui): update button component styles<br />
+                    Body: Auto-generated by Orca
+                  </div>
+                  <div className="mt-4">
+                    <span className="text-green-500">✔</span> PR Created: <a href="#" className="underline text-blue-400">https://github.com/.../pull/124</a>
+                  </div>
+                  <div className="mt-1 text-neutral-500">
+                    Opening browser...
+                  </div>
+                </TerminalWindow>
               </div>
             </div>
           </section>
@@ -309,51 +391,37 @@ export default function Home() {
               <h2 className="text-2xl font-bold tracking-tight uppercase">Workflow</h2>
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-3">
-              <div className="group relative bg-neutral-900/50 p-6 min-h-[200px] flex flex-col justify-between">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMCA1IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIj48cGF0aCBkPSJNMCA1IEw1IDAgTDEwIDUiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjE1KSIgc3Ryb2tlLXdpZHRoPSIxIiAvPjwvc3ZnPg==')] bg-repeat-x"></div>
-                <div className="absolute top-0 bottom-0 left-0 w-px bg-white/10"></div>
-                <div className="absolute top-0 bottom-0 right-0 w-px bg-white/10"></div>
-                <div className="absolute bottom-0 left-0 right-0 h-px bg-white/10"></div>
 
-                <div className="text-4xl text-emerald-500/20 font-black absolute top-4 right-4 group-hover:text-emerald-500/40 transition-colors">01</div>
+            <div className="grid gap-6 sm:grid-cols-3">
+              <DashedCard className="min-h-[200px] flex flex-col justify-between" title="">
+                <div className="absolute top-4 right-4 text-4xl text-emerald-500/20 font-black group-hover:text-emerald-500/40 transition-colors">01</div>
                 <div>
                   <div className="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-2">Commit</div>
                   <div className="text-neutral-400 text-sm leading-relaxed">
                     Guided prompts. Semantic grouping. Clean history by default.
                   </div>
                 </div>
-              </div>
+              </DashedCard>
 
-              <div className="group relative bg-neutral-900/50 p-6 min-h-[200px] flex flex-col justify-between">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMCA1IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIj48cGF0aCBkPSJNMCA1IEw1IDAgTDEwIDUiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjE1KSIgc3Ryb2tlLXdpZHRoPSIxIiAvPjwvc3ZnPg==')] bg-repeat-x"></div>
-                <div className="absolute top-0 bottom-0 left-0 w-px bg-white/10"></div>
-                <div className="absolute top-0 bottom-0 right-0 w-px bg-white/10"></div>
-                <div className="absolute bottom-0 left-0 right-0 h-px bg-white/10"></div>
-
-                <div className="text-4xl text-emerald-500/20 font-black absolute top-4 right-4 group-hover:text-emerald-500/40 transition-colors">02</div>
+              <DashedCard className="min-h-[200px] flex flex-col justify-between" title="">
+                <div className="absolute top-4 right-4 text-4xl text-emerald-500/20 font-black group-hover:text-emerald-500/40 transition-colors">02</div>
                 <div>
                   <div className="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-2">Plan</div>
                   <div className="text-neutral-400 text-sm leading-relaxed">
                     Generate JSON execution plans. CI/CD ready artifacts.
                   </div>
                 </div>
-              </div>
+              </DashedCard>
 
-              <div className="group relative bg-neutral-900/50 p-6 min-h-[200px] flex flex-col justify-between">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMCA1IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIj48cGF0aCBkPSJNMCA1IEw1IDAgTDEwIDUiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjE1KSIgc3Ryb2tlLXdpZHRoPSIxIiAvPjwvc3ZnPg==')] bg-repeat-x"></div>
-                <div className="absolute top-0 bottom-0 left-0 w-px bg-white/10"></div>
-                <div className="absolute top-0 bottom-0 right-0 w-px bg-white/10"></div>
-                <div className="absolute bottom-0 left-0 right-0 h-px bg-white/10"></div>
-
-                <div className="text-4xl text-emerald-500/20 font-black absolute top-4 right-4 group-hover:text-emerald-500/40 transition-colors">03</div>
+              <DashedCard className="min-h-[200px] flex flex-col justify-between" title="">
+                <div className="absolute top-4 right-4 text-4xl text-emerald-500/20 font-black group-hover:text-emerald-500/40 transition-colors">03</div>
                 <div>
                   <div className="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-2">Publish</div>
                   <div className="text-neutral-400 text-sm leading-relaxed">
                     Zero-friction releases. Automated PR creation.
                   </div>
                 </div>
-              </div>
+              </DashedCard>
             </div>
           </section>
 
