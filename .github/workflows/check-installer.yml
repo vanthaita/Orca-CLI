@@ -47,6 +47,8 @@ jobs:
           $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
           wix -?
 
+          wix extension add -g WixToolset.UI.wixext/4.0.4
+
       - name: Build MSI
         shell: pwsh
         run: |
