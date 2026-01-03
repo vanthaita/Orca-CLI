@@ -41,7 +41,7 @@ export function DownloadLinks() {
             <h3 className="text-lg font-semibold">Available Versions (Windows)</h3>
             <ul className="space-y-2">
                 {windowsReleases.map((release) => (
-                    <li key={release.tag_name} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <li key={release.tag_name} className="flex items-center justify-between p-3 border-2 border-dashed border-white/20 rounded-lg bg-neutral-900/50 hover:bg-white/5 transition-colors">
                         <div>
                             <span className="font-medium text-gray-900 dark:text-gray-100">{release.tag_name}</span>
                             <span className="text-xs text-gray-500 ml-2">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { HelpIcon } from "./icons";
 
 interface FaqItemProps {
     question: string;
@@ -11,14 +12,14 @@ const FaqItem = ({ question, answer }: FaqItemProps) => {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <div className="border-b-2 border-dashed border-white/10 last:border-0">
+        <div className="border-b-2 border-dashed border-white/20 last:border-0">
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex w-full items-center justify-between py-6 text-left transition-colors hover:text-emerald-400"
             >
                 <span className="text-lg font-bold">{question}</span>
                 <span
-                    className={`ml-6 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/20 transition-transform ${isOpen ? "rotate-45 border-emerald-500/50 bg-emerald-500/10 text-emerald-500" : ""
+                    className={`ml-6 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-white/30 transition-transform ${isOpen ? "rotate-45 border-emerald-500/50 bg-emerald-500/10 text-emerald-500" : ""
                         }`}
                 >
                     +
@@ -61,10 +62,11 @@ export const FaqSection = () => {
     ];
 
     return (
-        <section id="faq" className="grid gap-16 py-10 border-t border-dashed border-white/10">
+        <section id="faq" className="grid gap-16 py-10 border-t-2 border-dashed border-white/20">
             <div className="grid gap-8 lg:grid-cols-[1fr_2fr]">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight mb-4 uppercase sticky top-24">
+                    <h2 className="text-3xl font-bold tracking-tight mb-4 uppercase sticky top-24 inline-flex items-center gap-2">
+                        <HelpIcon className="h-5 w-5 text-emerald-400" />
                         FAQ
                     </h2>
                     <p className="text-neutral-400">
@@ -72,7 +74,7 @@ export const FaqSection = () => {
                     </p>
                 </div>
 
-                <div className="rounded-2xl border-2 border-dashed border-white/10 bg-white/5 px-8">
+                <div className="rounded-2xl border-2 border-dashed border-white/20 bg-white/5 px-8">
                     {faqs.map((faq, idx) => (
                         <FaqItem key={idx} {...faq} />
                     ))}

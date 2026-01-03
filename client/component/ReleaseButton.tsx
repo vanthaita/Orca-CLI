@@ -16,7 +16,7 @@ export const ReleaseButton = ({
 }) => {
   if (comingSoon) {
     return (
-      <div className="group relative flex items-center justify-center gap-4 border-2 border-dashed border-white/10 bg-neutral-900/20 p-4 transition-all opacity-70 cursor-not-allowed">
+      <div className="group relative flex items-center justify-center gap-4 border-2 border-dashed border-white/20 bg-neutral-900/20 p-4 transition-all opacity-70 cursor-not-allowed">
         <Icon className="h-8 w-8 text-neutral-600 transition-colors" />
         <div className="text-left">
           <div className="font-bold text-neutral-500 transition-colors">

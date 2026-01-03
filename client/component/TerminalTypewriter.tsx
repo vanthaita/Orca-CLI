@@ -1,152 +1,138 @@
+
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { TerminalWindow } from "./TerminalWindow";
 
-interface TerminalTypewriterProps {
+interface TextSegment {
+    text: string;
     className?: string;
 }
 
-export const TerminalTypewriter = ({ className = "" }: TerminalTypewriterProps) => {
-    const [displayedLines, setDisplayedLines] = useState<any[]>([]);
-    const [currentStep, setCurrentStep] = useState(0);
-    const [showCursor, setShowCursor] = useState(true);
+type Line = TextSegment[];
 
-    const steps = [
-        { type: "prompt", delay: 100 },
-        { type: "typing", text: "orca commit", delay: 80 },
-        { type: "pause", duration: 600 },
-        { type: "newline", delay: 100 },
-        { type: "output", content: <div className="text-neutral-500 mt-2">== orca: commit ==</div>, delay: 50 },
-        { type: "output", content: <div className="text-emerald-400">AI plan received</div>, delay: 400 },
-        { type: "pause", duration: 500 },
-        { type: "output", content: <div className="underline decoration-neutral-700 underline-offset-4">Proposed plan</div>, delay: 100 },
-        { type: "pause", duration: 400 },
-        {
-            type: "output",
-            content: (
-                <div>
-                    <div className="text-blue-400 font-bold">Commit #1 (2 file(s))</div>
-                    <div className="pl-4 border-l border-white/10 mt-1 space-y-1">
-                        <div>
-                            <span className="text-neutral-500">message:</span>{" "}
-                            <span className="text-emerald-300">feat(installer): Add Windows MSI build and release pipeline</span>
-                        </div>
-                        <div>
-                            <span className="text-neutral-500">files:</span>
-                            <div className="pl-4 text-neutral-400 text-xs">
-                                - .github/workflows/release.yml<br />
-                                - installer/
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            ),
-            delay: 600
-        },
-        { type: "pause", duration: 500 },
-        {
-            type: "output",
-            content: (
-                <div className="pt-2">
-                    Apply this plan? This will run git add/commit commands: <span className="text-white font-bold">yes</span>
-                </div>
-            ),
-            delay: 300
-        },
-        { type: "output", content: <div className="text-emerald-500">Commits created</div>, delay: 200 },
-        { type: "pause", duration: 2500 },
-        { type: "restart" },
-    ];
+const TERMINAL_CONTENT: Line[] = [
+    // Line 1: Prompt + Command
+    [
+        { text: "➜ ", className: "text-green-400" },
+        { text: "~/projects/orca ", className: "text-cyan-400" },
+        { text: "git:(main) ", className: "text-neutral-400" },
+        { text: "orca commit", className: "text-white" },
+    ],
+    // Line 2
+    [{ text: "== orca: commit ==", className: "text-neutral-500" }],
+    // Line 3
+    [{ text: "AI plan received", className: "text-emerald-400" }],
+    // Line 4 (Empty)
+    [{ text: "", className: "" }],
+    // Line 5
+    [{ text: "Proposed plan", className: "underline decoration-neutral-700 underline-offset-4" }],
+    // Line 6
+    [{ text: "Commit #1 (2 file(s))", className: "text-blue-400 font-bold" }],
+    // Line 7
+    [
+        { text: "  message: ", className: "text-neutral-500" },
+        { text: "feat(installer): Add Windows MSI build and release pipeline", className: "text-emerald-300" }
+    ],
+    // Line 8
+    [
+        { text: "  files:", className: "text-neutral-500" }
+    ],
+    // Line 9
+    [{ text: "    - .github/workflows/release.yml", className: "text-neutral-400" }],
+    // Line 10
+    [{ text: "    - installer/", className: "text-neutral-400" }],
+    // Line 11 (Empty)
+    [{ text: "", className: "" }],
+    // Line 12
+    [
+        { text: "Apply this plan? This will run git add/commit commands: ", className: "text-white" },
+        { text: "yes", className: "text-emerald-400 font-bold" }
+    ],
+    // Line 13
+    [{ text: "Commits created", className: "text-emerald-500" }]
+];
+
+export const TerminalTypewriter = () => {
+    const [currentLineIndex, setCurrentLineIndex] = useState(0);
+    const [currentCharIndex, setCurrentCharIndex] = useState(0);
+    const [isFinished, setIsFinished] = useState(false);
+
+    // Flatten the current line into a single string to simplify char tracking
+    const getLineText = (line: Line) => line.map((s) => s.text).join("");
 
     useEffect(() => {
-        const step = steps[currentStep];
-        if (!step) return;
+        if (isFinished) return;
 
-        let timeout: NodeJS.Timeout;
-
-        if (step.type === "prompt") {
-            const promptLine = (
-                <div key="prompt">
-                    <span className="text-green-400">➜</span>{" "}
-                    <span className="text-cyan-400">~/projects/orca</span>{" "}
-                    <span className="text-neutral-400">git:(main)</span>{" "}
-                </div>
-            );
-            setDisplayedLines([promptLine]);
-            timeout = setTimeout(() => setCurrentStep(currentStep + 1), step.delay);
-        } else if (step.type === "typing") {
-            // Type out the command character by character
-            let charIndex = 0;
-            const typeChar = () => {
-                if (charIndex <= (step.text?.length ?? 0)) {
-                    const typedText = step.text?.substring(0, charIndex) ?? "";
-                    const updatedPrompt = (
-                        <div key="prompt">
-                            <span className="text-green-400">➜</span>{" "}
-                            <span className="text-cyan-400">~/projects/orca</span>{" "}
-                            <span className="text-neutral-400">git:(main)</span>{" "}
-                            {typedText}
-                        </div>
-                    );
-                    setDisplayedLines([updatedPrompt]);
-
-                    if (charIndex < (step.text?.length ?? 0)) {
-                        charIndex++;
-                        timeout = setTimeout(typeChar, step.delay);
-                    } else {
-                        timeout = setTimeout(() => setCurrentStep(currentStep + 1), 200);
-                    }
-                }
-            };
-            typeChar();
-        } else if (step.type === "newline") {
-            timeout = setTimeout(() => {
-                setShowCursor(false);
-                setCurrentStep(currentStep + 1);
-            }, step.delay);
-        } else if (step.type === "output") {
-            timeout = setTimeout(() => {
-                setDisplayedLines((prev) => [...prev, step.content]);
-                setCurrentStep(currentStep + 1);
-            }, step.delay);
-        } else if (step.type === "pause") {
-            timeout = setTimeout(() => setCurrentStep(currentStep + 1), step.duration);
-        } else if (step.type === "restart") {
-            timeout = setTimeout(() => {
-                setDisplayedLines([]);
-                setCurrentStep(0);
-                setShowCursor(true);
-            }, step.delay || 0);
+        if (currentLineIndex >= TERMINAL_CONTENT.length) {
+            setIsFinished(true);
+            return;
         }
 
-        return () => {
-            if (timeout) clearTimeout(timeout);
-        };
-    }, [currentStep]);
+        const currentLineSegments = TERMINAL_CONTENT[currentLineIndex];
+        const fullLineText = getLineText(currentLineSegments);
+
+        const timeoutId = setTimeout(() => {
+            if (currentCharIndex < fullLineText.length) {
+                setCurrentCharIndex((prev) => prev + 1);
+            } else {
+                // Line finished, move to next
+                setCurrentLineIndex((prev) => prev + 1);
+                setCurrentCharIndex(0);
+            }
+        }, 30); // Typing speed in ms
+
+        return () => clearTimeout(timeoutId);
+    }, [currentCharIndex, currentLineIndex, isFinished]);
+
+    // Helper to render a partially typed line with segments
+    const renderPartialLine = (line: Line, charCount: number) => {
+        let charsRemaining = charCount;
+        const result: React.ReactNode[] = [];
+
+        for (let i = 0; i < line.length; i++) {
+            const segment = line[i];
+            if (charsRemaining <= 0) break;
+
+            const textToRender = segment.text.slice(0, charsRemaining);
+            result.push(
+                <span key={i} className={segment.className}>
+                    {textToRender}
+                </span>
+            );
+            charsRemaining -= segment.text.length;
+        }
+        return result;
+    };
 
     return (
-        <div
-            className={`overflow-hidden rounded-lg border-2 border-dashed border-white/10 bg-[#0c0c0c] shadow-2xl font-mono text-sm leading-relaxed flex flex-col ${className}`}
-        >
-            {/* Terminal Header - matching TerminalWindow style */}
-            <div className="flex items-center gap-2 border-b border-white/5 bg-white/5 px-4 py-3 shrink-0">
-                <div className="flex gap-2">
-                    <div className="h-3 w-3 rounded-full bg-red-500/80" />
-                    <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
-                    <div className="h-3 w-3 rounded-full bg-green-500/80" />
-                </div>
-                <div className="ml-4 text-xs font-medium text-white/40">User@Orca-Dev: ~/projects/orca</div>
-            </div>
+        <TerminalWindow title="User@Orca-Dev: ~/projects/orca">
+            <div className="flex flex-col gap-1 min-h-[360px]">
+                {TERMINAL_CONTENT.map((line, idx) => {
+                    if (idx > currentLineIndex) return null;
 
-            {/* Terminal Content */}
-            <div className="p-6 text-neutral-300 font-mono min-h-[400px] space-y-4">
-                {displayedLines.map((line, idx) => (
-                    <div key={idx}>{line}</div>
-                ))}
-                {showCursor && currentStep < steps.length && (
-                    <span className="inline-block w-2 h-4 bg-emerald-400 animate-pulse ml-1" />
-                )}
+                    // If it's a past line, render fully
+                    if (idx < currentLineIndex) {
+                        return (
+                            <div key={idx} className="whitespace-pre-wrap break-all min-h-[1.5em]">
+                                {line.map((seg, sIdx) => (
+                                    <span key={sIdx} className={seg.className}>
+                                        {seg.text}
+                                    </span>
+                                ))}
+                            </div>
+                        );
+                    }
+
+                    // If it's the current line, render partially
+                    return (
+                        <div key={idx} className="whitespace-pre-wrap break-all min-h-[1.5em]">
+                            {renderPartialLine(line, currentCharIndex)}
+                            <span className="animate-pulse inline-block w-2 h-4 bg-emerald-500 align-middle ml-1" />
+                        </div>
+                    );
+                })}
             </div>
-        </div>
+        </TerminalWindow>
     );
 };
