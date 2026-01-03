@@ -11,7 +11,7 @@ const FaqItem = ({ question, answer }: FaqItemProps) => {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <div className="border-b border-white/10 last:border-0">
+        <div className="border-b-2 border-dashed border-white/10 last:border-0">
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex w-full items-center justify-between py-6 text-left transition-colors hover:text-emerald-400"
@@ -72,7 +72,7 @@ export const FaqSection = () => {
                     </p>
                 </div>
 
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-8">
+                <div className="rounded-2xl border-2 border-dashed border-white/10 bg-white/5 px-8">
                     {faqs.map((faq, idx) => (
                         <FaqItem key={idx} {...faq} />
                     ))}
