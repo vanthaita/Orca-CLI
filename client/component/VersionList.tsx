@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { DownloadIcon, PackageIcon, TerminalIcon } from "./icons";
+
 interface ReleaseAsset {
     name: string;
     browser_download_url: string;
@@ -19,14 +21,14 @@ interface VersionListProps {
 }
 
 export const VersionList = ({ releases, className = "" }: VersionListProps) => {
-    const [viewMode, setViewMode] = useState<"download" | "cli">("download");
+    const [viewMode, setViewMode] = useState<"download" | "cli" | "npm" | "bun" | "brew" | "winget">("download");
 
     if (!releases || releases.length === 0) return null;
 
     return (
-        <div className={`w-full overflow-hidden rounded-xl border-2 border-dashed border-white/10 bg-white/5 ${className}`}>
-            <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-4">
-                <div className="flex">
+        <div className={`w-full overflow-hidden rounded-xl border-2 border-dashed border-white/20 bg-white/5 ${className}`}>
+            <div className="flex items-center justify-between border-b border-white/15 bg-white/5 px-4">
+                <div className="flex flex-wrap">
                     <button
                         onClick={() => setViewMode("download")}
                         className={`px-4 py-3 text-sm font-medium transition-colors ${viewMode === "download"
@@ -34,7 +36,10 @@ export const VersionList = ({ releases, className = "" }: VersionListProps) => {
                             : "text-neutral-400 hover:text-neutral-200"
                             }`}
                     >
-                        Downloads
+                        <span className="inline-flex items-center gap-2">
+                            <DownloadIcon className="h-4 w-4" />
+                            Downloads
+                        </span>
                     </button>
                     <button
                         onClick={() => setViewMode("cli")}
@@ -43,13 +48,64 @@ export const VersionList = ({ releases, className = "" }: VersionListProps) => {
                             : "text-neutral-400 hover:text-neutral-200"
                             }`}
                     >
-                        Command Line
+                        <span className="inline-flex items-center gap-2">
+                            <TerminalIcon className="h-4 w-4" />
+                            Command Line
+                        </span>
+                    </button>
+                    <button
+                        type="button"
+                        disabled
+                        className="px-4 py-3 text-sm font-medium text-neutral-500 cursor-not-allowed opacity-70"
+                        title="Coming soon"
+                    >
+                        <span className="inline-flex items-center gap-2">
+                            <PackageIcon className="h-4 w-4" />
+                            npm
+                        </span>
+                        <span className="ml-2 text-[10px] uppercase tracking-wider">Coming soon</span>
+                    </button>
+                    <button
+                        type="button"
+                        disabled
+                        className="px-4 py-3 text-sm font-medium text-neutral-500 cursor-not-allowed opacity-70"
+                        title="Coming soon"
+                    >
+                        <span className="inline-flex items-center gap-2">
+                            <PackageIcon className="h-4 w-4" />
+                            bun
+                        </span>
+                        <span className="ml-2 text-[10px] uppercase tracking-wider">Coming soon</span>
+                    </button>
+                    <button
+                        type="button"
+                        disabled
+                        className="px-4 py-3 text-sm font-medium text-neutral-500 cursor-not-allowed opacity-70"
+                        title="Coming soon"
+                    >
+                        <span className="inline-flex items-center gap-2">
+                            <PackageIcon className="h-4 w-4" />
+                            brew
+                        </span>
+                        <span className="ml-2 text-[10px] uppercase tracking-wider">Coming soon</span>
+                    </button>
+                    <button
+                        type="button"
+                        disabled
+                        className="px-4 py-3 text-sm font-medium text-neutral-500 cursor-not-allowed opacity-70"
+                        title="Coming soon"
+                    >
+                        <span className="inline-flex items-center gap-2">
+                            <PackageIcon className="h-4 w-4" />
+                            winget
+                        </span>
+                        <span className="ml-2 text-[10px] uppercase tracking-wider">Coming soon</span>
                     </button>
                 </div>
             </div>
 
             {viewMode === "download" ? (
-                <div className="divide-y divide-white/10 max-h-[300px] overflow-y-auto custom-scrollbar">
+                <div className="divide-y divide-white/15 max-h-[300px] overflow-y-auto custom-scrollbar">
                     {releases.map((release) => {
                         const date = new Date(release.published_at).toLocaleDateString("en-US", {
                             year: "numeric",
@@ -79,13 +135,13 @@ export const VersionList = ({ releases, className = "" }: VersionListProps) => {
                         );
                     })}
                 </div>
-            ) : (
+            ) : viewMode === "cli" ? (
                 <div className="p-6">
                     <div className="mb-4">
                         <h4 className="text-sm font-medium text-neutral-300 mb-2">Linux / macOS Install</h4>
                         <div className="relative group">
                             <div className="absolute inset-0 rounded-lg blur-sm  transition-all" />
-                            <div className="relative bg-black/40 border border-white/10 rounded-lg p-3 font-mono text-xs text-neutral-300 overflow-x-auto flex items-center justify-between gap-4">
+                            <div className="relative bg-black/40 border-2 border-dashed border-white/20 rounded-lg p-3 font-mono text-xs text-neutral-300 overflow-x-auto flex items-center justify-between gap-4">
                                 <code className="whitespace-pre">curl -fsSL https://raw.githubusercontent.com/vanthaita/orca-releases/main/install.sh | sh</code>
                                 <button
                                     onClick={() => {
@@ -104,6 +160,15 @@ export const VersionList = ({ releases, className = "" }: VersionListProps) => {
                         <p className="mt-2 text-[10px] text-neutral-500">
                             Detects OS/Arch automatically. Installs to <code className="bg-white/5 px-1 rounded">/usr/local/bin</code>.
                         </p>
+                    </div>
+                </div>
+            ) : (
+                <div className="p-6">
+                    <div className="rounded-lg border-2 border-dashed border-white/20 bg-black/30 p-4">
+                        <div className="text-sm font-medium text-neutral-200">Coming soon</div>
+                        <div className="mt-1 text-xs text-neutral-400">
+                            This installer method is not available yet.
+                        </div>
                     </div>
                 </div>
             )}
