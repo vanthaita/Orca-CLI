@@ -13,10 +13,10 @@ use std::process::Command;
 
 pub(crate) fn print_no_remote_guidance() {
     eprintln!(
-        "{}",
+        "\n{} {}",
+        style("[!]").yellow().bold(),
         style("No git remote configured, so nothing to push yet.")
             .yellow()
-            .bold()
     );
     eprintln!(
         "\n{}\n  - VS Code: Source Control -> Publish to GitHub (recommended)\n\n{}\n  1) Create a new repository on https://github.com/new\n  2) Add remote:\n     git remote add origin <repo-url>\n  3) Push first time:\n     git push -u origin <branch>",
@@ -58,38 +58,47 @@ pub(crate) fn print_friendly_error(err: &anyhow::Error) {
 
     if msg.contains("Not a git repository") {
         eprintln!(
-            "\n{}\n  git init\n  git remote add origin <url>",
-            style("Hint:").cyan().bold()
+            "\n{} {}\n  git init\n  git remote add origin <url>",
+            style("[i]").cyan().bold(),
+            style("Hint:").cyan()
         );
         return;
     }
 
-    if msg.contains("Missing GEMINI_API_KEY") || msg.contains("GEMINI_API_KEY") && msg.contains("MISSING") {
-        eprintln!("\n{}\n  export GEMINI_API_KEY=...", style("Hint:").cyan().bold());
+    if msg.contains("GEMINI_API_KEY") {
+        eprintln!(
+            "\n{} {}\n  Option 1: orca setup --api-key YOUR_KEY\n  Option 2: export GEMINI_API_KEY=YOUR_KEY",
+            style("[i]").cyan().bold(),
+            style("Hint:").cyan()
+        );
         return;
     }
 
     if msg.contains("Author identity unknown") || msg.contains("unable to auto-detect email address") {
         eprintln!(
-            "\n{}\n  git config --global user.name \"Your Name\"\n  git config --global user.email \"you@example.com\"\n\n{}\n  git config user.name \"Your Name\"\n  git config user.email \"you@example.com\"",
-            style("Fix (global):").cyan().bold(),
-            style("Fix (this repo only):").cyan().bold(),
+            "\n{} {}\n  git config --global user.name \"Your Name\"\n  git config --global user.email \"you@example.com\"\n\n{} {}\n  git config user.name \"Your Name\"\n  git config user.email \"you@example.com\"",
+            style("[i]").cyan().bold(),
+            style("Fix (global):").cyan(),
+            style("[i]").cyan().bold(),
+            style("Fix (this repo only):").cyan(),
         );
         return;
     }
 
     if msg.contains("no upstream branch") || msg.contains("set the remote as upstream") {
         eprintln!(
-            "\n{}\n  git push -u origin <branch>",
-            style("Hint:").cyan().bold()
+            "\n{} {}\n  git push -u origin <branch>",
+            style("[i]").cyan().bold(),
+            style("Hint:").cyan()
         );
         return;
     }
 
     if msg.contains("No configured push destination") {
         eprintln!(
-            "\n{}\n  1) Create a GitHub repo (VS Code: Source Control -> Publish to GitHub)\n  2) Or via CLI:\n     - Create repo on github.com\n     - git remote add origin <repo-url>\n     - git push -u origin <branch>",
-            style("Hint:").cyan().bold()
+            "\n{} {}\n  1) Create a GitHub repo (VS Code: Source Control -> Publish to GitHub)\n  2) Or via CLI:\n     - Create repo on github.com\n     - git remote add origin <repo-url>\n     - git push -u origin <branch>",
+            style("[i]").cyan().bold(),
+            style("Hint:").cyan()
         );
         return;
     }
@@ -100,32 +109,36 @@ pub(crate) fn print_friendly_error(err: &anyhow::Error) {
         || msg.contains("Permission denied")
     {
         eprintln!(
-            "\n{}\n  - Ensure remote URL is correct: git remote -v\n  - If using HTTPS, use a GitHub PAT (not password)\n  - If using SSH, ensure your SSH key is added to GitHub",
-            style("Hint:").cyan().bold()
+            "\n{} {}\n  - Ensure remote URL is correct: git remote -v\n  - If using HTTPS, use a GitHub PAT (not password)\n  - If using SSH, ensure your SSH key is added to GitHub",
+            style("[i]").cyan().bold(),
+            style("Hint:").cyan()
         );
         return;
     }
 
     if msg.contains("pathspec") && msg.contains("did not match any file") {
         eprintln!(
-            "\n{}\n  Re-generate the plan with: orca plan --out plan.json",
-            style("Hint:").cyan().bold()
+            "\n{} {}\n  Re-generate the plan with: orca plan --out plan.json",
+            style("[i]").cyan().bold(),
+            style("Hint:").cyan()
         );
         return;
     }
 
     if msg.contains("nothing to commit") || msg.contains("no changes added to commit") {
         eprintln!(
-            "\n{}\n  - Run: git status\n  - Ensure the plan files are still modified\n  - If you already committed, regenerate plan: orca plan --out plan.json",
-            style("Hint:").cyan().bold()
+            "\n{} {}\n  - Run: git status\n  - Ensure the plan files are still modified\n  - If you already committed, regenerate plan: orca plan --out plan.json",
+            style("[i]").cyan().bold(),
+            style("Hint:").cyan()
         );
         return;
     }
 
     if msg.contains("Gemini API") {
         eprintln!(
-            "\n{}\n  - Check GEMINI_API_KEY\n  - Try another model: --model gemini-2.5-flash\n  - If rate limited, retry later",
-            style("Hint:").cyan().bold()
+            "\n{} {}\n  - Check GEMINI_API_KEY\n  - Try another model: --model gemini-2.5-flash\n  - If rate limited, retry later",
+            style("[i]").cyan().bold(),
+            style("Hint:").cyan()
         );
     }
 }
@@ -133,7 +146,7 @@ pub(crate) fn print_friendly_error(err: &anyhow::Error) {
 pub(crate) async fn run_commit_flow(confirm: bool, dry_run: bool, model: &str) -> Result<()> {
     ensure_git_repo()?;
 
-    println!("{}", style("== orca: commit ==").bold());
+    println!("{}", style("[orca commit]").bold().cyan());
 
     let status = run_git(&["status", "--porcelain"])?;
     let diff = run_git(&["diff"])?;
@@ -156,13 +169,13 @@ pub(crate) async fn run_commit_flow(confirm: bool, dry_run: bool, model: &str) -
 
     let changed_files = files_from_status_porcelain(&status);
 
-    let pb = spinner("Asking Gemini to propose commit plan...");
+    let pb = spinner("Asking Gemini to analyze changes and propose commit plan...");
     let mut plan = generate_plan_with_gemini(model, &status, &diff, &log).await?;
     pb.finish_and_clear();
-    eprintln!("{}", style("Gemini plan received").green());
+    eprintln!("{} {}", style("[✓]").green().bold(), style("Plan received from Gemini").green());
     normalize_plan_files(&mut plan, &changed_files);
 
-    println!("\n{}", style("Proposed plan").bold().underlined());
+    println!("\n{}", style("Proposed Plan:").bold().cyan());
     print_plan_human(&plan);
 
     if dry_run {
@@ -181,10 +194,10 @@ pub(crate) async fn run_commit_flow(confirm: bool, dry_run: bool, model: &str) -
         }
     }
 
-    let pb = spinner("Applying plan (git add/commit)...");
+    let pb = spinner("Applying plan (running git add and commit)...");
     apply_plan(&plan)?;
     pb.finish_and_clear();
-    eprintln!("{}", style("Commits created").green());
+    eprintln!("{} {}", style("[✓]").green().bold(), style("Commits created successfully").green());
     Ok(())
 }
 
@@ -223,7 +236,7 @@ pub(crate) async fn run_publish_current_flow(
 ) -> Result<()> {
     ensure_git_repo()?;
 
-    println!("{}", style("== orca: publish-current ==").bold());
+    println!("{}", style("[orca publish-current]").bold().cyan());
 
     if !has_git_remote()? {
         print_no_remote_guidance();
@@ -247,10 +260,10 @@ pub(crate) async fn run_publish_current_flow(
     checkout_branch(&target_branch, true)?;
     pb.finish_and_clear();
 
-    let pb = spinner("Pushing branch (git push -u origin <branch>)...");
+    let pb = spinner(&format!("Pushing branch '{}' to origin...", target_branch));
     run_git(&["push", "-u", "origin", &target_branch])?;
     pb.finish_and_clear();
-    eprintln!("{}", style("Pushed branch to origin").green());
+    eprintln!("{} {}", style("[✓]").green().bold(), style("Branch pushed to origin").green());
 
     if pr {
         if gh_available() {
@@ -262,7 +275,7 @@ pub(crate) async fn run_publish_current_flow(
             pb.finish_and_clear();
 
             if status.success() {
-                eprintln!("{}", style("Pull request created").green());
+                eprintln!("{} {}", style("[✓]").green().bold(), style("Pull request created").green());
             } else {
                 eprintln!(
                     "{} {}",
@@ -279,23 +292,43 @@ pub(crate) async fn run_publish_current_flow(
     Ok(())
 }
 
-pub(crate) async fn run_setup_flow(name: Option<String>, email: Option<String>, local: bool) -> Result<()> {
+pub(crate) async fn run_setup_flow(
+    api_key: Option<String>,
+    name: Option<String>,
+    email: Option<String>,
+    local: bool,
+) -> Result<()> {
     ensure_git_repo()?;
 
-    println!("{}", style("== orca: setup ==").bold());
+    println!("{}\n", style("[orca setup]").bold().cyan());
 
     let scope_args: [&str; 1] = ["--global"];
     let use_global = !local;
 
-    let nothing_to_set = name.is_none() && email.is_none();
+    // Handle API key configuration
+    if let Some(ref key) = api_key {
+        let mut config = crate::config::load_config().unwrap_or_default();
+        config.api.gemini_api_key = Some(key.clone());
+        crate::config::save_config(&config)?;
+        println!(
+            "  {} {}",
+            style("[✓]").green().bold(),
+            style("API key saved to config file").green()
+        );
+    }
 
+    // Handle git configuration
     if let Some(ref n) = name {
         if use_global {
             run_git(&["config", scope_args[0], "user.name", n.as_str()])?;
         } else {
             run_git(&["config", "user.name", n.as_str()])?;
         }
-        println!("{} {}", style("Set user.name:").green(), style(n).cyan());
+        println!(
+            "  {} Set user.name: {}",
+            style("[✓]").green().bold(),
+            style(n).cyan()
+        );
     }
 
     if let Some(ref e) = email {
@@ -304,24 +337,37 @@ pub(crate) async fn run_setup_flow(name: Option<String>, email: Option<String>, 
         } else {
             run_git(&["config", "user.email", e.as_str()])?;
         }
-        println!("{} {}", style("Set user.email:").green(), style(e).cyan());
-    }
-
-    if nothing_to_set {
         println!(
-            "{} {}",
-            style("Nothing to set.").yellow().bold(),
-            style("Provide --name and/or --email.").yellow()
+            "  {} Set user.email: {}",
+            style("[✓]").green().bold(),
+            style(e).cyan()
         );
     }
 
+    // Show config file location if API key was set
+    if api_key.is_some() {
+        if let Ok(config_path) = crate::config::config_file_path() {
+            println!(
+                "\n{} {}",
+                style("Configuration saved to:").dim(),
+                style(config_path.display()).cyan()
+            );
+        }
+    }
+
+    // Check GitHub CLI
+    println!();
     if gh_available() {
-        println!("{} {}", style("gh:").green().bold(), style("OK").green());
+        println!(
+            "  {} {}",
+            style("[✓]").green().bold(),
+            style("GitHub CLI (gh) is installed").green()
+        );
     } else {
         println!(
-            "{} {}",
-            style("gh:").yellow().bold(),
-            style("MISSING (install GitHub CLI for PR creation)").yellow()
+            "  {} {}",
+            style("[!]").yellow().bold(),
+            style("GitHub CLI (gh) not found - install for PR creation").yellow()
         );
     }
 
@@ -397,7 +443,7 @@ fn print_github_pr_url(branch: &str, base: &str) -> Result<()> {
 pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<PathBuf>) -> Result<()> {
     ensure_git_repo()?;
 
-    println!("{}", style("== orca: plan ==").bold());
+    println!("{}", style("[orca plan]").bold().cyan());
 
     let status = run_git(&["status", "--porcelain"])?;
     let diff = run_git(&["diff"])?;
@@ -415,18 +461,18 @@ pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<Path
     }
 
     let changed_files = files_from_status_porcelain(&status);
-    let pb = spinner("Asking Gemini to propose commit plan...");
+    let pb = spinner("Asking Gemini to analyze changes and propose commit plan...");
     let mut plan = generate_plan_with_gemini(model, &status, &diff, &log).await?;
     pb.finish_and_clear();
-    eprintln!("{}", style("Gemini plan received").green());
+    eprintln!("{} {}", style("[✓]").green().bold(), style("Plan received from Gemini").green());
     normalize_plan_files(&mut plan, &changed_files);
 
     let plan_json = serde_json::to_string_pretty(&plan)?;
 
     if !json_only {
-        println!("\n{}", style("Proposed plan").bold().underlined());
+        println!("\n{}", style("Proposed Plan:").bold().cyan());
         print_plan_human(&plan);
-        println!("\n{}\n{}", style("JSON plan").bold().underlined(), plan_json);
+        println!("\n{}\n{}", style("JSON Output:").bold().cyan(), plan_json);
     } else {
         println!("{}", plan_json);
     }
@@ -456,7 +502,7 @@ pub(crate) async fn run_apply_flow(
 ) -> Result<()> {
     ensure_git_repo()?;
 
-    println!("{}", style("== orca: apply ==").bold());
+    println!("{}", style("[orca apply]").bold().cyan());
 
     let raw = std::fs::read_to_string(file).with_context(|| {
         format!(
@@ -471,7 +517,7 @@ pub(crate) async fn run_apply_flow(
     let changed_files = files_from_status_porcelain(&status);
     normalize_plan_files(&mut plan, &changed_files);
 
-    println!("\n{}", style("Plan to apply").bold().underlined());
+    println!("\n{}", style("Plan to Apply:").bold().cyan());
     print_plan_human(&plan);
 
     if dry_run {
@@ -490,10 +536,10 @@ pub(crate) async fn run_apply_flow(
         }
     }
 
-    let pb = spinner("Applying plan (git add/commit)...");
+    let pb = spinner("Applying plan (running git add and commit)...");
     apply_plan(&plan)?;
     pb.finish_and_clear();
-    eprintln!("{}", style("Commits created").green());
+    eprintln!("{} {}", style("[✓]").green().bold(), style("Commits created successfully").green());
 
     if publish {
         if !has_git_remote()? {
@@ -516,10 +562,10 @@ pub(crate) async fn run_apply_flow(
         checkout_branch(&target_branch, true)?;
         pb.finish_and_clear();
 
-        let pb = spinner("Pushing branch (git push -u origin <branch>)...");
+        let pb = spinner(&format!("Pushing branch '{}' to origin...", target_branch));
         run_git(&["push", "-u", "origin", &target_branch])?;
         pb.finish_and_clear();
-        eprintln!("{}", style("Pushed branch to origin").green());
+        eprintln!("{} {}", style("[✓]").green().bold(), style("Branch pushed to origin").green());
 
         if pr {
             if gh_available() {
@@ -531,7 +577,7 @@ pub(crate) async fn run_apply_flow(
                 pb.finish_and_clear();
 
                 if status.success() {
-                    eprintln!("{}", style("Pull request created").green());
+                    eprintln!("{} {}", style("[✓]").green().bold(), style("Pull request created").green());
                 } else {
                     eprintln!(
                         "{} {}",
@@ -583,10 +629,10 @@ pub(crate) async fn run_apply_flow(
                 }
             }
 
-            let pb = spinner("Running git push...");
+            let pb = spinner("Pushing to remote...");
             run_git(&["push"])?;
             pb.finish_and_clear();
-            eprintln!("{}", style("Pushed to remote").green());
+            eprintln!("{} {}", style("[✓]").green().bold(), style("Pushed to remote").green());
         } else {
             println!("Skipped git push.");
         }
@@ -596,7 +642,7 @@ pub(crate) async fn run_apply_flow(
 }
 
 pub(crate) async fn run_doctor_flow() -> Result<()> {
-    println!("{}", style("== orca: doctor ==").bold());
+    println!("{}", style("[orca doctor]").bold().cyan());
     if let Err(e) = ensure_git_repo() {
         println!(
             "{} {}",
@@ -605,18 +651,18 @@ pub(crate) async fn run_doctor_flow() -> Result<()> {
         );
         return Ok(());
     }
-    println!("{} {}", style("git repo:").green().bold(), style("OK").green());
+    println!("{} {}", style("[✓]").green().bold(), style("Git repository detected").green());
 
     match std::env::var("GEMINI_API_KEY") {
         Ok(_) => println!(
             "{} {}",
-            style("GEMINI_API_KEY:").green().bold(),
-            style("OK").green()
+            style("[✓]").green().bold(),
+            style("GEMINI_API_KEY is set").green()
         ),
         Err(_) => println!(
             "{} {}",
-            style("GEMINI_API_KEY:").yellow().bold(),
-            style("MISSING (export GEMINI_API_KEY=...)").yellow()
+            style("[!]").yellow().bold(),
+            style("GEMINI_API_KEY is missing (export GEMINI_API_KEY=...)").yellow()
         ),
     }
 

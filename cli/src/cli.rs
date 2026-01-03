@@ -128,6 +128,10 @@ pub(crate) enum Commands {
 
     /// Setup local git identity and check required tools (gh)
     Setup {
+        /// Gemini API key to store in config file
+        #[arg(long)]
+        api_key: Option<String>,
+
         /// Git user.name
         #[arg(long)]
         name: Option<String>,

@@ -8,7 +8,7 @@ pub(crate) async fn generate_plan_with_gemini(
     diff: &str,
     log: &str,
 ) -> Result<CommitPlan> {
-    let api_key = std::env::var("GEMINI_API_KEY").context("Missing GEMINI_API_KEY env var")?;
+    let api_key = crate::config::get_gemini_api_key()?;
 
     let prompt = build_prompt(status, diff, log);
     let resp_text = call_gemini_generate_content(model, &api_key, &prompt).await?;
