@@ -8,7 +8,7 @@ interface CommandItemProps {
 
 const CommandItem = ({ command, description, args }: CommandItemProps) => {
     return (
-        <div className="border border-white/10 bg-neutral-900/50 p-6 rounded-lg hover:border-emerald-500/30 transition-colors group">
+        <div className="border-2 border-dashed border-white/10 bg-neutral-900/50 p-6 rounded-lg hover:border-emerald-500/30 transition-colors group">
             <div className="font-mono text-emerald-400 font-bold mb-2 text-lg">
                 {command}
             </div>
