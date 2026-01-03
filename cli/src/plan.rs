@@ -19,18 +19,19 @@ pub(crate) struct PlannedCommit {
 pub(crate) fn print_plan_human(plan: &CommitPlan) {
     for (i, c) in plan.commits.iter().enumerate() {
         println!(
-            "\n{} {}",
+            "\n{} {} {}",
             style(format!("Commit #{}", i + 1)).bold().cyan(),
-            style(format!("({} file(s))", c.files.len())).dim()
+            style("•").dim(),
+            style(format!("{} file(s)", c.files.len())).dim()
         );
-        println!("  {} {}", style("message:").bold(), style(&c.message).green().bold());
-        println!("  {}", style("files:").bold());
+        println!("  {} {}", style("Message:").bold(), style(&c.message).green());
+        println!("  {}", style("Files:").bold());
         for f in &c.files {
-            println!("    {} {}", style("-").dim(), style(f).white());
+            println!("    {} {}", style("→").cyan(), style(f).white());
         }
-        println!("  {}", style("commands:").bold());
+        println!("  {}", style("Commands:").bold());
         for cmd in &c.commands {
-            println!("    {} {}", style("$").dim(), style(cmd).yellow());
+            println!("    {} {}", style("$").yellow(), style(cmd).yellow());
         }
     }
 }
