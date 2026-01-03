@@ -17,7 +17,13 @@ import {
   FaqSection,
   DownloadLinks,
   VersionList,
+  IntroductionSection,
+  GuideSection,
+  ModelShowcase,
+  SocialProof,
 } from "../component";
+
+import { BookIcon, HelpIcon, InfoIcon } from "../component";
 
 const Home = () => {
   const repo = "vanthaita/orca-releases"; // Target the public releases repo
@@ -105,21 +111,24 @@ const Home = () => {
 
           <nav className="hidden items-center gap-6 sm:flex">
             <Link
-              className="text-sm font-medium text-neutral-400 hover:text-white transition-colors"
+              className="text-sm font-medium text-neutral-400 hover:text-white transition-colors inline-flex items-center gap-2"
               href="#how-it-works"
             >
+              <InfoIcon className="h-4 w-4" />
               Overview
             </Link>
             <Link
-              className="text-sm font-medium text-neutral-400 hover:text-white transition-colors"
+              className="text-sm font-medium text-neutral-400 hover:text-white transition-colors inline-flex items-center gap-2"
               href="#help"
             >
+              <BookIcon className="h-4 w-4" />
               Guide
             </Link>
             <Link
-              className="text-sm font-medium text-neutral-400 hover:text-white transition-colors"
+              className="text-sm font-medium text-neutral-400 hover:text-white transition-colors inline-flex items-center gap-2"
               href="#faq"
             >
+              <HelpIcon className="h-4 w-4" />
               FAQ
             </Link>
           </nav>
@@ -127,7 +136,7 @@ const Home = () => {
 
         <main className="mt-2 grid gap-16" id="top">
           <section className="grid gap-16">
-            <div className="inline-flex w-fit items-center gap-3 border-b border-white/10 pb-2 text-xs font-mono uppercase tracking-widest text-emerald-400">
+            <div className="inline-flex w-fit items-center gap-3 border-b-2 border-dashed border-white/20 pb-2 text-xs font-mono uppercase tracking-widest text-emerald-400">
               <span className={isLoading ? "animate-pulse" : ""}>{versionString}</span>
               <span className="h-3 w-px bg-white/20"></span>
               <span>Rust CLI</span>
@@ -168,7 +177,7 @@ const Home = () => {
               </div>
             </div>
 
-            <div className="grid gap-8 border-t border-dashed border-white/10 pt-16">
+            <div className="grid gap-8 border-t-2 border-dashed border-white/20 pt-16">
               <h2 className="text-xl font-bold tracking-tight uppercase text-neutral-300 mb-4">Install on your platform</h2>
               <div className="grid gap-6 sm:grid-cols-3">
                 <ReleaseButton
@@ -204,6 +213,11 @@ const Home = () => {
 
           </section>
 
+          <IntroductionSection />
+
+          <ModelShowcase />
+
+
           <section className="grid gap-16 py-10">
             <div className="text-center max-w-2xl mx-auto">
               <h2 className="text-3xl font-bold tracking-tight mb-4">Focus on the code, not the rituals</h2>
@@ -226,7 +240,7 @@ const Home = () => {
 
                     <div>
                       <div className="text-blue-400 font-bold">Commit #1 (2 file(s))</div>
-                      <div className="pl-4 border-l border-white/10 mt-1 space-y-1">
+                      <div className="pl-4 border-l-2 border-dashed border-white/20 mt-1 space-y-1">
                         <div><span className="text-neutral-500">message:</span> <span className="text-emerald-300">feat(installer): Add Windows MSI build and release pipeline</span></div>
                         <div>
                           <span className="text-neutral-500">files:</span>
@@ -279,7 +293,7 @@ const Home = () => {
           </section>
 
           <section id="how-it-works" className="grid gap-8">
-            <div className="border-t border-white/10 pt-10">
+            <div className="border-t-2 border-dashed border-white/20 pt-10">
               <h2 className="text-2xl font-bold tracking-tight uppercase">Workflow</h2>
             </div>
 
@@ -317,7 +331,9 @@ const Home = () => {
             </div>
           </section>
 
+          <GuideSection />
 
+          <SocialProof />
 
           <HelpSection />
 
@@ -339,7 +355,7 @@ const Home = () => {
             </div>
           </section>
 
-          <footer className="flex flex-col gap-6 border-t border-white/10 pt-12 text-sm text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
+          <footer className="flex flex-col gap-6 border-t-2 border-dashed border-white/20 pt-12 text-sm text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
             <div className="font-mono uppercase tracking-widest text-xs">© {new Date().getFullYear()} Orca CLI</div>
             <div className="flex items-center gap-8 font-medium">
               <Link

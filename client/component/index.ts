@@ -8,4 +8,8 @@ export * from "./FaqSection";
 export * from "./DownloadLinks";
 export * from "./icons";
 
+export * from "./IntroductionSection";
+export * from "./GuideSection";
+export * from "./ModelShowcase";
+export * from "./SocialProof";
 export * from "./VersionList";
