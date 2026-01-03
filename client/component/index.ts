@@ -7,3 +7,4 @@ export * from "./FaqSection";
 export * from "./DownloadLinks";
 export * from "./icons";
 
+export * from "./VersionList";
