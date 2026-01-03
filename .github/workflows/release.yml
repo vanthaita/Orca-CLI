@@ -102,15 +102,50 @@ jobs:
           $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
           wix build installer\Orca.wxs -d Version=$env:VERSION -o OrcaSetup-$env:VERSION.msi
 
-      - name: Upload to GitHub Release
+      - name: Upload to Public GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             orca-${{ matrix.target }}.${{ matrix.archive }}
+          repository: vanthaita/orca-releases
+          token: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
 
-      - name: Upload MSI to GitHub Release
+      - name: Upload MSI to Public GitHub Release
         if: matrix.os == 'windows-latest'
         uses: softprops/action-gh-release@v2
         with:
           files: |
             OrcaSetup-*.msi
+          repository: vanthaita/orca-releases
+          token: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
+
+  update-install-script:
+    name: Update Install Script
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: source
+
+      - uses: actions/checkout@v4
+        with:
+          repository: vanthaita/orca-releases
+          token: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
+          path: public-repo
+
+      - name: Update install.sh
+        shell: bash
+        run: |
+          cp source/scripts/install.sh public-repo/install.sh
+          cd public-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add install.sh
+          if git diff --staged --quiet; then
+            echo "No changes to install.sh"
+          else
+            git commit -m "Update install.sh [skip ci]"
+            git push
+          fi
+
