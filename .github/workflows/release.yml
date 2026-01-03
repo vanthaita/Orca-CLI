@@ -121,6 +121,7 @@ jobs:
           dotnet tool install --global wix --version 4.*
           $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
           wix --version
+          wix extension add WixToolset.UI.wixext
 
       - name: Build MSI (Windows)
         if: matrix.os == 'windows-latest'
