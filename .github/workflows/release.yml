@@ -26,9 +26,24 @@ jobs:
         working-directory: cli
         run: cargo test --locked
 
+  create-release:
+    name: Create Release
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: vanthaita/orca-releases
+          token: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
   build-and-upload:
     name: Build & Upload (${{ matrix.target }})
-    needs: test
+    needs: create-release
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -109,6 +124,7 @@ jobs:
             orca-${{ matrix.target }}.${{ matrix.archive }}
           repository: vanthaita/orca-releases
           token: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
+          make_latest: false
 
       - name: Upload MSI to Public GitHub Release
         if: matrix.os == 'windows-latest'
@@ -118,6 +134,7 @@ jobs:
             OrcaSetup-*.msi
           repository: vanthaita/orca-releases
           token: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
+          make_latest: false
 
   update-install-script:
     name: Update Install Script
@@ -128,24 +145,39 @@ jobs:
         with:
           path: source
 
-      - uses: actions/checkout@v4
-        with:
-          repository: vanthaita/orca-releases
-          token: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
-          path: public-repo
-
       - name: Update install.sh
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
         run: |
-          cp source/scripts/install.sh public-repo/install.sh
+          # Manual clone/setup to handle empty repository
+          rm -rf public-repo
+          git clone "https://oauth2:${GH_TOKEN}@github.com/vanthaita/orca-releases.git" public-repo
+          
           cd public-repo
+          # Ensure we are on main, creating it if it doesn't exist (e.g. empty repo)
+          if ! git rev-parse --verify HEAD >/dev/null 2>&1; then
+             echo "Empty repository. Creating main branch."
+             git checkout -b main
+          else
+             echo "Repository not empty. Checking out main."
+             git checkout main || git checkout -b main
+          fi
+
+          # Copy file from source (which is checked out in 'source' dir)
+          # Note: previous step checked out source to 'source' path.
+          echo "Copying install.sh..."
+          cp ../source/scripts/install.sh install.sh
+          
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          
           git add install.sh
           if git diff --staged --quiet; then
             echo "No changes to install.sh"
           else
+            echo "Committing and pushing changes..."
             git commit -m "Update install.sh [skip ci]"
-            git push
+            git push -u origin main
           fi
 
