@@ -15,17 +15,54 @@ import {
   HelpSection,
   FaqSection,
   DownloadLinks,
+  VersionList,
 } from "../component";
 
 const Home = () => {
-  const repo = process.env.NEXT_PUBLIC_ORCA_REPO ?? "vanthaita/Orca";
+  const repo = "vanthaita/orca-releases"; // Target the public releases repo
   const repoUrl = useMemo(() => `https://github.com/${repo}`, [repo]);
-  const releaseUrl = useMemo(() => `${repoUrl}/releases/latest`, [repoUrl]);
-  const issuesUrl = useMemo(() => `${repoUrl}/issues`, [repoUrl]);
-  const msiUrl = useMemo(
-    () => `${repoUrl}/releases/latest/download/OrcaSetup.msi`,
-    [repoUrl]
-  );
+  const issuesUrl = useMemo(() => `https://github.com/vanthaita/Orca/issues`, []); // Keep issues on main repo
+
+  const [releases, setReleases] = useState<any[]>([]);
+  const [latestRelease, setLatestRelease] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Initial Fetch
+  useEffect(() => {
+    const fetchReleases = async () => {
+      try {
+        const res = await fetch(`https://api.github.com/repos/${repo}/releases`);
+        if (!res.ok) throw new Error("Failed to fetch releases");
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setReleases(data);
+          setLatestRelease(data[0]);
+        }
+      } catch (error) {
+        console.error("Error fetching releases:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchReleases();
+  }, [repo]);
+
+  // Derived Links
+  const msiUrl = useMemo(() => {
+    if (!latestRelease) return "#";
+    const asset = latestRelease.assets?.find((a: any) => a.name.endsWith(".msi"));
+    return asset ? asset.browser_download_url : latestRelease.html_url;
+  }, [latestRelease]);
+
+  const linuxUrl = useMemo(() => {
+    if (!latestRelease) return "#";
+    const asset = latestRelease.assets?.find((a: any) => a.name.includes("linux") && a.name.endsWith(".tar.gz"));
+    return asset ? asset.browser_download_url : latestRelease.html_url;
+  }, [latestRelease]);
+
+  // Fallback version string
+  const versionString = isLoading ? "..." : (latestRelease?.tag_name || "v0.1.2");
 
   const [isWindows, setIsWindows] = useState(false);
   useEffect(() => {
@@ -84,21 +121,13 @@ const Home = () => {
             >
               FAQ
             </Link>
-            <Link
-              className="text-sm font-medium text-neutral-400 hover:text-white transition-colors"
-              href={repoUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              GitHub
-            </Link>
           </nav>
         </header>
 
         <main className="mt-2 grid gap-16" id="top">
           <section className="grid gap-16">
             <div className="inline-flex w-fit items-center gap-3 border-b border-white/10 pb-2 text-xs font-mono uppercase tracking-widest text-emerald-400">
-              <span>v0.1.2</span>
+              <span className={isLoading ? "animate-pulse" : ""}>{versionString}</span>
               <span className="h-3 w-px bg-white/20"></span>
               <span>Rust CLI</span>
             </div>
@@ -116,7 +145,7 @@ const Home = () => {
 
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                   <Link
-                    className="relative inline-flex items-center justify-center gap-3 bg-white px-8 py-4 text-sm font-bold text-black transition hover:bg-emerald-300 group overflow-hidden"
+                    className={`relative inline-flex items-center justify-center gap-3 bg-white px-8 py-4 text-sm font-bold text-black transition hover:bg-emerald-300 group overflow-hidden ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
                     href={msiUrl}
                     target="_blank"
                     rel="noreferrer"
@@ -124,14 +153,6 @@ const Home = () => {
                   >
                     <WindowsIcon className="h-5 w-5" />
                     <span>Download for Windows</span>
-                  </Link>
-                  <Link
-                    className="inline-flex items-center justify-center px-6 py-3 text-sm font-bold text-white transition hover:text-emerald-400"
-                    href={releaseUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    View release notes →
                   </Link>
                 </div>
                 {isWindows && (
@@ -162,23 +183,30 @@ const Home = () => {
                   icon={WindowsIcon}
                   label="Windows"
                   subLabel="MSI Installer (x64)"
+                  comingSoon={isLoading}
                 />
                 <ReleaseButton
-                  href={releaseUrl}
+                  href={linuxUrl} // Use dynamic linux url
                   icon={LinuxIcon}
                   label="Linux"
-                  subLabel="See Release Assets"
+                  subLabel="x64 tar.gz"
+                  comingSoon={isLoading}
                 />
                 <ReleaseButton
-                  href={releaseUrl}
+                  href={linuxUrl} // Reusing linux url for now as they are often same logic or use mac specific if available
                   icon={MacIcon}
                   label="macOS"
-                  subLabel="See Release Assets"
+                  subLabel="x64 tar.gz"
+                  comingSoon={isLoading}
                 />
               </div>
-              <div className="mt-8 border-t border-dashed border-white/10 pt-8">
-                <DownloadLinks />
-              </div>
+
+              {/* Version History List */}
+              {releases.length > 0 && (
+                <div className="mt-8">
+                  <VersionList releases={releases} />
+                </div>
+              )}
             </div>
 
           </section>
@@ -229,7 +257,7 @@ const Home = () => {
                   <h3 className="text-xl font-bold text-emerald-400 font-mono">02. orca publish</h3>
                   <p className="text-sm text-neutral-400">Automated branch creation, push, and PR flow.</p>
                 </div>
-                <TerminalWindow title="User@Orca-Dev: ~/projects/orca" className="h-full mb-24">
+                <TerminalWindow title="User@Orca-Dev: ~/projects/orca" className="h-full mb-30">
                   <div>
                     <span className="text-green-400">➜</span> <span className="text-cyan-400">~/projects/orca</span> <span className="text-neutral-400">git:(main)</span> orca publish
                   </div>
@@ -313,16 +341,8 @@ const Home = () => {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-2">
               <div className="text-sm text-neutral-500 font-mono">
-                REPO: <span className="text-neutral-300">{repo}</span>
+                CLI Version: <span className={`text-neutral-300 ${isLoading ? "animate-pulse" : ""}`}>{versionString}</span>
               </div>
-              <Link
-                className="text-sm font-bold text-white hover:text-emerald-400 transition-colors uppercase tracking-wider"
-                href={repoUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Source Code →
-              </Link>
             </div>
           </section>
 
@@ -331,17 +351,11 @@ const Home = () => {
             <div className="flex items-center gap-8 font-medium">
               <Link
                 className="hover:text-white transition-colors"
-                href={releaseUrl}
+                href={repoUrl}
                 target="_blank"
                 rel="noreferrer"
               >
-                DL
-              </Link>
-              <Link className="hover:text-white transition-colors" href="https://github.com/vanthaita/Orca/blob/main/LICENSE" target="_blank" rel="noreferrer">
-                License
-              </Link>
-              <Link className="hover:text-white transition-colors" href={issuesUrl} target="_blank" rel="noreferrer">
-                Issues
+                GitHub (Releases)
               </Link>
             </div>
           </footer>

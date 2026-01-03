@@ -6,12 +6,28 @@ export const ReleaseButton = ({
   icon: Icon,
   label,
   subLabel,
+  comingSoon = false,
 }: {
   href: string;
   icon: ElementType<{ className?: string }>;
   label: string;
   subLabel?: string;
+  comingSoon?: boolean;
 }) => {
+  if (comingSoon) {
+    return (
+      <div className="group relative flex items-center justify-center gap-4 border-2 border-dashed border-white/10 bg-neutral-900/20 p-4 transition-all opacity-70 cursor-not-allowed">
+        <Icon className="h-8 w-8 text-neutral-600 transition-colors" />
+        <div className="text-left">
+          <div className="font-bold text-neutral-500 transition-colors">
+            {label}
+          </div>
+          <div className="text-xs text-neutral-600">Coming Soon</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Link
       href={href}
