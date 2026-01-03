@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -11,6 +11,7 @@ import {
   MacIcon,
   ReleaseButton,
   TerminalWindow,
+  TerminalTypewriter,
   WindowsIcon,
   HelpSection,
   FaqSection,
@@ -97,7 +98,7 @@ const Home = () => {
           <Link className="flex items-center gap-3 group" href="#top">
             <div className="leading-tight">
               <div className="text-2xl font-black tracking-tighter text-white uppercase italic group-hover:text-emerald-400 transition-colors">
-                Orca
+                Orca Cli
               </div>
             </div>
           </Link>
@@ -139,7 +140,7 @@ const Home = () => {
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Deep Work.</span>
                 </h1>
                 <p className="max-w-xl text-pretty text-xl leading-relaxed text-neutral-400">
-                  Orca is an AI-powered CLI that intelligently groups your changes into semantic commits using Gemini.
+                  Orca is an AI-powered CLI that intelligently groups your changes into semantic commits using multiple AI models.
                   Automate git workflows, generate execution plans, and streamline your GitHub releases.
                 </p>
 
@@ -163,15 +164,7 @@ const Home = () => {
               </div>
 
               <div id="hero-image" className="relative group perspective-1000">
-                <div className="relative border-2 border-dashed border-white/20 p-1">
-                  <Image
-                    src="https://res.cloudinary.com/dq2z27agv/image/upload/q_auto,f_webp,w_1200/v1767370505/pejzaqh8mx1yc076ncoz.png"
-                    alt="Orca CLI Preview"
-                    width={1200}
-                    height={720}
-                    className="w-full h-auto shadow-2xl"
-                  />
-                </div>
+                <TerminalTypewriter />
               </div>
             </div>
 
@@ -227,7 +220,7 @@ const Home = () => {
                   <div className="space-y-4">
                     <span className="text-green-400">➜</span> <span className="text-cyan-400">~/projects/orca</span> <span className="text-neutral-400">git:(main)</span> orca commit
                     <div className="text-neutral-500 mt-2">== orca: commit ==</div>
-                    <div className="text-emerald-400">Gemini plan received</div>
+                    <div className="text-emerald-400">AI plan received</div>
 
                     <div className="underline decoration-neutral-700 underline-offset-4">Proposed plan</div>
 

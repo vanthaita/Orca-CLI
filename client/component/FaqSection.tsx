@@ -40,11 +40,11 @@ export const FaqSection = () => {
     const faqs = [
         {
             question: "Is my code safe?",
-            answer: "Yes. Orca only sends the diffs (changes) of your staged files to Gemini to generate commit messages. Your full codebase is never uploaded or stored persistently.",
+            answer: "Yes. Orca only sends the diffs (changes) of your staged files to the selected AI provider to generate commit messages. Your full codebase is never uploaded or stored persistently.",
         },
         {
-            question: "Do I need a Gemini API Key?",
-            answer: "Yes, you need a Google Gemini API key to use the AI features. You can set it via the GEMINI_API_KEY environment variable.",
+            question: "Do I need an API key?",
+            answer: "Yes. You’ll need an API key for the AI provider/model you choose. Configure it via environment variables (depending on the provider).",
         },
         {
             question: "Can I edit the commit messages before they are applied?",

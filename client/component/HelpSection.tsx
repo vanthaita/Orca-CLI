@@ -64,9 +64,9 @@ export const HelpSection = () => {
                 />
                 <CommandItem
                     command="orca commit"
-                    description="Analyze staged changes and generate semantic commit groups using Gemini."
+                    description="Analyze staged changes and generate semantic commit groups using multiple AI models."
                     args={[
-                        { arg: "--model", desc: "Specify Gemini model (default: gemini-2.5-flash)" },
+                        { arg: "--model", desc: "Specify AI model" },
                         { arg: "--dry-run", desc: "Preview plan without applying" },
                     ]}
                 />
