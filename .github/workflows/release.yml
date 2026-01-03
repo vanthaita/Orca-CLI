@@ -50,7 +50,7 @@ jobs:
 
   build-and-upload:
     name: Build & Upload (${{ matrix.target }})
-    needs: test
+    needs: [test, create-release]
     if: always() && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped')
     runs-on: ${{ matrix.os }}
     strategy:
