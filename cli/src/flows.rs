@@ -1,9 +1,8 @@
-use crate::gemini::generate_plan_with_gemini;
 use crate::git::{
     checkout_branch, current_branch, ensure_git_repo, github_repo_slug_from_remote, has_git_remote,
     origin_url, run_git, upstream_ahead_behind, upstream_ref,
 };
-use crate::plan::{apply_plan, files_from_status_porcelain, normalize_plan_files, print_plan_human, CommitPlan};
+use crate::plan::{apply_plan, files_from_status_porcelain, normalize_plan_files, print_plan_human, CommitPlan, PlannedCommit};
 use anyhow::{Context, Result};
 use console::style;
 use dialoguer::Confirm;
@@ -11,14 +10,111 @@ use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
 use std::path::PathBuf;
 use std::process::Command;
 
+pub(crate) async fn generate_plan(
+    model: &str,
+    status: &str,
+    diff: &str,
+    log: &str,
+) -> Result<CommitPlan> {
+    let provider = crate::ai::create_provider().await?;
+    let prompt = build_prompt(status, diff, log);
+    
+    // Default system prompt. You can customize this or make it configurable.
+    let system_prompt = "You are a senior software engineer. Your task is to propose a commit plan.";
+
+    let resp_text = provider.generate_content(model, system_prompt, &prompt).await?;
+    let json_text = extract_json(&resp_text).unwrap_or_else(|| resp_text.clone());
+
+    if let Ok(plan) = serde_json::from_str::<CommitPlan>(&json_text) {
+        return Ok(plan);
+    }
+
+    if let Ok(commits) = serde_json::from_str::<Vec<PlannedCommit>>(&json_text) {
+        return Ok(CommitPlan { commits });
+    }
+
+    anyhow::bail!(
+        "Failed to parse provider response as JSON. Raw response: {}",
+        resp_text
+    );
+}
+
+fn extract_json(input: &str) -> Option<String> {
+    let mut s = input.trim();
+
+    if s.starts_with("```") {
+        if let Some(idx) = s.find('\n') {
+            s = &s[idx + 1..];
+        } else {
+            return None;
+        }
+
+        if let Some(end) = s.rfind("```") {
+            s = &s[..end];
+        }
+        s = s.trim();
+    }
+
+    let start_obj = s.find('{');
+    let start_arr = s.find('[');
+    let start = match (start_obj, start_arr) {
+        (Some(o), Some(a)) => Some(o.min(a)),
+        (Some(o), None) => Some(o),
+        (None, Some(a)) => Some(a),
+        (None, None) => None,
+    }?;
+
+    let end_obj = s.rfind('}');
+    let end_arr = s.rfind(']');
+    let end = match (end_obj, end_arr) {
+        (Some(o), Some(a)) => Some(o.max(a)),
+        (Some(o), None) => Some(o),
+        (None, Some(a)) => Some(a),
+        (None, None) => None,
+    }?;
+
+    if end <= start {
+        return None;
+    }
+
+    Some(s[start..=end].trim().to_string())
+}
+
+fn build_prompt(status: &str, diff: &str, log: &str) -> String {
+    format!(
+    "Task: Propose a commit plan for the current git working tree.
+    Rules:
+    - Output ONLY valid JSON. No markdown. No commentary.
+    - JSON schema: {{\"commits\":[{{\"message\":string,\"files\":[string],\"commands\":[string]}}]}}
+    - Group files into logical commits by feature/responsibility.
+    - Commit messages should be concise, imperative, and conventional (e.g. feat:, fix:, refactor:, chore:).
+    - Each file path must exist in git status output.
+    - For each commit, commands must contain EXACTLY 2 commands in this order:
+      1) git add -- <files...>
+      2) git commit -m \"<message>\"
+
+    Context:
+    GIT_STATUS_PORCELAIN:
+{status}
+
+    GIT_DIFF:
+{diff}
+
+    RECENT_GIT_LOG (for style):
+{log}
+"
+    )
+}
+
 pub(crate) fn print_no_remote_guidance() {
+    // ... function content (unchanged, just ensuring context match)
     eprintln!(
         "\n{} {}",
         style("[!]").yellow().bold(),
         style("No git remote configured, so nothing to push yet.")
             .yellow()
     );
-    eprintln!(
+     eprintln!(
         "\n{}\n  - VS Code: Source Control -> Publish to GitHub (recommended)\n\n{}\n  1) Create a new repository on https://github.com/new\n  2) Add remote:\n     git remote add origin <repo-url>\n  3) Push first time:\n     git push -u origin <branch>",
         style("Option A (VS Code):").cyan().bold(),
         style("Option B (Git CLI):").cyan().bold(),
@@ -170,7 +266,7 @@ pub(crate) async fn run_commit_flow(confirm: bool, dry_run: bool, model: &str) -
     let changed_files = files_from_status_porcelain(&status);
 
     let pb = spinner("Asking Gemini to analyze changes and propose commit plan...");
-    let mut plan = generate_plan_with_gemini(model, &status, &diff, &log).await?;
+    let mut plan = generate_plan(model, &status, &diff, &log).await?;
     pb.finish_and_clear();
     eprintln!("{} {}", style("[✓]").green().bold(), style("Plan received from Gemini").green());
     normalize_plan_files(&mut plan, &changed_files);
@@ -293,6 +389,7 @@ pub(crate) async fn run_publish_current_flow(
 }
 
 pub(crate) async fn run_setup_flow(
+    provider: Option<String>,
     api_key: Option<String>,
     name: Option<String>,
     email: Option<String>,
@@ -305,16 +402,53 @@ pub(crate) async fn run_setup_flow(
     let scope_args: [&str; 1] = ["--global"];
     let use_global = !local;
 
-    // Handle API key configuration
+    // Load existing config or default
+    let mut config = crate::config::load_config().unwrap_or_default();
+    let mut config_changed = false;
+
+    // 1. Handle Provider Switch
+    if let Some(p) = provider {
+        let p_lower = p.to_lowercase();
+        // Validate provider
+        match p_lower.as_str() {
+            "gemini" | "openai" | "zai" | "deepseek" => {
+                config.api.provider = p_lower.clone();
+                config_changed = true;
+                println!(
+                    "  {} Set active provider to: {}",
+                    style("[✓]").green().bold(),
+                    style(&p_lower).cyan()
+                );
+            }
+            _ => {
+                anyhow::bail!("Unknown provider '{}'. Supported: gemini, openai, zai, deepseek", p);
+            }
+        }
+    }
+
+    // 2. Handle API Key
     if let Some(ref key) = api_key {
-        let mut config = crate::config::load_config().unwrap_or_default();
-        config.api.gemini_api_key = Some(key.clone());
-        crate::config::save_config(&config)?;
+        // Determine which provider to set key for.
+        // If --provider was passed, use that. Otherwise use the active provider.
+        let target_provider = config.api.provider.clone();
+
+        match target_provider.as_str() {
+            "openai" | "rest" => config.api.openai_api_key = Some(key.clone()),
+            "zai" => config.api.zai_api_key = Some(key.clone()),
+            "deepseek" => config.api.deepseek_api_key = Some(key.clone()),
+            "gemini" | _ => config.api.gemini_api_key = Some(key.clone()),
+        }
+        config_changed = true;
+
         println!(
-            "  {} {}",
+            "  {} API key for '{}' saved to config file",
             style("[✓]").green().bold(),
-            style("API key saved to config file").green()
+            style(&target_provider).cyan()
         );
+    }
+
+    if config_changed {
+        crate::config::save_config(&config)?;
     }
 
     // Handle git configuration
@@ -344,8 +478,8 @@ pub(crate) async fn run_setup_flow(
         );
     }
 
-    // Show config file location if API key was set
-    if api_key.is_some() {
+    // Show config file location if we touched config
+    if config_changed {
         if let Ok(config_path) = crate::config::config_file_path() {
             println!(
                 "\n{} {}",
@@ -462,7 +596,7 @@ pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<Path
 
     let changed_files = files_from_status_porcelain(&status);
     let pb = spinner("Asking Gemini to analyze changes and propose commit plan...");
-    let mut plan = generate_plan_with_gemini(model, &status, &diff, &log).await?;
+    let mut plan = generate_plan(model, &status, &diff, &log).await?;
     pb.finish_and_clear();
     eprintln!("{} {}", style("[✓]").green().bold(), style("Plan received from Gemini").green());
     normalize_plan_files(&mut plan, &changed_files);
@@ -643,6 +777,40 @@ pub(crate) async fn run_apply_flow(
 
 pub(crate) async fn run_doctor_flow() -> Result<()> {
     println!("{}", style("[orca doctor]").bold().cyan());
+    
+    // Check Config / Provider
+    let config = crate::config::load_config().unwrap_or_default();
+    let provider = config.api.provider.clone();
+    println!(
+        "{} Active Provider: {}",
+        style("[*]").blue().bold(),
+        style(&provider).cyan()
+    );
+
+    // Check API Key for active provider
+    if let Ok(key) = crate::config::get_api_key(&provider) {
+         if !key.trim().is_empty() {
+            println!(
+                "{} {} API Key set",
+                style("[✓]").green().bold(),
+                provider
+            );
+         } else {
+             println!(
+                "{} {} API Key is empty",
+                style("[!]").yellow().bold(),
+                provider
+            );
+         }
+    } else {
+        println!(
+            "{} {} API Key missing",
+            style("[!]").yellow().bold(),
+            provider
+        );
+    }
+
+
     if let Err(e) = ensure_git_repo() {
         println!(
             "{} {}",
@@ -652,19 +820,6 @@ pub(crate) async fn run_doctor_flow() -> Result<()> {
         return Ok(());
     }
     println!("{} {}", style("[✓]").green().bold(), style("Git repository detected").green());
-
-    match std::env::var("GEMINI_API_KEY") {
-        Ok(_) => println!(
-            "{} {}",
-            style("[✓]").green().bold(),
-            style("GEMINI_API_KEY is set").green()
-        ),
-        Err(_) => println!(
-            "{} {}",
-            style("[!]").yellow().bold(),
-            style("GEMINI_API_KEY is missing (export GEMINI_API_KEY=...)").yellow()
-        ),
-    }
 
     let status = run_git(&["status", "--porcelain"])?;
     if status.trim().is_empty() {

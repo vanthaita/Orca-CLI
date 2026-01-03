@@ -4,7 +4,7 @@ use clap::Parser;
 mod cli;
 mod config;
 mod flows;
-mod gemini;
+mod ai;
 mod git;
 mod plan;
 mod ui;
@@ -63,8 +63,8 @@ async fn run() -> Result<()> {
         } => {
             flows::run_apply_flow(&file, confirm, dry_run, false, true, branch.as_deref(), &base, pr).await?
         }
-        crate::cli::Commands::Setup { api_key, name, email, local } => {
-            flows::run_setup_flow(api_key, name, email, local).await?
+        crate::cli::Commands::Setup { provider, api_key, name, email, local } => {
+            flows::run_setup_flow(provider, api_key, name, email, local).await?
         }
         crate::cli::Commands::Doctor => flows::run_doctor_flow().await?,
     }

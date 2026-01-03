@@ -128,7 +128,11 @@ pub(crate) enum Commands {
 
     /// Setup local git identity and check required tools (gh)
     Setup {
-        /// Gemini API key to store in config file
+        /// Provider to configure or switch to (gemini, openai, zai, deepseek)
+        #[arg(long)]
+        provider: Option<String>,
+
+        /// API key for the provider
         #[arg(long)]
         api_key: Option<String>,
 

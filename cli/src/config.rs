@@ -12,9 +12,36 @@ pub(crate) struct OrcaConfig {
     pub(crate) git: GitConfig,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct ApiConfig {
+    /// Active provider: "gemini", "openai", "zai", "deepseek"
+    #[serde(default = "default_provider")]
+    pub(crate) provider: String,
+
+    /// Optional base URL for OpenAI-compatible endpoints
+    pub(crate) api_base_url: Option<String>,
+
     pub(crate) gemini_api_key: Option<String>,
+    pub(crate) openai_api_key: Option<String>,
+    pub(crate) zai_api_key: Option<String>,
+    pub(crate) deepseek_api_key: Option<String>,
+}
+
+impl Default for ApiConfig {
+    fn default() -> Self {
+        Self {
+            provider: default_provider(),
+            api_base_url: None,
+            gemini_api_key: None,
+            openai_api_key: None,
+            zai_api_key: None,
+            deepseek_api_key: None,
+        }
+    }
+}
+
+fn default_provider() -> String {
+    "gemini".to_string()
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -70,30 +97,49 @@ pub(crate) fn save_config(config: &OrcaConfig) -> Result<()> {
     Ok(())
 }
 
-/// Get the Gemini API key from config file or environment variable
-/// Priority: Environment variable -> Config file -> Error
-pub(crate) fn get_gemini_api_key() -> Result<String> {
-    // First, try environment variable (allows override)
-    if let Ok(key) = std::env::var("GEMINI_API_KEY") {
+/// Get the API key for the requested provider (or currently active one)
+pub(crate) fn get_api_key(provider: &str) -> Result<String> {
+    // 1. Check environment variable first (specific to provider)
+    let env_var_name = match provider {
+        "rest" | "openai" => "OPENAI_API_KEY",
+        "zai" => "ZAI_API_KEY",
+        "deepseek" => "DEEPSEEK_API_KEY",
+        "gemini" | _ => "GEMINI_API_KEY",
+    };
+
+    if let Ok(key) = std::env::var(env_var_name) {
         if !key.trim().is_empty() {
             return Ok(key);
         }
     }
-    
-    // Second, try config file
+
+    // 2. Check config file
     let config = load_config()?;
-    if let Some(key) = config.api.gemini_api_key {
-        if !key.trim().is_empty() {
-            return Ok(key);
+    let key = match provider {
+        "rest" | "openai" => config.api.openai_api_key,
+        "zai" => config.api.zai_api_key,
+        "deepseek" => config.api.deepseek_api_key,
+        "gemini" | _ => config.api.gemini_api_key,
+    };
+
+    if let Some(k) = key {
+        if !k.trim().is_empty() {
+            return Ok(k);
         }
     }
-    
-    // Neither found
+
     anyhow::bail!(
-        "GEMINI_API_KEY not found. Set it with:\n  \
-        1) orca setup --api-key YOUR_KEY (recommended)\n  \
-        2) export GEMINI_API_KEY=YOUR_KEY"
+        "API Key for '{}' not found. Set it via environment variable {} or `orca config`.",
+        provider,
+        env_var_name
     )
+}
+
+/// Get the active provider name from config
+pub(crate) fn get_provider() -> String {
+    load_config()
+        .map(|c| c.api.provider)
+        .unwrap_or_else(|_| "gemini".to_string())
 }
 
 #[cfg(test)]
@@ -105,6 +151,7 @@ mod tests {
         let config = OrcaConfig {
             api: ApiConfig {
                 gemini_api_key: Some("test-key".to_string()),
+                ..Default::default()
             },
             git: GitConfig {
                 default_model: Some("gemini-2.5-flash".to_string()),
