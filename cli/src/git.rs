@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use std::collections::HashSet;
+use std::path::PathBuf;
 use std::process::Command;
 
 pub(crate) fn ensure_git_repo() -> Result<()> {
@@ -13,8 +14,24 @@ pub(crate) fn ensure_git_repo() -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn run_git(args: &[&str]) -> Result<String> {
+pub(crate) fn get_repo_root() -> Result<PathBuf> {
     let out = Command::new("git")
+        .args(["rev-parse", "--show-toplevel"])
+        .output()
+        .context("Failed to run git rev-parse --show-toplevel")?;
+    
+    if !out.status.success() {
+        anyhow::bail!("Failed to get git repository root");
+    }
+    
+    let path_str = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    Ok(PathBuf::from(path_str))
+}
+
+pub(crate) fn run_git(args: &[&str]) -> Result<String> {
+    let repo_root = get_repo_root()?;
+    let out = Command::new("git")
+        .current_dir(&repo_root)
         .args(args)
         .output()
         .with_context(|| format!("Failed to run git {}", args.join(" ")))?;
@@ -52,7 +69,9 @@ pub(crate) fn run_git(args: &[&str]) -> Result<String> {
 pub(crate) fn run_git_with_input(args: &[&str], input: &str) -> Result<String> {
     use std::io::Write;
 
+    let repo_root = get_repo_root()?;
     let mut child = Command::new("git")
+        .current_dir(&repo_root)
         .args(args)
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
