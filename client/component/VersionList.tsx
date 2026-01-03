@@ -21,7 +21,7 @@ export const VersionList = ({ releases, className = "" }: VersionListProps) => {
     if (!releases || releases.length === 0) return null;
 
     return (
-        <div className={`w-full overflow-hidden rounded-xl border border-white/10 bg-white/5 ${className}`}>
+        <div className={`w-full overflow-hidden rounded-xl border-2 border-dashed border-white/10 bg-white/5 ${className}`}>
             <div className="border-b border-white/10 px-6 py-4 bg-white/5">
                 <h3 className="font-bold text-neutral-200">Recent Releases</h3>
             </div>
