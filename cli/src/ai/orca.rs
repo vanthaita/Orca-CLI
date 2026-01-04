@@ -22,7 +22,11 @@ impl CompletionProvider for OrcaProvider {
         system_prompt: &str,
         user_prompt: &str,
     ) -> Result<String> {
-        let url = format!("{}/ai/chat", self.base_url.trim_end_matches('/'));
+        let url = format!(
+            "{}/{}/ai/chat",
+            self.base_url.trim_end_matches('/'),
+            crate::config::ORCA_API_PREFIX
+        );
 
         let body = OrcaChatRequest {
             provider: None,
