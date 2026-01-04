@@ -149,7 +149,14 @@ pub(crate) enum Commands {
         local: bool,
     },
 
-    /// Check environment (git repo, changes, GEMINI_API_KEY)
+    /// Login via browser to obtain a CLI token (remote Orca server mode)
+    Login {
+        /// Orca server base URL (e.g. http://localhost:8000)
+        #[arg(long)]
+        server: Option<String>,
+    },
+
+    /// Check environment (git repo, working tree, API key)
     Doctor,
 }
 

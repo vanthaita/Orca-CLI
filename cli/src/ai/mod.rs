@@ -1,9 +1,10 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use crate::config::{get_api_key, get_provider};
+use crate::config::{get_api_key, get_orca_base_url, get_orca_token, get_provider};
 
 pub(crate) mod gemini;
 pub(crate) mod openai;
+pub(crate) mod orca;
 
 #[async_trait]
 pub(crate) trait CompletionProvider {
@@ -20,6 +21,11 @@ pub(crate) async fn create_provider() -> Result<Box<dyn CompletionProvider + Sen
     let provider_name = provider_name.as_str();
 
     match provider_name {
+        "orca" => {
+            let base_url = get_orca_base_url()?;
+            let token = get_orca_token()?;
+            Ok(Box::new(orca::OrcaProvider::new(base_url, token)))
+        }
         "gemini" => {
             let api_key = get_api_key("gemini")?;
             Ok(Box::new(gemini::GeminiProvider::new(api_key)))

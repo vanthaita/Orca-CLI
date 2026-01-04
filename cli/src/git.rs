@@ -1,7 +1,34 @@
 use anyhow::{Context, Result};
 use std::collections::HashSet;
 use std::path::PathBuf;
-use std::process::Command;
+use std::process::{Command, Output};
+
+fn git_failed_error(args: &[&str], out: &Output) -> anyhow::Error {
+    let code = out
+        .status
+        .code()
+        .map(|c| c.to_string())
+        .unwrap_or("<signal>".to_string());
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let stderr_t = stderr.trim();
+    let stdout_t = stdout.trim();
+
+    let details = if !stderr_t.is_empty() {
+        stderr_t.to_string()
+    } else if !stdout_t.is_empty() {
+        stdout_t.to_string()
+    } else {
+        "<no output from git>".to_string()
+    };
+
+    anyhow::anyhow!(
+        "git {} failed (exit code {}): {}",
+        args.join(" "),
+        code,
+        details
+    )
+}
 
 pub(crate) fn ensure_git_repo() -> Result<()> {
     let out = Command::new("git")
@@ -37,30 +64,7 @@ pub(crate) fn run_git(args: &[&str]) -> Result<String> {
         .with_context(|| format!("Failed to run git {}", args.join(" ")))?;
 
     if !out.status.success() {
-        let code = out
-            .status
-            .code()
-            .map(|c| c.to_string())
-            .unwrap_or("<signal>".to_string());
-        let stderr = String::from_utf8_lossy(&out.stderr);
-        let stdout = String::from_utf8_lossy(&out.stdout);
-        let stderr_t = stderr.trim();
-        let stdout_t = stdout.trim();
-
-        let details = if !stderr_t.is_empty() {
-            stderr_t.to_string()
-        } else if !stdout_t.is_empty() {
-            stdout_t.to_string()
-        } else {
-            "<no output from git>".to_string()
-        };
-
-        anyhow::bail!(
-            "git {} failed (exit code {}): {}",
-            args.join(" "),
-            code,
-            details
-        );
+        return Err(git_failed_error(args, &out));
     }
 
     Ok(String::from_utf8_lossy(&out.stdout).to_string())
@@ -90,30 +94,7 @@ pub(crate) fn run_git_with_input(args: &[&str], input: &str) -> Result<String> {
         .with_context(|| format!("Failed to wait for git {}", args.join(" ")))?;
 
     if !out.status.success() {
-        let code = out
-            .status
-            .code()
-            .map(|c| c.to_string())
-            .unwrap_or("<signal>".to_string());
-        let stderr = String::from_utf8_lossy(&out.stderr);
-        let stdout = String::from_utf8_lossy(&out.stdout);
-        let stderr_t = stderr.trim();
-        let stdout_t = stdout.trim();
-
-        let details = if !stderr_t.is_empty() {
-            stderr_t.to_string()
-        } else if !stdout_t.is_empty() {
-            stdout_t.to_string()
-        } else {
-            "<no output from git>".to_string()
-        };
-
-        anyhow::bail!(
-            "git {} failed (exit code {}): {}",
-            args.join(" "),
-            code,
-            details
-        );
+        return Err(git_failed_error(args, &out));
     }
 
     Ok(String::from_utf8_lossy(&out.stdout).to_string())

@@ -95,6 +95,8 @@ jobs:
 
       - name: Build
         working-directory: cli
+        env:
+          ORCA_DEFAULT_API_BASE_URL: ${{ vars.ORCA_DEFAULT_API_BASE_URL }}
         run: cargo build --release --locked --target ${{ matrix.target }}
 
       - name: Package (tar.gz)

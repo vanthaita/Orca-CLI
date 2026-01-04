@@ -1,0 +1,54 @@
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+
+@Entity({ name: 'users' })
+export class User {
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
+
+  @Index({ unique: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  email!: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  name!: string | null;
+
+  @Column({ type: 'varchar', length: 2048, nullable: true })
+  picture!: string | null;
+
+  @Index({ unique: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  googleId!: string | null;
+
+  @Index()
+  @Column({ type: 'text', nullable: true })
+  projectRefreshTokenHash!: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  projectRefreshTokenExpiresAt!: Date | null;
+
+  @Index()
+  @Column({ type: 'varchar', length: 32, default: 'free' })
+  plan!: string;
+
+  @Column({ type: 'int', nullable: true })
+  dailyRequestLimit!: number | null;
+
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  byokProvider!: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  byokApiKey!: string | null;
+
+  @CreateDateColumn({ type: 'timestamptz' })
+  createdAt!: Date;
+
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updatedAt!: Date;
+}
