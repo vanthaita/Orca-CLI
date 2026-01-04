@@ -1,12 +1,26 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 
 import { useCliVerify } from '@/hook/useCliVerify';
 import { useMe } from '@/hook/useMe';
 
 export default function CliVerifyPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center p-6">
+          <div className="animate-pulse text-neutral-400 font-mono">Loading...</div>
+        </div>
+      }
+    >
+      <CliVerifyInner />
+    </Suspense>
+  );
+}
+
+function CliVerifyInner() {
   const searchParams = useSearchParams();
   const me = useMe();
   const verify = useCliVerify();

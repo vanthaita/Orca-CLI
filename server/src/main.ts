@@ -29,12 +29,21 @@ async function bootstrap() {
   app.setGlobalPrefix(apiPrefix);
 
   const corsOriginEnv = process.env.CORS_ORIGIN;
-  const corsOrigins = corsOriginEnv
-    ? corsOriginEnv
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
-    : ['http://localhost:3000', 'http://127.0.0.1:3000']; // Default to localhost:3000 if not set
+  const frontendUrlEnv = process.env.ORCA_FRONTEND_URL;
+
+  const corsOrigins = [
+    ...(corsOriginEnv
+      ? corsOriginEnv
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : ['http://localhost:3000', 'http://127.0.0.1:3000']),
+    ...(frontendUrlEnv ? [frontendUrlEnv.trim()] : []),
+  ]
+    .map((s) => s.replace(/\/+$/, ''))
+    .filter(Boolean);
+
+  const allowAnyOrigin = corsOrigins.includes('*');
 
   console.log('CORS Origins:', corsOrigins);
 
@@ -63,7 +72,18 @@ async function bootstrap() {
 
   if (corsOrigins) {
     app.enableCors({
-      origin: corsOrigins,
+      origin: (origin, callback) => {
+        if (!origin) {
+          return callback(null, true);
+        }
+
+        const normalizedOrigin = origin.replace(/\/+$/, '');
+        if (allowAnyOrigin || corsOrigins.includes(normalizedOrigin)) {
+          return callback(null, true);
+        }
+
+        return callback(new Error(`Not allowed by CORS: ${origin}`), false);
+      },
       credentials: corsCredentials,
       methods: corsMethods,
       exposedHeaders: corsExposedHeaders,

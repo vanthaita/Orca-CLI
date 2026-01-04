@@ -1,12 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { ORCA_API_BASE_URL } from '@/config/env';
 
-export default function LoginPage() {
+function LoginContent() {
   const { isAuthenticated, isLoading } = useAuth();
   const searchParams = useSearchParams();
   const next = searchParams.get('next');
@@ -31,9 +31,6 @@ export default function LoginPage() {
 
   // Handle Google Login Click to save state
   const handleGoogleLogin = () => {
-    // If we have a next URL or userCode, save it to localStorage to restore after callback
-    // Note: This requires logic on the landing page (dashboard) to check this.
-    // For now, at least we fix the direct link case if already logged in.
     if (next) {
       localStorage.setItem('auth_redirect', next);
     } else if (userCode) {
@@ -98,3 +95,16 @@ export default function LoginPage() {
     </div>
   );
 }
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="animate-pulse text-emerald-400 font-mono">Loading...</div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
+  );
+}
+
