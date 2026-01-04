@@ -2,6 +2,9 @@
   "name": "Rust Docker Dev v1",
   "image": "rust:latest",
   "workspaceFolder": "/workspace",
+  "runArgs": [
+    "--add-host=host.docker.internal:host-gateway"
+  ],
   "mounts": [
     "source=${localWorkspaceFolder},target=/workspace,type=bind"
   ],

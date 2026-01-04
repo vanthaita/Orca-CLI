@@ -3,6 +3,11 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+const DEFAULT_ORCA_BASE_URL: &str = match option_env!("ORCA_DEFAULT_API_BASE_URL") {
+    Some(v) => v,
+    None => "http://localhost:8000",
+};
+
 /// Orca CLI configuration structure
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub(crate) struct OrcaConfig {
@@ -21,6 +26,12 @@ pub(crate) struct ApiConfig {
     /// Optional base URL for OpenAI-compatible endpoints
     pub(crate) api_base_url: Option<String>,
 
+    /// Orca server base URL (when provider = "orca")
+    pub(crate) orca_base_url: Option<String>,
+
+    /// Orca server token (when provider = "orca")
+    pub(crate) orca_token: Option<String>,
+
     pub(crate) gemini_api_key: Option<String>,
     pub(crate) openai_api_key: Option<String>,
     pub(crate) zai_api_key: Option<String>,
@@ -32,6 +43,8 @@ impl Default for ApiConfig {
         Self {
             provider: default_provider(),
             api_base_url: None,
+            orca_base_url: Some(DEFAULT_ORCA_BASE_URL.to_string()),
+            orca_token: None,
             gemini_api_key: None,
             openai_api_key: None,
             zai_api_key: None,
@@ -97,15 +110,28 @@ pub(crate) fn save_config(config: &OrcaConfig) -> Result<()> {
     Ok(())
 }
 
-/// Get the API key for the requested provider (or currently active one)
-pub(crate) fn get_api_key(provider: &str) -> Result<String> {
-    // 1. Check environment variable first (specific to provider)
-    let env_var_name = match provider {
+fn env_var_name_for_provider(provider: &str) -> &'static str {
+    match provider {
         "rest" | "openai" => "OPENAI_API_KEY",
         "zai" => "ZAI_API_KEY",
         "deepseek" => "DEEPSEEK_API_KEY",
         "gemini" | _ => "GEMINI_API_KEY",
-    };
+    }
+}
+
+fn config_key_for_provider(config: OrcaConfig, provider: &str) -> Option<String> {
+    match provider {
+        "rest" | "openai" => config.api.openai_api_key,
+        "zai" => config.api.zai_api_key,
+        "deepseek" => config.api.deepseek_api_key,
+        "gemini" | _ => config.api.gemini_api_key,
+    }
+}
+
+/// Get the API key for the requested provider (or currently active one)
+pub(crate) fn get_api_key(provider: &str) -> Result<String> {
+    // 1. Check environment variable first (specific to provider)
+    let env_var_name = env_var_name_for_provider(provider);
 
     if let Ok(key) = std::env::var(env_var_name) {
         if !key.trim().is_empty() {
@@ -115,12 +141,7 @@ pub(crate) fn get_api_key(provider: &str) -> Result<String> {
 
     // 2. Check config file
     let config = load_config()?;
-    let key = match provider {
-        "rest" | "openai" => config.api.openai_api_key,
-        "zai" => config.api.zai_api_key,
-        "deepseek" => config.api.deepseek_api_key,
-        "gemini" | _ => config.api.gemini_api_key,
-    };
+    let key = config_key_for_provider(config, provider);
 
     if let Some(k) = key {
         if !k.trim().is_empty() {
@@ -129,7 +150,7 @@ pub(crate) fn get_api_key(provider: &str) -> Result<String> {
     }
 
     anyhow::bail!(
-        "API Key for '{}' not found. Set it via environment variable {} or `orca config`.",
+        "API Key for '{}' not found. Set it via environment variable {} or `orca setup --api-key <KEY>`",
         provider,
         env_var_name
     )
@@ -140,6 +161,42 @@ pub(crate) fn get_provider() -> String {
     load_config()
         .map(|c| c.api.provider)
         .unwrap_or_else(|_| "gemini".to_string())
+}
+
+pub(crate) fn get_orca_base_url() -> Result<String> {
+    if let Ok(v) = std::env::var("ORCA_API_BASE_URL") {
+        if !v.trim().is_empty() {
+            return Ok(v);
+        }
+    }
+
+    let config = load_config()?;
+    if let Some(v) = config.api.orca_base_url {
+        if !v.trim().is_empty() {
+            return Ok(v);
+        }
+    }
+
+    Ok(DEFAULT_ORCA_BASE_URL.to_string())
+}
+
+pub(crate) fn get_orca_token() -> Result<String> {
+    if let Ok(v) = std::env::var("ORCA_API_TOKEN") {
+        if !v.trim().is_empty() {
+            return Ok(v);
+        }
+    }
+
+    let config = load_config()?;
+    if let Some(v) = config.api.orca_token {
+        if !v.trim().is_empty() {
+            return Ok(v);
+        }
+    }
+
+    anyhow::bail!(
+        "Orca server token not found. Set ORCA_API_TOKEN or run `orca setup --provider orca --api-key <TOKEN>`"
+    )
 }
 
 #[cfg(test)]
