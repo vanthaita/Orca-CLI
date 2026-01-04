@@ -57,33 +57,41 @@ pub(crate) fn files_from_status_porcelain(status: &str) -> Vec<String> {
 
 pub(crate) fn normalize_plan_files(plan: &mut CommitPlan, changed_files: &[String]) {
     for c in &mut plan.commits {
-        let mut normalized: Vec<String> = Vec::new();
-        for f in &c.files {
-            let f = f.trim();
+        let mut normalized: Vec<String> = Vec::with_capacity(c.files.len());
+        for raw in &c.files {
+            let f = raw.trim();
             if f.is_empty() {
                 continue;
             }
 
-            if f.ends_with('/') {
-                let prefix = f;
-                for cf in changed_files {
-                    if cf.starts_with(prefix) {
-                        normalized.push(cf.clone());
-                    }
-                }
+            if let Some(prefix) = f.strip_suffix('/') {
+                // Preserve original behavior: directory expansion matches "prefix/".
+                let prefix = format!("{prefix}/");
+                normalized.extend(
+                    changed_files
+                        .iter()
+                        .filter(|cf| cf.starts_with(&prefix))
+                        .cloned(),
+                );
                 continue;
             }
 
-            normalized.push(f.to_string());
+            // Avoid allocating if already trimmed without changes.
+            if raw.len() == f.len() {
+                normalized.push(raw.clone());
+            } else {
+                normalized.push(f.to_string());
+            }
         }
         normalized.sort();
         normalized.dedup();
         c.files = normalized;
 
         if c.commands.is_empty() {
+            let msg = c.message.replace('"', "\\\"");
             c.commands = vec![
                 format!("git add -- {}", c.files.join(" ")),
-                format!("git commit -m \"{}\"", c.message.replace('"', "\\\"")),
+                format!("git commit -m \"{}\"", msg),
             ];
         }
     }
