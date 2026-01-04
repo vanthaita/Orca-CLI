@@ -13,13 +13,13 @@ import { AiUsageDaily } from './modules/ai/entities/ai-usage-daily.entity';
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST ?? 'localhost',
-      port: Number(process.env.DB_PORT ?? 5432),
-      username: process.env.DB_USER ?? 'postgres',
-      password: process.env.DB_PASSWORD ?? 'postgres',
-      database: process.env.DB_NAME ?? 'orca',
+      host: process.env.DB_HOST!,
+      port: Number(process.env.DB_PORT!),
+      username: process.env.DB_USER!,
+      password: process.env.DB_PASSWORD!,
+      database: process.env.DB_NAME!,
       entities: [User, CliDeviceCode, CliToken, AiUsageDaily],
-      synchronize: (process.env.TYPEORM_SYNC ?? 'true') === 'true',
+      synchronize: process.env.TYPEORM_SYNC === 'true',
     }),
     AuthModule,
     AiModule,
@@ -27,4 +27,4 @@ import { AiUsageDaily } from './modules/ai/entities/ai-usage-daily.entity';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
