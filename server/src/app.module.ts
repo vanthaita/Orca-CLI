@@ -9,6 +9,12 @@ import { CliToken } from './modules/auth/entities/cli-token.entity';
 import { User } from './modules/auth/entities/user.entity';
 import { AiUsageDaily } from './modules/ai/entities/ai-usage-daily.entity';
 
+ const isProduction = process.env.NODE_ENV === 'production';
+ const shouldSynchronize =
+   process.env.TYPEORM_SYNC != null
+     ? process.env.TYPEORM_SYNC === 'true'
+     : !isProduction;
+
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -19,7 +25,7 @@ import { AiUsageDaily } from './modules/ai/entities/ai-usage-daily.entity';
       password: process.env.DB_PASSWORD!,
       database: process.env.DB_NAME!,
       entities: [User, CliDeviceCode, CliToken, AiUsageDaily],
-      synchronize: process.env.TYPEORM_SYNC === 'true',
+      synchronize: shouldSynchronize,
     }),
     AuthModule,
     AiModule,
