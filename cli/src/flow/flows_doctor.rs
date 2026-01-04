@@ -25,7 +25,11 @@ pub(crate) async fn run_doctor_flow() -> Result<()> {
         // Check if root endpoint is reachable (assuming API Global Prefix might be set)
         // If API_PREFIX is api/v1, then localhost:3000/api/v1/ should return something (e.g. hello)
         // If not, it might return 404, but connection should succeed.
-        let check_url = format!("{}/api/v1", base_url.trim_end_matches('/')); 
+        let check_url = format!(
+            "{}/{}",
+            base_url.trim_end_matches('/'),
+            crate::config::ORCA_API_PREFIX
+        ); 
 
         match client.get(&check_url).send().await {
             Ok(resp) => {
