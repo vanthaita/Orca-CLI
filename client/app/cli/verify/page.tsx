@@ -41,22 +41,51 @@ function CliVerifyInner() {
   }, [userCodeFromQuery, userCode]);
 
   useEffect(() => {
-    if (didAutoApprove.current) return;
-    if (me.isLoading) return;
-    if (me.isError) return;
-    if (!me.data?.user) return;
+    console.log('[CliVerify] Auto-approve check:', {
+      didAutoApprove: didAutoApprove.current,
+      isLoading: me.isLoading,
+      isError: me.isError,
+      hasUser: !!me.data?.user,
+      userCodeFromQuery,
+      userCode,
+      isPending: verify.isPending,
+      isSuccess: verify.isSuccess,
+    });
+
+    if (didAutoApprove.current) {
+      console.log('[CliVerify] Already approved, skipping');
+      return;
+    }
+    if (me.isLoading) {
+      console.log('[CliVerify] Still loading user data, waiting...');
+      return;
+    }
+    if (me.isError) {
+      console.log('[CliVerify] Error loading user, skipping');
+      return;
+    }
+    if (!me.data?.user) {
+      console.log('[CliVerify] No user data, skipping');
+      return;
+    }
 
     const codeToApprove = (userCodeFromQuery || userCode).trim();
-    if (!codeToApprove) return;
-    if (verify.isPending || verify.isSuccess) return;
+    if (!codeToApprove) {
+      console.log('[CliVerify] No user code to approve');
+      return;
+    }
+    if (verify.isPending || verify.isSuccess) {
+      console.log('[CliVerify] Verify already in progress or completed');
+      return;
+    }
 
+    console.log('[CliVerify] ✅ All conditions met, triggering verify.mutate with code:', codeToApprove);
     didAutoApprove.current = true;
     verify.mutate(codeToApprove);
-  }, [me.isLoading, me.isError, me.data, userCodeFromQuery, userCode, verify]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me.isLoading, me.isError, me.data?.user, userCodeFromQuery, userCode, verify.isPending, verify.isSuccess]);
 
   useEffect(() => {
-    // If we finished loading checking me headers, and we are not logged in, we need to redirect to login
-    // But if there was an error (e.g. network/CORS), we should show that instead of redirecting loop
     if (!me.isLoading && !me.isError && !me.data?.user) {
       const codeForRedirect = userCodeFromQuery || userCode;
       if (!codeForRedirect) return;
