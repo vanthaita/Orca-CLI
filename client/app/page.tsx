@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/lib/auth";
 
 import {
   BookIcon,
@@ -27,6 +28,7 @@ import {
 } from "@/component";
 
 const Home = () => {
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const repo = "vanthaita/orca-releases"; // Target the public releases repo
   const repoUrl = useMemo(() => `https://github.com/${repo}`, [repo]);
   const issuesUrl = useMemo(() => `https://github.com/vanthaita/Orca/issues`, []); // Keep issues on main repo
@@ -132,16 +134,18 @@ const Home = () => {
               <HelpIcon className="h-4 w-4" />
               FAQ
             </Link>
-            <Link
-              className="inline-flex items-center gap-2 border-2 border-dashed border-emerald-500/50 bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-400 transition-all hover:bg-emerald-500/20 hover:border-emerald-500"
-              href="/login"
-              style={{ clipPath: "polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)" }}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-              </svg>
-              Login
-            </Link>
+            {!isAuthLoading && (
+              <Link
+                className="inline-flex items-center gap-2 border-2 border-dashed border-emerald-500/50 bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-400 transition-all hover:bg-emerald-500/20 hover:border-emerald-500"
+                href={isAuthenticated ? "/dashboard" : "/login"}
+                style={{ clipPath: "polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)" }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+                {isAuthenticated ? "Dashboard" : "Login"}
+              </Link>
+            )}
           </nav>
         </header>
 
