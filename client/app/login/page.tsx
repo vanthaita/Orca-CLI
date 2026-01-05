@@ -1,15 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useMemo, useEffect, Suspense, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { AuthService } from '@/service/auth.service';
 
 function LoginContent() {
   const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const userCode = searchParams.get('userCode');
+  const didRedirect = useRef(false);
 
   const googleLoginUrl = useMemo(() => {
     // keep in sync with axios baseURL
@@ -19,14 +21,16 @@ function LoginContent() {
 
   // Redirect to dashboard or next url if already logged in
   useEffect(() => {
+    if (didRedirect.current) return;
     if (!isLoading && isAuthenticated) {
+      didRedirect.current = true;
       if (userCode) {
-        window.location.href = `/cli/verify?userCode=${userCode}`;
+        router.replace(`/cli/verify?userCode=${encodeURIComponent(userCode)}`);
       } else {
-        window.location.href = '/dashboard';
+        router.replace('/dashboard');
       }
     }
-  }, [isAuthenticated, isLoading, userCode]);
+  }, [isAuthenticated, isLoading, userCode, router]);
 
   // Show loading while checking auth
   if (isLoading) {
