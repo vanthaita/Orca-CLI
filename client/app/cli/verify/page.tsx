@@ -1,6 +1,6 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useCliVerify } from '@/hook/useCliVerify';
@@ -24,6 +24,7 @@ const CliVerifyInner = () => {
   const searchParams = useSearchParams();
   const me = useMe();
   const verify = useCliVerify();
+  const router = useRouter(); // Import useRouter from next/navigation
 
   const didAutoApprove = useRef(false);
 
@@ -34,84 +35,69 @@ const CliVerifyInner = () => {
 
   const [userCode, setUserCode] = useState(userCodeFromQuery);
 
+  // Sync state if query param changes late
   useEffect(() => {
     if (userCodeFromQuery && userCodeFromQuery !== userCode) {
       setUserCode(userCodeFromQuery);
     }
   }, [userCodeFromQuery, userCode]);
 
+  // Auto-approve logic
   useEffect(() => {
-    console.log('[CliVerify] Auto-approve check:', {
-      didAutoApprove: didAutoApprove.current,
-      isLoading: me.isLoading,
-      isError: me.isError,
-      hasUser: !!me.data?.user,
-      userCodeFromQuery,
-      userCode,
-      isPending: verify.isPending,
-      isSuccess: verify.isSuccess,
-    });
+    // If we already tried to auto-approve, don't try again automatically to avoid loops
+    if (didAutoApprove.current) return;
 
-    if (didAutoApprove.current) {
-      console.log('[CliVerify] Already approved, skipping');
-      return;
-    }
-    if (me.isLoading) {
-      console.log('[CliVerify] Still loading user data, waiting...');
-      return;
-    }
-    if (me.isError) {
-      console.log('[CliVerify] Error loading user, skipping');
-      return;
-    }
-    if (!me.data?.user) {
-      console.log('[CliVerify] No user data, skipping');
-      return;
-    }
+    // Conditions to attempt auto-approve:
+    // 1. We have a user (logged in)
+    // 2. We have a user code
+    // 3. We are not already verifying
+    // 4. We haven't succeeded yet
+    // 5. We are not loading user data
+    const canAutoApprove =
+      me.data?.user &&
+      !me.isLoading &&
+      userCodeFromQuery &&
+      !verify.isPending &&
+      !verify.isSuccess &&
+      !verify.isError;
 
-    const codeToApprove = (userCodeFromQuery || userCode).trim();
-    if (!codeToApprove) {
-      console.log('[CliVerify] No user code to approve');
-      return;
+    if (canAutoApprove) {
+      console.log('[CliVerify] Auto-approving code:', userCodeFromQuery);
+      didAutoApprove.current = true;
+      verify.mutate(userCodeFromQuery);
     }
-    if (verify.isPending || verify.isSuccess) {
-      console.log('[CliVerify] Verify already in progress or completed');
-      return;
-    }
+  }, [me.data?.user, me.isLoading, userCodeFromQuery, verify.isPending, verify.isSuccess, verify.isError, verify]);
 
-    console.log('[CliVerify] ✅ All conditions met, triggering verify.mutate with code:', codeToApprove);
-    didAutoApprove.current = true;
-    verify.mutate(codeToApprove);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [me.isLoading, me.isError, me.data?.user, userCodeFromQuery, userCode, verify.isPending, verify.isSuccess]);
-
+  // Redirect if not logged in logic - handled by UI button instead for better UX, 
+  // but we can auto-redirect if we have the code and definitely no user.
   useEffect(() => {
-    console.log('[CliVerify] Auth check:', {
-      isLoading: me.isLoading,
-      isError: me.isError,
-      hasUser: !!me.data?.user,
-      userData: me.data,
-      userCodeFromQuery
-    });
-
-    if (!me.isLoading && !me.isError && !me.data?.user) {
-      const codeForRedirect = userCodeFromQuery || userCode;
-      if (!codeForRedirect) return;
-      const redirectUrl = `/login?userCode=${encodeURIComponent(codeForRedirect)}`;
-      console.log('[CliVerify] WOULD Redirect to:', redirectUrl);
-      window.location.href = redirectUrl;
+    if (!me.isLoading && !me.data?.user && userCodeFromQuery) {
+      // Optional: Could auto-redirect here, but showing UI is often safer to avoid loops.
+      // leaving it as manual action or "Redirecting..." UI for now to be safe.
     }
-  }, [me.isLoading, me.data, userCode, userCodeFromQuery, me.isError]);
+  }, [me.isLoading, me.data, userCodeFromQuery]);
+
+  const handleLoginRedirect = () => {
+    const code = userCodeFromQuery || userCode;
+    const returnUrl = `/cli/verify?userCode=${encodeURIComponent(code)}`;
+    // Use the auth service helper? Or just direct link. 
+    // Usually standard login link wraps this.
+    // For now, let's just go to /login passing userCode so it can redirect back.
+    router.push(`/login?userCode=${encodeURIComponent(code)}`);
+  };
 
   const statusText = useMemo(() => {
     if (me.isLoading) return 'Checking authentication...';
-    if (!me.data?.user) return 'Redirecting to login...';
+    if (!me.data?.user) return 'Sign in required to approve CLI login.';
 
-    if (verify.isPending) return 'Verifying...';
-    if (verify.isSuccess) return 'Approved! You can close this tab and return to your terminal.';
+    if (verify.isPending) return 'Verifying code...';
+    if (verify.isSuccess) return 'Approved! You can close this tab.';
     if (verify.isError) return 'Verification failed.';
-    return '';
-  }, [verify.isPending, verify.isSuccess, verify.isError, me.isLoading, me.data]);
+
+    if (!userCode.trim()) return 'Please enter the code displayed in your terminal.';
+
+    return 'Ready to approve.';
+  }, [verify.isPending, verify.isSuccess, verify.isError, me.isLoading, me.data, userCode]);
 
   if (me.isError) {
     return (
@@ -120,8 +106,6 @@ const CliVerifyInner = () => {
           <div className="text-red-500 font-semibold mb-2">Connection Error</div>
           <div className="text-sm text-neutral-600 mb-4">
             Could not connect to the authentication server.
-            <br />
-            Backend URL: {process.env.NEXT_PUBLIC_ORCA_API_BASE_URL || 'http://localhost:8000'}
           </div>
           <button
             onClick={() => window.location.reload()}
@@ -134,68 +118,83 @@ const CliVerifyInner = () => {
     );
   }
 
-  if (me.isLoading || !me.data?.user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="animate-pulse text-neutral-400 font-mono">
-          {me.isLoading ? 'Checking authentication...' : 'Redirecting to login...'}
-          <div className="text-xs mt-2 text-neutral-600">
-            User: {JSON.stringify(me.data?.user)} <br />
-            Error: {me.isError ? 'Yes' : 'No'} <br />
-            Loading: {me.isLoading ? 'Yes' : 'No'}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-md rounded-xl border border-neutral-200 p-6">
-        {verify.isSuccess ? (
-          <div className="text-center py-4">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-              <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-neutral-50">
+      <div className="w-full max-w-md rounded-xl border border-neutral-200 bg-white p-8 shadow-sm">
+
+        {/* Header Icon */}
+        <div className="flex justify-center mb-6">
+          <div className={`h-16 w-16 rounded-full flex items-center justify-center ${verify.isSuccess ? 'bg-green-100 text-green-600' : 'bg-neutral-100 text-neutral-600'
+            }`}>
+            {verify.isSuccess ? (
+              <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-            </div>
-            <h2 className="text-xl font-semibold text-neutral-900">Successfully Approved!</h2>
-            <p className="mt-2 text-sm text-neutral-600">
-              You can now safely close this tab and return to your terminal.
-            </p>
+            ) : (
+              <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+              </svg>
+            )}
+          </div>
+        </div>
+
+        <h1 className="text-2xl font-bold text-center text-neutral-900 mb-2">
+          {verify.isSuccess ? 'Login Approved' : 'CLI Login Request'}
+        </h1>
+
+        <p className="text-center text-sm text-neutral-500 mb-8">
+          {statusText}
+        </p>
+
+        {verify.isSuccess ? (
+          <div className="bg-green-50 text-green-800 text-sm rounded-lg p-4 text-center">
+            You have successfully logged in to the CLI. You can now close this window.
           </div>
         ) : (
-          <>
-            <h1 className="text-2xl font-semibold">Approve CLI Login</h1>
+          <div className="space-y-4">
+            {me.data?.user ? (
+              <div className="bg-neutral-50 rounded-lg p-3 text-sm text-center border border-neutral-100">
+                Signed in as <span className="font-semibold">{me.data.user.email}</span>
+              </div>
+            ) : (
+              <button
+                onClick={handleLoginRedirect}
+                className="w-full py-3 px-4 bg-black text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
+              >
+                Sign in to Approve
+              </button>
+            )}
 
-            <div className="mt-2 text-sm text-neutral-600">
-              Signed in as: <span className="font-medium">{me.data?.user?.email ?? '...'}</span>
+            <div className="relative">
+              <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">
+                Confirmation Code
+              </label>
+              <input
+                value={userCode}
+                onChange={(e) => setUserCode(e.target.value.toUpperCase())}
+                placeholder="ABCD-EFGH"
+                className="w-full text-center text-2xl font-mono tracking-widest p-3 rounded-lg border border-neutral-300 focus:ring-2 focus:ring-black focus:border-transparent outline-none uppercase"
+                disabled={verify.isPending || verify.isSuccess}
+                maxLength={9}
+              />
             </div>
 
-            <label className="mt-6 block text-sm font-medium">User code</label>
-            <input
-              value={userCode}
-              onChange={(e) => setUserCode(e.target.value)}
-              placeholder="ABCD-EFGH"
-              className="mt-2 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
-              disabled={verify.isPending || verify.isSuccess}
-            />
+            {me.data?.user && (
+              <button
+                onClick={() => verify.mutate(userCode.trim())}
+                disabled={!userCode.trim() || verify.isPending}
+                className="w-full py-3 px-4 bg-black text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {verify.isPending ? 'Verifying...' : 'Approve Login'}
+              </button>
+            )}
 
-            <button
-              onClick={() => verify.mutate(userCode.trim())}
-              disabled={!userCode.trim() || verify.isPending}
-              className="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-black px-4 py-3 text-sm font-medium text-white disabled:opacity-50 transition-colors hover:bg-neutral-800"
-            >
-              {verify.isPending ? 'Verifying...' : 'Approve'}
-            </button>
-
-            {statusText && !verify.isSuccess ? <div className="mt-4 text-sm text-center text-neutral-600">{statusText}</div> : null}
-            {verify.isError ? (
-              <div className="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-600">
-                {(verify.error as any)?.message ?? 'Verification failed. Please try again.'}
+            {verify.isError && (
+              <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg">
+                {(verify.error as any)?.message || 'Something went wrong. Please try again.'}
               </div>
-            ) : null}
-          </>
+            )}
+          </div>
         )}
       </div>
     </div>
