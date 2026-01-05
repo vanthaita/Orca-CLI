@@ -35,6 +35,11 @@ const CliVerifyInner = () => {
 
   const [userCode, setUserCode] = useState(userCodeFromQuery);
 
+  useEffect(() => {
+    me.refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Sync state if query param changes late
   useEffect(() => {
     if (userCodeFromQuery && userCodeFromQuery !== userCode) {
@@ -64,7 +69,11 @@ const CliVerifyInner = () => {
     if (canAutoApprove) {
       console.log('[CliVerify] Auto-approving code:', userCodeFromQuery);
       didAutoApprove.current = true;
-      verify.mutate(userCodeFromQuery);
+      verify.mutate(userCodeFromQuery, {
+        onError: () => {
+          didAutoApprove.current = false;
+        },
+      });
     }
   }, [me.data?.user, me.isLoading, userCodeFromQuery, verify.isPending, verify.isSuccess, verify.isError, verify]);
 
