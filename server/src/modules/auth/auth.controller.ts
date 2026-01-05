@@ -133,6 +133,9 @@ export class AuthController {
     const rawState = (req as any).query?.state as string | undefined;
     const state = rawState ? String(rawState) : undefined;
     const safePath = state && state.startsWith('/') ? state : '/dashboard';
+
+    this.logger.log(`[Google Callback] rawState: ${rawState}, safePath: ${safePath}`);
+
     res.redirect(`${frontendUrl}${safePath}`);
   }
 
