@@ -128,11 +128,24 @@ export class AuthController {
       maxAge: Number(process.env.JWT_REFRESH_DAYS ?? 30) * 24 * 60 * 60 * 1000,
     });
 
-    const frontendUrl = process.env.ORCA_FRONTEND_URL ?? 'http://localhost:3000';
+    const frontendUrl = (process.env.ORCA_FRONTEND_URL ?? 'http://localhost:3000').replace(/\/+$/, '');
 
     const rawState = (req as any).query?.state as string | undefined;
     const state = rawState ? String(rawState) : undefined;
-    const safePath = state && state.startsWith('/') ? state : '/dashboard';
+    let safePath = '/dashboard';
+
+    if (state) {
+      // Decode if it looks encoded, though express query parser usually handles it.
+      // But purely client-side might send it raw.
+      // If it starts with / it's a path.
+      if (state.startsWith('/')) {
+        safePath = state;
+      } else {
+        // If it doesn't start with /, strictly it might be invalid or a full URL (which we shouldn't trust blindly for open redirect reasons, but here we assume internal paths)
+        // Let's assume it's a relative path without leading slash
+        safePath = `/${state}`;
+      }
+    }
 
     this.logger.log(`[Google Callback] rawState: ${rawState}, safePath: ${safePath}`);
 
