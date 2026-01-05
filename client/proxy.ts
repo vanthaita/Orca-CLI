@@ -29,7 +29,7 @@ export async function proxy(req: NextRequest) {
     if (!accessToken) {
         const url = req.nextUrl.clone();
         url.pathname = '/login';
-        url.search = '';
+        // Preserve search params
         return NextResponse.redirect(url);
     }
 
@@ -37,7 +37,7 @@ export async function proxy(req: NextRequest) {
     if (!ok) {
         const url = req.nextUrl.clone();
         url.pathname = '/login';
-        url.search = '';
+        // Preserve search params
         return NextResponse.redirect(url);
     }
 
