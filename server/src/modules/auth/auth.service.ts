@@ -75,6 +75,7 @@ export class AuthService {
     expiresIn: number;
     interval: number;
   }> {
+    this.logger.log(`[CLI Login] Starting login flow`);
     const deviceCode = randomBytes(48).toString('base64url');
     const deviceCodeHash = this.hashToken(deviceCode);
 
@@ -92,6 +93,7 @@ export class AuthService {
     });
 
     await this.cliDeviceCodesRepo.save(record);
+    this.logger.log(`[CLI Login] Generated device code and user code: ${userCode}`);
 
     const frontendUrl = process.env.ORCA_FRONTEND_URL ?? 'http://localhost:3000';
     const verificationUrl = `${frontendUrl.replace(/\/+$/, '')}/cli/verify?userCode=${encodeURIComponent(userCode)}`;
@@ -108,25 +110,28 @@ export class AuthService {
 
   async approveCliLogin(userId: string, userCode: string): Promise<{ ok: true }> {
     const code = userCode.trim().toUpperCase();
-    this.logger.log(`approveCliLogin called for user ${userId} with code ${code}`);
+    this.logger.log(`[CLI Login] approving login for user ${userId} with code ${code}`);
     const device = await this.cliDeviceCodesRepo.findOne({ where: { userCode: code } });
-    this.logger.log(`Device found: ${!!device}`);
 
     if (!device) {
+      this.logger.warn(`[CLI Login] Invalid user code: ${code}`);
       throw new UnauthorizedException('Invalid user code');
     }
 
     if (device.expiresAt.getTime() < Date.now()) {
+      this.logger.warn(`[CLI Login] User code expired: ${code}`);
       throw new UnauthorizedException('User code expired');
     }
 
     if (device.approvedAt) {
+      this.logger.log(`[CLI Login] Already approved: ${code}`);
       return { ok: true };
     }
 
     device.userId = userId;
     device.approvedAt = new Date();
     await this.cliDeviceCodesRepo.save(device);
+    this.logger.log(`[CLI Login] Successfully approved: ${code}`);
     return { ok: true };
   }
 
@@ -140,18 +145,22 @@ export class AuthService {
     const device = await this.cliDeviceCodesRepo.findOne({ where: { deviceCodeHash } });
 
     if (!device) {
+      // this.logger.debug(`[CLI Login] Poll: Device not found`);
       return { status: 'expired' };
     }
 
     if (device.expiresAt.getTime() < Date.now()) {
+      this.logger.log(`[CLI Login] Poll: Device code expired`);
       await this.cliDeviceCodesRepo.delete({ id: device.id });
       return { status: 'expired' };
     }
 
     if (!device.approvedAt || !device.userId) {
+      // this.logger.debug(`[CLI Login] Poll: Pending approval`);
       return { status: 'authorization_pending', interval };
     }
 
+    this.logger.log(`[CLI Login] Poll: Approved! Issuing token for user ${device.userId}`);
     const rawToken = randomBytes(48).toString('base64url');
     const tokenHash = this.hashToken(rawToken);
 
