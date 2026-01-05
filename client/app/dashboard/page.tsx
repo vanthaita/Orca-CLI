@@ -1,53 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
-import { ORCA_API_BASE_URL } from '@/config/env';
 
-interface User {
-    id: string;
-    email: string | null;
-    name: string | null;
-    picture: string | null;
-    plan: string;
-    createdAt: string;
-}
+import { useMe } from '@/hook/useMe';
 
 export default function DashboardPage() {
-    const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const me = useMe();
+    const user = me.data?.user;
 
     useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                const res = await fetch(`${ORCA_API_BASE_URL}/api/v1/auth/me`, {
-                    credentials: 'include', // Important: send cookies
-                });
+        if (me.isLoading) return;
+        if (user) return;
 
-                if (res.ok) {
-                    const data = await res.json();
-                    setUser(data.user);
-                } else {
-                    // Not authenticated, redirect to login
-                    console.log('Not authenticated, redirecting to login...');
-                    setTimeout(() => {
-                        window.location.href = '/login';
-                    }, 1000);
-                }
-            } catch (error) {
-                console.error('Failed to fetch user:', error);
-                setError('Failed to load user data');
-                setTimeout(() => {
-                    window.location.href = '/login';
-                }, 2000);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchUser();
-    }, []);
+        // Not authenticated or session invalid -> redirect to login
+        setTimeout(() => {
+            window.location.href = '/login';
+        }, me.isError ? 2000 : 1000);
+    }, [me.isLoading, me.isError, user]);
 
     useEffect(() => {
         if (user) {
@@ -69,10 +39,18 @@ export default function DashboardPage() {
         window.location.href = '/';
     };
 
-    if (isLoading) {
+    if (me.isLoading) {
         return (
             <div className="min-h-screen bg-[#0c0c0c] flex items-center justify-center">
                 <div className="animate-pulse text-emerald-400 font-mono">Loading...</div>
+            </div>
+        );
+    }
+
+    if (me.isError) {
+        return (
+            <div className="min-h-screen bg-[#0c0c0c] flex items-center justify-center">
+                <div className="text-red-400 font-mono text-sm">Failed to load user data</div>
             </div>
         );
     }

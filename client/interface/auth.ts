@@ -1,8 +1,11 @@
 export type ProjectUser = {
-  sub: string;
-  email?: string;
-  name?: string;
-  picture?: string;
+  id: string;
+  email: string | null;
+  name: string | null;
+  picture: string | null;
+  plan: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type MeResponse = {
