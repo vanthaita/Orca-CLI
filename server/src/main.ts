@@ -1,42 +1,33 @@
-import 'dotenv/config';
-import cookieParser from 'cookie-parser';
 import { NestFactory } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
+import { Logger } from 'nestjs-pino';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const configService = app.get(ConfigService);
+  const logger = app.get(Logger);
+
+  app.useLogger(logger);
+  app.useGlobalInterceptors(new TransformInterceptor());
+  app.useGlobalFilters(new AllExceptionsFilter());
   app.use(cookieParser());
 
-  // Simple HTTP Request Logger
-  app.use((req, res, next) => {
-    console.log(`[Incoming Request] ${req.method} ${req.originalUrl}`);
-    if (req.body && Object.keys(req.body).length > 0) {
-      console.log('  [Body]:', JSON.stringify(req.body, null, 2));
-    }
-
-    const start = Date.now();
-    res.on('finish', () => {
-      const duration = Date.now() - start;
-      console.log(
-        `[Response] ${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`,
-      );
-    });
-
-    next();
-  });
-
-  const apiPrefix = process.env.API_PREFIX ?? 'api/v1';
+  const apiPrefix = configService.get<string>('API_PREFIX') || 'api/v1';
   app.setGlobalPrefix(apiPrefix);
 
-  const corsOriginEnv = process.env.CORS_ORIGIN;
-  const frontendUrlEnv = process.env.ORCA_FRONTEND_URL;
+  const corsOriginsEnv = configService.get<string>('CORS_ORIGIN');
+  const frontendUrlEnv = configService.get<string>('ORCA_FRONTEND_URL');
 
   const corsOrigins = [
-    ...(corsOriginEnv
-      ? corsOriginEnv
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean)
+    ...(corsOriginsEnv
+      ? corsOriginsEnv
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
       : ['http://localhost:3000', 'http://127.0.0.1:3000']),
     ...(frontendUrlEnv ? [frontendUrlEnv.trim()] : []),
   ]
@@ -45,10 +36,9 @@ async function bootstrap() {
 
   const allowAnyOrigin = corsOrigins.includes('*');
 
-  console.log('CORS Origins:', corsOrigins);
+  logger.log(`CORS Origins: ${JSON.stringify(corsOrigins)}`);
 
-
-  const corsMethodsEnv = process.env.CORS_METHODS;
+  const corsMethodsEnv = configService.get<string>('CORS_METHODS');
   const corsMethods = corsMethodsEnv
     ? corsMethodsEnv
       .split(',')
@@ -57,7 +47,7 @@ async function bootstrap() {
       .join(',')
     : undefined;
 
-  const corsExposedHeadersEnv = process.env.CORS_EXPOSED_HEADERS;
+  const corsExposedHeadersEnv = configService.get<string>('CORS_EXPOSED_HEADERS');
   const corsExposedHeaders = corsExposedHeadersEnv
     ? corsExposedHeadersEnv
       .split(',')
@@ -65,12 +55,11 @@ async function bootstrap() {
       .filter(Boolean)
     : undefined;
 
-  const corsMaxAgeEnv = process.env.CORS_MAX_AGE;
-  const corsMaxAge = corsMaxAgeEnv ? Number(corsMaxAgeEnv) : undefined;
+  const corsMaxAge = configService.get<number>('CORS_MAX_AGE');
+  const corsCredentials =
+    (configService.get<string>('CORS_CREDENTIALS') ?? 'true') === 'true';
 
-  const corsCredentials = (process.env.CORS_CREDENTIALS ?? 'true') === 'true';
-
-  if (corsOrigins) {
+  if (corsOrigins.length > 0) {
     app.enableCors({
       origin: (origin, callback) => {
         if (!origin) {
@@ -91,8 +80,8 @@ async function bootstrap() {
     });
   }
 
-  const port = Number(process.env.PORT ?? 8000);
+  const port = configService.get<number>('PORT') || 8000;
   await app.listen(port, '0.0.0.0');
-  console.log(`Server running on http://localhost:${port}/${apiPrefix}`);
+  logger.log(`Server running on http://localhost:${port}/${apiPrefix}`);
 }
 bootstrap();
