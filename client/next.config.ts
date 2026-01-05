@@ -10,21 +10,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  async rewrites() {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_ORCA_API_BASE_URL?.trim() ||
-      process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
-      'http://localhost:8000';
-
-    const normalized = baseUrl.replace(/\/+$/, '');
-
-    return [
-      {
-        source: '/api/v1/:path*',
-        destination: `${normalized}/api/v1/:path*`,
-      },
-    ];
-  },
 };
 
 export default nextConfig;
