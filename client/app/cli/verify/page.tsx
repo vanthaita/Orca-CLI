@@ -99,7 +99,7 @@ const CliVerifyInner = () => {
       if (!codeForRedirect) return;
       const redirectUrl = `/login?userCode=${encodeURIComponent(codeForRedirect)}`;
       console.log('[CliVerify] WOULD Redirect to:', redirectUrl);
-      // window.location.href = redirectUrl; // DISABLED FOR DEBUGGING
+      window.location.href = redirectUrl;
     }
   }, [me.isLoading, me.data, userCode, userCodeFromQuery, me.isError]);
 
@@ -138,7 +138,7 @@ const CliVerifyInner = () => {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="animate-pulse text-neutral-400 font-mono">
-          {me.isLoading ? 'Checking authentication...' : 'Redirecting to login... (DEBUG: Redirect Disabled)'}
+          {me.isLoading ? 'Checking authentication...' : 'Redirecting to login...'}
           <div className="text-xs mt-2 text-neutral-600">
             User: {JSON.stringify(me.data?.user)} <br />
             Error: {me.isError ? 'Yes' : 'No'} <br />
