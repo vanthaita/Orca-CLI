@@ -20,7 +20,7 @@ export default function CliVerifyPage() {
   );
 }
 
-function CliVerifyInner() {
+const CliVerifyInner = () => {
   const searchParams = useSearchParams();
   const me = useMe();
   const verify = useCliVerify();
