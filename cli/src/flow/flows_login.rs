@@ -1,3 +1,4 @@
+use crate::flow::flows_spinner::spinner;
 use anyhow::{Context, Result};
 use console::style;
 use serde::{Deserialize, Serialize};
@@ -147,6 +148,12 @@ pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
         style(&start.verification_url).cyan()
     );
 
+    println!(
+        "\n{} {}\n",
+        style("!").yellow().bold(),
+        style("Please copy the code above and paste it into the browser window.").yellow()
+    );
+
     try_open_browser(&start.verification_url);
 
     let poll_urls: Vec<String> = poll_paths
@@ -158,8 +165,11 @@ pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
     let deadline = std::time::Instant::now() + Duration::from_secs(start.expires_in);
     let mut interval = Duration::from_secs(start.interval.max(1));
 
+    let pb = spinner("Waiting for approval...");
+
     loop {
         if std::time::Instant::now() > deadline {
+            pb.finish_and_clear();
             anyhow::bail!("Login expired. Please run `orca login` again.");
         }
 
@@ -196,7 +206,10 @@ pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
 
         let text = match text {
             Some(t) => t,
-            None => return Err(last_err.unwrap_or_else(|| anyhow::anyhow!("Failed to call /auth/cli/poll"))),
+            None => {
+                pb.finish_and_clear();
+                 return Err(last_err.unwrap_or_else(|| anyhow::anyhow!("Failed to call /auth/cli/poll")));
+            }
         };
 
         let poll: CliPollResponse = serde_json::from_str(&text)
@@ -208,9 +221,11 @@ pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
                 tokio::time::sleep(interval).await;
             }
             CliPollResponse::Expired => {
+                pb.finish_and_clear();
                 anyhow::bail!("Login expired. Please run `orca login` again.");
             }
             CliPollResponse::Ok { access_token, .. } => {
+                pb.finish_and_clear();
                 config.api.provider = "orca".to_string();
                 config.api.orca_base_url = Some(base_url);
                 config.api.orca_token = Some(access_token);
@@ -219,7 +234,7 @@ pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
                 println!(
                     "{} {}",
                     style("[✓]").green().bold(),
-                    style("Logged in. Token saved to config.").green()
+                    style("Logged in successfully.").green()
                 );
                 return Ok(());
             }
