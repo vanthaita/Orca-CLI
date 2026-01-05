@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useCliVerify } from '@/hook/useCliVerify';
 import { useMe } from '@/hook/useMe';
@@ -25,6 +25,8 @@ function CliVerifyInner() {
   const me = useMe();
   const verify = useCliVerify();
 
+  const didAutoApprove = useRef(false);
+
   const userCodeFromQuery = useMemo(() => {
     const fromQuery = searchParams.get('userCode') ?? searchParams.get('code') ?? '';
     return fromQuery.trim();
@@ -37,6 +39,20 @@ function CliVerifyInner() {
       setUserCode(userCodeFromQuery);
     }
   }, [userCodeFromQuery, userCode]);
+
+  useEffect(() => {
+    if (didAutoApprove.current) return;
+    if (me.isLoading) return;
+    if (me.isError) return;
+    if (!me.data?.user) return;
+
+    const codeToApprove = (userCodeFromQuery || userCode).trim();
+    if (!codeToApprove) return;
+    if (verify.isPending || verify.isSuccess) return;
+
+    didAutoApprove.current = true;
+    verify.mutate(codeToApprove);
+  }, [me.isLoading, me.isError, me.data, userCodeFromQuery, userCode, verify]);
 
   useEffect(() => {
     // If we finished loading checking me headers, and we are not logged in, we need to redirect to login
