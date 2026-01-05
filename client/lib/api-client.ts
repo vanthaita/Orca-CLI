@@ -9,6 +9,23 @@ export const apiClient = axios.create({
     },
 });
 
+apiClient.interceptors.request.use(
+    (config) => {
+        const baseURL = config.baseURL ?? '';
+        const url = config.url ?? '';
+        const fullUrl = url.startsWith('http') ? url : `${String(baseURL).replace(/\/+$/, '')}/${String(url).replace(/^\/+/, '')}`;
+        const method = (config.method ?? 'GET').toUpperCase();
+        // eslint-disable-next-line no-console
+        console.log('[apiClient]', method, fullUrl);
+        return config;
+    },
+    (error) => {
+        // eslint-disable-next-line no-console
+        console.log('[apiClient] request error', error);
+        return Promise.reject(error);
+    }
+);
+
 apiClient.interceptors.response.use(
     (response) => {
         if (response.data && response.data.data !== undefined) {
@@ -18,8 +35,12 @@ apiClient.interceptors.response.use(
     },
     (error) => {
         if (error.response?.data) {
+            // eslint-disable-next-line no-console
+            console.log('[apiClient] response error', error.response.status, error.response.data);
             return Promise.reject(error.response.data);
         }
+        // eslint-disable-next-line no-console
+        console.log('[apiClient] response error', error);
         return Promise.reject(error);
     }
 );
