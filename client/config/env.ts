@@ -6,7 +6,7 @@ const envSchema = z.object({
     .url()
     .default('http://localhost:8000')
     .or(z.literal('http://localhost:8000')),
-  NEXT_PUBLIC_PREFIX_API: z.string().default('/api/v1'),
+  NEXT_PUBLIC_PREFIX_API: z.string().default('api/v1'),
 });
 
 const _env = envSchema.safeParse({
