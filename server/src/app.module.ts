@@ -20,17 +20,25 @@ import { AiUsageDaily } from './modules/ai/entities/ai-usage-daily.entity';
       isGlobal: true,
       validate,
     }),
-    LoggerModule.forRoot({
-      pinoHttp: {
-        customProps: (req, res) => ({
-          context: 'HTTP',
-        }),
-        transport: {
-          target: 'pino-pretty',
-          options: {
-            singleLine: true,
+    LoggerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const isProduction = configService.get<string>('NODE_ENV') === 'production';
+        return {
+          pinoHttp: {
+            customProps: (req, res) => ({
+              context: 'HTTP',
+            }),
+            transport: isProduction
+              ? undefined
+              : {
+                target: 'pino-pretty',
+                options: {
+                  singleLine: true,
+                },
+              },
           },
-        },
+        };
       },
     }),
     TypeOrmModule.forRootAsync({
