@@ -25,24 +25,29 @@ function CliVerifyInner() {
   const me = useMe();
   const verify = useCliVerify();
 
-  const [userCode, setUserCode] = useState('');
+  const userCodeFromQuery = useMemo(() => {
+    const fromQuery = searchParams.get('userCode') ?? searchParams.get('code') ?? '';
+    return fromQuery.trim();
+  }, [searchParams]);
+
+  const [userCode, setUserCode] = useState(userCodeFromQuery);
 
   useEffect(() => {
-    const fromQuery = searchParams.get('userCode') ?? searchParams.get('code') ?? '';
-    const trimmed = fromQuery.trim();
-    if (trimmed) {
-      setUserCode(trimmed);
+    if (userCodeFromQuery && userCodeFromQuery !== userCode) {
+      setUserCode(userCodeFromQuery);
     }
-  }, [searchParams]);
+  }, [userCodeFromQuery, userCode]);
 
   useEffect(() => {
     // If we finished loading checking me headers, and we are not logged in, we need to redirect to login
     // But if there was an error (e.g. network/CORS), we should show that instead of redirecting loop
     if (!me.isLoading && !me.isError && !me.data?.user) {
-      const redirectUrl = `/login?next=${encodeURIComponent(`/cli/verify?userCode=${userCode}`)}`;
+      const codeForRedirect = userCodeFromQuery || userCode;
+      if (!codeForRedirect) return;
+      const redirectUrl = `/login?userCode=${encodeURIComponent(codeForRedirect)}`;
       window.location.href = redirectUrl;
     }
-  }, [me.isLoading, me.data, userCode, me.isError]);
+  }, [me.isLoading, me.data, userCode, userCodeFromQuery, me.isError]);
 
   const statusText = useMemo(() => {
     if (me.isLoading) return 'Checking authentication...';

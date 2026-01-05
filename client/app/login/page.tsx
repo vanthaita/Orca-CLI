@@ -4,39 +4,28 @@ import Link from 'next/link';
 import { useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-import { ORCA_API_BASE_URL } from '@/config/env';
+import { AuthService } from '@/service/auth.service';
 
 function LoginContent() {
   const { isAuthenticated, isLoading } = useAuth();
   const searchParams = useSearchParams();
-  const next = searchParams.get('next');
   const userCode = searchParams.get('userCode');
 
   const googleLoginUrl = useMemo(() => {
-    return `${ORCA_API_BASE_URL.replace(/\/+$/, '')}/api/v1/auth/google`;
+    // keep in sync with axios baseURL
+    return `${AuthService.startGoogleLogin()}`;
   }, []);
 
   // Redirect to dashboard or next url if already logged in
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      if (next) {
-        window.location.href = next;
-      } else if (userCode) {
+      if (userCode) {
         window.location.href = `/cli/verify?userCode=${userCode}`;
       } else {
         window.location.href = '/dashboard';
       }
     }
-  }, [isAuthenticated, isLoading, next, userCode]);
-
-  // Handle Google Login Click to save state
-  const handleGoogleLogin = () => {
-    if (next) {
-      localStorage.setItem('auth_redirect', next);
-    } else if (userCode) {
-      localStorage.setItem('auth_redirect', `/cli/verify?userCode=${userCode}`);
-    }
-  };
+  }, [isAuthenticated, isLoading, userCode]);
 
   // Show loading while checking auth
   if (isLoading) {
@@ -62,7 +51,6 @@ function LoginContent() {
 
         <a
           href={googleLoginUrl}
-          onClick={handleGoogleLogin}
           className="mt-8 inline-flex w-full items-center justify-center gap-3 rounded-lg border-2 border-dashed border-white/20 bg-white px-4 py-3 text-sm font-semibold text-black transition-all hover:bg-white/90 hover:border-white/40 hover:scale-[1.02]"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
