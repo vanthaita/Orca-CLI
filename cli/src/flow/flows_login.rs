@@ -96,6 +96,13 @@ pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
             .ok_or_else(|| anyhow::anyhow!("Missing Orca server URL. Set ORCA_API_BASE_URL or run: orca login --server <URL>"))
     })?;
 
+    if !base_url.starts_with("http://") && !base_url.starts_with("https://") {
+        anyhow::bail!(
+            "Invalid Orca server URL: '{}'. It must be an absolute URL including scheme, e.g. https://api.orcacli.codes",
+            base_url
+        );
+    }
+
     let current_base_url = base_url.clone();
     let client = reqwest::Client::builder()
         .connect_timeout(Duration::from_secs(2))

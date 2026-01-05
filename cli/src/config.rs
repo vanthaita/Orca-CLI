@@ -169,18 +169,30 @@ pub(crate) fn get_provider() -> String {
 pub(crate) fn get_orca_base_url() -> Result<String> {
     if let Ok(v) = std::env::var("ORCA_API_BASE_URL") {
         if !v.trim().is_empty() {
-            return Ok(v);
+            return validate_orca_base_url(v);
         }
     }
 
     let config = load_config()?;
     if let Some(v) = config.api.orca_base_url {
         if !v.trim().is_empty() {
-            return Ok(v);
+            return validate_orca_base_url(v);
         }
     }
 
-    Ok(DEFAULT_ORCA_BASE_URL.to_string())
+    validate_orca_base_url(DEFAULT_ORCA_BASE_URL.to_string())
+}
+
+fn validate_orca_base_url(v: String) -> Result<String> {
+    let trimmed = v.trim();
+    if trimmed.starts_with("http://") || trimmed.starts_with("https://") {
+        return Ok(trimmed.to_string());
+    }
+
+    anyhow::bail!(
+        "Invalid Orca server URL: '{}'. It must be an absolute URL including scheme, e.g. https://api.orcacli.codes",
+        trimmed
+    )
 }
 
 pub(crate) fn get_orca_token() -> Result<String> {
