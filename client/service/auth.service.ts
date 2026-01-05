@@ -1,16 +1,9 @@
-import { http } from '@/service/http';
+import { apiClient } from '@/lib/api-client';
 import type { CliVerifyResponse, MeResponse } from '@/interface/auth';
 
 export const AuthService = {
   me: async (): Promise<MeResponse> => {
-    const { data } = await http.get<MeResponse>('/auth/me', {
-      params: { _t: Date.now() },
-      headers: {
-        'Cache-Control': 'no-cache',
-        Pragma: 'no-cache',
-      },
-    });
-    return data;
+    return apiClient.get('/auth/me');
   },
 
   startGoogleLogin: (state?: string): string => {
@@ -20,7 +13,6 @@ export const AuthService = {
   },
 
   cliVerify: async (userCode: string): Promise<CliVerifyResponse> => {
-    const { data } = await http.post<CliVerifyResponse>('/auth/cli/verify', { userCode });
-    return data;
+    return apiClient.post('/auth/cli/verify', { userCode });
   },
 };
