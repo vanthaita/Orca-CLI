@@ -7,17 +7,28 @@ import { useAuth } from '@/lib/auth';
 import { AuthService } from '@/service/auth.service';
 
 function LoginContent() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, refetch } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const userCode = searchParams.get('userCode');
   const didRedirect = useRef(false);
+  const didRefetch = useRef(false);
 
   const googleLoginUrl = useMemo(() => {
     // keep in sync with axios baseURL
     const state = userCode ? `/cli/verify?userCode=${encodeURIComponent(userCode)}` : undefined;
     return `${AuthService.startGoogleLogin(state)}`;
   }, [userCode]);
+
+  // Force refetch auth state on mount to handle post-OAuth callback
+  // This ensures we have fresh auth data when checking if redirect is needed
+  useEffect(() => {
+    if (didRefetch.current) return;
+    didRefetch.current = true;
+    refetch().catch((err) => {
+      console.error('[Login] Failed to refetch auth state:', err);
+    });
+  }, [refetch]);
 
   // Redirect to dashboard or next url if already logged in
   useEffect(() => {
