@@ -1,7 +1,9 @@
 use crate::flow::flows_spinner::spinner;
 use anyhow::{Context, Result};
 use console::style;
+use indicatif::ProgressBar;
 use serde::{Deserialize, Serialize};
+use serde::de::DeserializeOwned;
 use std::time::Duration;
 
 enum CliStartError {
@@ -64,6 +66,16 @@ struct CliStartResponse {
     verification_url: String,
     expires_in: u64,
     interval: u64,
+}
+
+fn parse_api_json<T: DeserializeOwned>(text: &str) -> Result<T> {
+    let value: serde_json::Value = serde_json::from_str(text).context("Failed to parse JSON")?;
+
+    if let Some(data) = value.get("data") {
+        return serde_json::from_value::<T>(data.clone()).context("Failed to parse JSON.data");
+    }
+
+    serde_json::from_value::<T>(value).context("Failed to parse JSON")
 }
 
 #[derive(Debug, Serialize)]
@@ -134,7 +146,7 @@ pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
     // Update base_url to the one that worked, so it gets saved to config later
     let base_url = working_url;
 
-    let start: CliStartResponse = serde_json::from_str(&text)
+    let start: CliStartResponse = parse_api_json(&text)
         .with_context(|| format!("Failed to parse /auth/cli/start response: {}", text))?;
 
     println!(
@@ -212,7 +224,7 @@ pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
             }
         };
 
-        let poll: CliPollResponse = serde_json::from_str(&text)
+        let poll: CliPollResponse = parse_api_json(&text)
             .with_context(|| format!("Failed to parse /auth/cli/poll response: {}", text))?;
 
         match poll {
