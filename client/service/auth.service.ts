@@ -13,8 +13,10 @@ export const AuthService = {
     return data;
   },
 
-  startGoogleLogin: (): string => {
-    return '/api/v1/auth/google';
+  startGoogleLogin: (state?: string): string => {
+    if (!state) return '/api/v1/auth/google';
+    const s = state.startsWith('/') ? state : `/${state}`;
+    return `/api/v1/auth/google?state=${encodeURIComponent(s)}`;
   },
 
   cliVerify: async (userCode: string): Promise<CliVerifyResponse> => {

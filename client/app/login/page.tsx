@@ -13,8 +13,9 @@ function LoginContent() {
 
   const googleLoginUrl = useMemo(() => {
     // keep in sync with axios baseURL
-    return `${AuthService.startGoogleLogin()}`;
-  }, []);
+    const state = userCode ? `/cli/verify?userCode=${encodeURIComponent(userCode)}` : undefined;
+    return `${AuthService.startGoogleLogin(state)}`;
+  }, [userCode]);
 
   // Redirect to dashboard or next url if already logged in
   useEffect(() => {

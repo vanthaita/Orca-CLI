@@ -129,7 +129,11 @@ export class AuthController {
     });
 
     const frontendUrl = process.env.ORCA_FRONTEND_URL ?? 'http://localhost:3000';
-    res.redirect(`${frontendUrl}/dashboard`);
+
+    const rawState = (req as any).query?.state as string | undefined;
+    const state = rawState ? String(rawState) : undefined;
+    const safePath = state && state.startsWith('/') ? state : '/dashboard';
+    res.redirect(`${frontendUrl}${safePath}`);
   }
 
   @Post('refresh')
