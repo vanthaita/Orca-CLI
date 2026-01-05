@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { TerminalWindow } from "./TerminalWindow";
 
 interface TextSegment {
@@ -56,7 +56,9 @@ const TERMINAL_CONTENT: Line[] = [
 export const TerminalTypewriter = () => {
     const [currentLineIndex, setCurrentLineIndex] = useState(0);
     const [currentCharIndex, setCurrentCharIndex] = useState(0);
-    const [isFinished, setIsFinished] = useState(false);
+
+    // Derived state
+    const isFinished = currentLineIndex >= TERMINAL_CONTENT.length;
 
     // Flatten the current line into a single string to simplify char tracking
     const getLineText = (line: Line) => line.map((s) => s.text).join("");
@@ -64,10 +66,7 @@ export const TerminalTypewriter = () => {
     useEffect(() => {
         if (isFinished) return;
 
-        if (currentLineIndex >= TERMINAL_CONTENT.length) {
-            setIsFinished(true);
-            return;
-        }
+
 
         const currentLineSegments = TERMINAL_CONTENT[currentLineIndex];
         const fullLineText = getLineText(currentLineSegments);

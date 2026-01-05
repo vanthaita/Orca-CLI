@@ -16,7 +16,7 @@ const FeedbackCard = ({ user, handle, content, platform, tag }: FeedbackCardProp
         <div className="flex flex-col gap-3 rounded border-2 border-dashed border-white/20 bg-neutral-900/80 p-4 transition-all hover:border-emerald-500/50 group h-full cursor-default">
             <div className="flex items-start justify-between gap-2">
                 <div className="text-sm font-medium text-neutral-300 leading-snug group-hover:text-emerald-400 transition-colors">
-                    "{content}"
+                    &quot;{content}&quot;
                 </div>
             </div>
 
@@ -33,7 +33,7 @@ const FeedbackCard = ({ user, handle, content, platform, tag }: FeedbackCardProp
 
                 <div className="text-[10px] font-mono text-neutral-500 flex items-center gap-1">
                     <span className={`w-1.5 h-1.5 rounded-full ${platform === "Twitter" ? "bg-blue-400" :
-                            platform === "GitHub" ? "bg-white" : "bg-indigo-400"
+                        platform === "GitHub" ? "bg-white" : "bg-indigo-400"
                         }`}></span>
                     {platform}
                 </div>

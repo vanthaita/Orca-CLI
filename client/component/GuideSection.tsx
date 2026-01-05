@@ -99,7 +99,7 @@ const BasicsGuide = () => (
             <div className="grid gap-2">
                 <div className="text-emerald-400 font-mono font-bold text-sm">STEP 02</div>
                 <div className="font-medium text-white">Review the Plan</div>
-                <p className="text-sm text-neutral-400">Orca proposes a set of commits. You can say 'yes' to apply them immediately.</p>
+                <p className="text-sm text-neutral-400">Orca proposes a set of commits. You can say &apos;yes&apos; to apply them immediately.</p>
             </div>
         </div>
     </div>
@@ -145,7 +145,7 @@ const TeamWorkflowGuide = () => (
 
         <div className="grid gap-8">
             <div className="border-l-2 border-emerald-500/30 pl-6 py-2">
-                <h4 className="font-bold text-white mb-2">The "Publish" Command</h4>
+                <h4 className="font-bold text-white mb-2">The &quot;Publish&quot; Command</h4>
                 <p className="text-neutral-400 text-sm mb-4">
                     `orca publish` is a macro that performs the following:
                 </p>

@@ -25,7 +25,7 @@ export const IntroductionSection = () => {
                             and generates clean, meaningful history that tells a story.
                         </p>
                         <p>
-                            It's not just a wrapper; it's a workflow engine designed for the era of AI-assisted coding.
+                            It&apos;s not just a wrapper; it&apos;s a workflow engine designed for the era of AI-assisted coding.
                         </p>
                     </div>
                 </div>

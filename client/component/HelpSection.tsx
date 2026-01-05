@@ -1,4 +1,4 @@
-import { CodeCard } from "./CodeCard";
+
 import { TerminalIcon } from "./icons";
 
 interface CommandItemProps {

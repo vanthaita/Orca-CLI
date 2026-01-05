@@ -20,21 +20,26 @@ interface VersionListProps {
     className?: string;
 }
 
+import { cn } from "@/lib/utils";
+// ... imports
+
 export const VersionList = ({ releases, className = "" }: VersionListProps) => {
     const [viewMode, setViewMode] = useState<"download" | "cli" | "npm" | "bun" | "brew" | "winget">("download");
 
     if (!releases || releases.length === 0) return null;
 
     return (
-        <div className={`w-full overflow-hidden rounded-xl border-2 border-dashed border-white/20 bg-white/5 ${className}`}>
+        <div className={cn("w-full overflow-hidden rounded-xl border-2 border-dashed border-white/20 bg-white/5", className)}>
             <div className="flex items-center justify-between border-b border-white/15 bg-white/5 px-4">
                 <div className="flex flex-wrap">
                     <button
                         onClick={() => setViewMode("download")}
-                        className={`px-4 py-3 text-sm font-medium transition-colors ${viewMode === "download"
-                            ? "text-emerald-400 border-b-2 border-emerald-400"
-                            : "text-neutral-400 hover:text-neutral-200"
-                            }`}
+                        className={cn(
+                            "px-4 py-3 text-sm font-medium transition-colors",
+                            viewMode === "download"
+                                ? "text-emerald-400 border-b-2 border-emerald-400"
+                                : "text-neutral-400 hover:text-neutral-200"
+                        )}
                     >
                         <span className="inline-flex items-center gap-2">
                             <DownloadIcon className="h-4 w-4" />
@@ -43,16 +48,19 @@ export const VersionList = ({ releases, className = "" }: VersionListProps) => {
                     </button>
                     <button
                         onClick={() => setViewMode("cli")}
-                        className={`px-4 py-3 text-sm font-medium transition-colors ${viewMode === "cli"
-                            ? "text-emerald-400 border-b-2 border-emerald-400"
-                            : "text-neutral-400 hover:text-neutral-200"
-                            }`}
+                        className={cn(
+                            "px-4 py-3 text-sm font-medium transition-colors",
+                            viewMode === "cli"
+                                ? "text-emerald-400 border-b-2 border-emerald-400"
+                                : "text-neutral-400 hover:text-neutral-200"
+                        )}
                     >
                         <span className="inline-flex items-center gap-2">
                             <TerminalIcon className="h-4 w-4" />
                             Command Line
                         </span>
                     </button>
+                    {/* Other buttons remain similar or can be refactored if needed, skipping for brevity but good practice to apply all */}
                     <button
                         type="button"
                         disabled

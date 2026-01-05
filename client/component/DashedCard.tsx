@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 export const DashedCard = ({
   children,
@@ -10,7 +11,7 @@ export const DashedCard = ({
   className?: string;
 }) => {
   return (
-    <div className={`relative group ${className}`}>
+    <div className={cn("relative group", className)}>
       <div
         className="h-full border-2 border-dashed border-white/20 bg-neutral-900/50 p-5 relative overflow-hidden transition-colors hover:border-emerald-500/30"
       >
