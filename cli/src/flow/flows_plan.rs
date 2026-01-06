@@ -119,8 +119,28 @@ pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<Path
 
     let changed_files = files_from_status_porcelain(&status);
     let pb = spinner("Asking Gemini to analyze changes and propose commit plan...");
-    let mut plan = generate_plan(model, &status, &diff, &log).await?;
+    
+    // Truncate diff if it's extremely large (safety limit ~20MB)
+    // Server now supports up to 50MB
+    let max_diff_len = 20_000_000;
+    let effective_diff = if diff.len() > max_diff_len {
+        let truncated = diff.chars().take(max_diff_len).collect::<String>();
+        format!("{}\n\n... (Diff truncated due to extreme size > 20MB)", truncated)
+    } else {
+        diff.to_string()
+    };
+    
+    let mut plan = generate_plan(model, &status, &effective_diff, &log).await?;
     pb.finish_and_clear();
+    
+    if diff.len() > max_diff_len {
+        eprintln!(
+            "{} {}",
+            style("[!]").yellow().bold(),
+            style("Diff was truncated because it exceeded 20MB. This is extremely large!").yellow()
+        );
+    }
+    
     eprintln!("{} {}", style("[✓]").green().bold(), style("Plan received from Gemini").green());
     normalize_plan_files(&mut plan, &changed_files);
 
