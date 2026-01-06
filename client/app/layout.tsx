@@ -16,22 +16,22 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Orca Shell - AI-Assisted Git Workflow",
-    template: "%s | Orca Shell",
+    default: "Orca ClI - AI-powered Git Workflow",
+    template: "%s | Orca ClI",
   },
   description: "Orca is an AI-powered CLI that intelligently groups your changes into semantic commits using multiple AI models. Stop micro-managing Git.",
   keywords: ["git", "ai", "cli", "workflow", "developer tools", "productivity", "semantic commits"],
   openGraph: {
-    title: "Orca Shell - AI-Assisted Git Workflow",
+    title: "Orca ClI - AI-powered Git Workflow",
     description: "Intelligently group changes into semantic commits. Stop micro-managing Git.",
     url: "https://orcacli.codes",
-    siteName: "Orca Shell",
+    siteName: "Orca ClI",
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Orca Shell - AI-Assisted Git Workflow",
+    title: "Orca ClI - AI-powered Git Workflow",
     description: "Intelligently group changes into semantic commits. Stop micro-managing Git.",
   },
 };
