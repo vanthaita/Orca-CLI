@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { createHash, randomBytes } from 'crypto';
-import { Repository } from 'typeorm';
+import { Repository, MoreThanOrEqual } from 'typeorm';
 import { CliDeviceCode } from './entities/cli-device-code.entity';
 import { CliToken } from './entities/cli-token.entity';
 import { User } from './entities/user.entity';
@@ -76,7 +76,7 @@ export class AuthService {
     const count = await this.cliDeviceCodesRepo.count({
       where: {
         ipAddress,
-        createdAt: { $gte: since } as any,
+        createdAt: MoreThanOrEqual(since),
       },
     });
 
