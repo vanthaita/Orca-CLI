@@ -118,10 +118,14 @@ pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<Path
     }
 
     let changed_files = files_from_status_porcelain(&status);
-    let spinner_msg = format!(
-        "Asking model '{}' to analyze changes and propose commit plan...",
-        model
-    );
+    let spinner_msg = if crate::config::get_provider() == "orca" {
+        "Asking Orca Server to analyze changes and propose commit plan...".to_string()
+    } else {
+        format!(
+            "Asking model '{}' to analyze changes and propose commit plan...",
+            model
+        )
+    };
     let pb = spinner(&spinner_msg);
     
     // Truncate diff if it's extremely large (safety limit ~20MB)

@@ -53,10 +53,14 @@ pub(crate) async fn run_commit_flow(confirm: bool, dry_run: bool, model: &str) -
 
     let changed_files = files_from_status_porcelain(&status);
 
-    let spinner_msg = format!(
-        "Asking model '{}' to analyze changes and propose commit plan...",
-        model
-    );
+    let spinner_msg = if crate::config::get_provider() == "orca" {
+        "Asking Orca Server to analyze changes and propose commit plan...".to_string()
+    } else {
+        format!(
+            "Asking model '{}' to analyze changes and propose commit plan...",
+            model
+        )
+    };
     let pb = spinner(&spinner_msg);
     let mut plan = generate_plan(model, &status, &diff, &log).await?;
     pb.finish_and_clear();
