@@ -15,6 +15,11 @@ struct ReleaseInfo {
     notes: String,
 }
 
+#[derive(Deserialize, Debug)]
+struct OrcaApiResponse<T> {
+    data: T,
+}
+
 pub async fn run_update_flow() -> Result<()> {
     println!("{}", style("Checking for updates...").cyan());
 
@@ -23,18 +28,47 @@ pub async fn run_update_flow() -> Result<()> {
     
     // 2. Fetch latest version from server
     let server_url = crate::config::get_orca_base_url()?;
+    let api_prefix = crate::config::ORCA_API_PREFIX;
+    let server_url = server_url.trim_end_matches('/');
+    let api_prefix = api_prefix.trim_matches('/');
+
+    let releases_url = if server_url.ends_with(&format!("/{api_prefix}")) {
+        format!("{server_url}/releases/latest")
+    } else {
+        format!("{server_url}/{api_prefix}/releases/latest")
+    };
+
+    println!("Checking: {}", style(&releases_url).dim());
     let client = reqwest::Client::new();
     let resp = client
-        .get(format!("{}/releases/latest", server_url))
+        .get(&releases_url)
         .send()
         .await
         .context("Failed to check for updates (server unreachable)")?;
 
     if !resp.status().is_success() {
+        if resp.status() == reqwest::StatusCode::NOT_FOUND {
+            anyhow::bail!(
+                "Update endpoint not found (404). Tried: {}\n\nIf you set ORCA_API_BASE_URL or config.api.orca_base_url, ensure it points to the Orca API host (e.g. https://api.orcacli.codes) and that the server supports '{}/releases/latest'.",
+                releases_url,
+                api_prefix
+            );
+        }
+
         anyhow::bail!("Server returned error: {}", resp.status());
     }
 
-    let release_info: ReleaseInfo = resp.json().await.context("Failed to parse release info")?;
+    let body = resp.text().await.context("Failed to read update response body")?;
+
+    let release_info: ReleaseInfo = match serde_json::from_str::<OrcaApiResponse<ReleaseInfo>>(&body) {
+        Ok(v) => v.data,
+        Err(_) => serde_json::from_str::<ReleaseInfo>(&body).with_context(|| {
+            let snippet = body.chars().take(400).collect::<String>();
+            format!(
+                "Failed to parse release info (unexpected response schema). URL: {releases_url}\nResponse (first 400 chars): {snippet}"
+            )
+        })?,
+    };
 
     println!("Current version: {}", style(current_version).yellow());
     println!("Latest version:  {}", style(&release_info.version).green());
@@ -45,6 +79,16 @@ pub async fn run_update_flow() -> Result<()> {
     }
 
     println!("\nRelease notes:\n{}", release_info.notes);
+
+    if !cfg!(target_os = "windows") {
+        println!(
+            "\n{}\n{}\n{}",
+            style("Automatic updates are currently only supported on Windows.").yellow().bold(),
+            style("To update on this platform, download the latest release from:").yellow(),
+            style(&release_info.url).cyan().underlined()
+        );
+        return Ok(());
+    }
     
     if !dialoguer::Confirm::new()
         .with_prompt("Do you want to update now?")

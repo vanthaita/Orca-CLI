@@ -131,3 +131,7 @@ pub(crate) async fn run_apply_flow(
 pub(crate) async fn run_doctor_flow() -> Result<()> {
     super::flows_doctor::run_doctor_flow().await
 }
+
+pub(crate) async fn run_update_flow() -> Result<()> {
+    super::update::run_update_flow().await
+}
