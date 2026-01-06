@@ -1,23 +1,45 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/lib/auth';
 import { AuthService } from '@/service/auth.service';
-import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 
 function VerifyContent() {
+    const router = useRouter();
     const searchParams = useSearchParams();
+    const { isAuthenticated, isLoading } = useAuth();
+
     const [userCode, setUserCode] = useState('');
     const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
     const [message, setMessage] = useState('');
+    const didCheckAuth = useRef(false);
 
+    // Initialize userCode from URL
     useEffect(() => {
         const code = searchParams.get('userCode');
         if (code) {
-            setUserCode(code);
+            setUserCode(code.toUpperCase());
         }
     }, [searchParams]);
+
+    // Handle Authentication Enforce
+    useEffect(() => {
+        if (isLoading) return;
+        if (didCheckAuth.current) return;
+
+        if (!isAuthenticated) {
+            didCheckAuth.current = true;
+            // Redirect to login if not authenticated, carrying the userCode
+            const code = searchParams.get('userCode');
+            const loginUrl = code
+                ? `/login?userCode=${encodeURIComponent(code)}`
+                : '/login';
+            router.replace(loginUrl);
+        }
+    }, [isAuthenticated, isLoading, router, searchParams]);
 
     const handleVerify = async (e?: React.FormEvent) => {
         e?.preventDefault();
@@ -31,31 +53,48 @@ function VerifyContent() {
             setStatus('success');
         } catch (error: any) {
             setStatus('error');
-            setMessage(error?.response?.data?.message || 'Failed to verify code. Please try again.');
+            setMessage(error?.response?.data?.message || 'Failed to verify code. Please check the code and try again.');
         }
     };
 
+    // Show loading while checking auth state
+    if (isLoading) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-black">
+                <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+            </div>
+        );
+    }
+
+    // If not authenticated, we return null because we are redirecting
+    if (!isAuthenticated) {
+        return null;
+    }
+
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
-            <div className="w-full max-w-md space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
-                <div className="text-center">
-                    <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                        Device Login
+        <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-br from-gray-900 to-black text-white">
+            <div className="w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-2xl shadow-2xl">
+                <div className="text-center mb-8">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 mb-4">
+                        <ShieldCheck className="h-6 w-6 text-emerald-500" />
+                    </div>
+                    <h1 className="text-2xl font-bold tracking-tight text-white">
+                        Device Confirmation
                     </h1>
-                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                        Enter the code displayed on your device
+                    <p className="mt-2 text-sm text-neutral-400">
+                        Please confirm the code displayed on your CLI to continue.
                     </p>
                 </div>
 
                 {status === 'success' ? (
-                    <div className="flex flex-col items-center justify-center space-y-4 py-8 text-center text-green-600 dark:text-green-400 fade-in">
-                        <CheckCircle2 className="h-16 w-16" />
+                    <div className="flex flex-col items-center justify-center space-y-4 py-8 text-center text-emerald-400 animate-in fade-in zoom-in duration-300">
+                        <CheckCircle2 className="h-20 w-20" />
                         <div className="space-y-2">
-                            <h3 className="text-xl font-semibold">Success!</h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                You have successfully signed in to the CLI.
+                            <h3 className="text-xl font-semibold text-white">Authorization Successful!</h3>
+                            <p className="text-sm text-neutral-400">
+                                Your terminal is now authenticated.
                                 <br />
-                                You can now close this window.
+                                You may close this window.
                             </p>
                         </div>
                     </div>
@@ -72,23 +111,24 @@ function VerifyContent() {
                                 required
                                 value={userCode}
                                 onChange={(e) => setUserCode(e.target.value.toUpperCase())}
-                                className="block w-full rounded-md border-0 py-3 text-center text-2xl font-mono tracking-[0.5em] text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:bg-gray-950 dark:text-white dark:ring-gray-700 sm:text-2xl"
-                                placeholder="ABCD-1234"
+                                className="block w-full rounded-xl border-0 py-4 text-center text-3xl font-mono tracking-[0.5em] text-white bg-black/50 shadow-inner ring-1 ring-inset ring-white/10 placeholder:text-neutral-700 focus:ring-2 focus:ring-inset focus:ring-emerald-500 sm:text-3xl transition-all"
+                                placeholder="ABCDEF"
                                 maxLength={9}
+                                autoComplete="off"
                             />
                         </div>
 
                         {status === 'error' && (
-                            <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">
+                            <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-4">
                                 <div className="flex">
                                     <div className="flex-shrink-0">
-                                        <AlertCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
+                                        <AlertCircle className="h-5 w-5 text-red-500" aria-hidden="true" />
                                     </div>
                                     <div className="ml-3">
-                                        <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                                        <h3 className="text-sm font-medium text-red-400">
                                             Verification Failed
                                         </h3>
-                                        <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                                        <div className="mt-1 text-sm text-red-500/80">
                                             <p>{message}</p>
                                         </div>
                                     </div>
@@ -99,22 +139,25 @@ function VerifyContent() {
                         <button
                             type="submit"
                             disabled={status === 'loading' || !userCode}
-                            className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            className="flex w-full justify-center rounded-xl bg-emerald-600 px-3 py-3.5 text-sm font-semibold text-white shadow-lg hover:bg-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
                         >
                             {status === 'loading' ? (
                                 <Loader2 className="h-5 w-5 animate-spin" />
                             ) : (
-                                'Verify Device'
+                                'Confirm Device Logic'
                             )}
                         </button>
                     </form>
                 )}
             </div>
-            <div className="mt-8">
-                <Link href="/" className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-300">
-                    ← Back to Home
-                </Link>
-            </div>
+
+            {!status.includes('success') && (
+                <div className="mt-8">
+                    <Link href="/" className="text-sm text-neutral-500 hover:text-white transition-colors">
+                        Cancel
+                    </Link>
+                </div>
+            )}
         </div>
     );
 }
@@ -122,8 +165,8 @@ function VerifyContent() {
 export default function CliVerifyPage() {
     return (
         <Suspense fallback={
-            <div className="flex min-h-screen items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            <div className="flex min-h-screen items-center justify-center bg-black">
+                <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
             </div>
         }>
             <VerifyContent />

@@ -1,73 +1,75 @@
 'use client';
 
-import Link from 'next/link';
-import { useMemo, useEffect, Suspense, useRef } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { AuthService } from '@/service/auth.service';
+import Link from 'next/link';
 
 function LoginContent() {
-  const { isAuthenticated, isLoading, refetch } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const userCode = searchParams.get('userCode');
-  const didRedirect = useRef(false);
-  const didRefetch = useRef(false);
 
+  // Checking redirect state prevents flash of login screen content
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // Calculate the Google Login URL
+  // If userCode is present, we want to return to /cli/verify?userCode=...
   const googleLoginUrl = useMemo(() => {
-    // keep in sync with axios baseURL
-    const state = userCode ? `/cli/verify?userCode=${encodeURIComponent(userCode)}` : undefined;
-    return `${AuthService.startGoogleLogin(state)}`;
+    const returnPath = userCode
+      ? `/cli/verify?userCode=${encodeURIComponent(userCode)}`
+      : '/dashboard';
+
+    return AuthService.startGoogleLogin(returnPath);
   }, [userCode]);
 
-  // Force refetch auth state on mount to handle post-OAuth callback
-  // This ensures we have fresh auth data when checking if redirect is needed
+  // Handle successful authentication redirection
   useEffect(() => {
-    if (didRefetch.current) return;
-    didRefetch.current = true;
-    refetch().catch((err) => {
-      console.error('[Login] Failed to refetch auth state:', err);
-    });
-  }, [refetch]);
-
-  // Redirect to dashboard or next url if already logged in
-  useEffect(() => {
-    if (didRedirect.current) return;
     if (!isLoading && isAuthenticated) {
-      didRedirect.current = true;
+      setIsRedirecting(true);
       if (userCode) {
+        // If we have a userCode, go to verification page
         router.replace(`/cli/verify?userCode=${encodeURIComponent(userCode)}`);
       } else {
+        // Otherwise go to dashboard
         router.replace('/dashboard');
       }
     }
   }, [isAuthenticated, isLoading, userCode, router]);
 
-  // Show loading while checking auth
-  if (isLoading) {
+  // Loading state (initial check or redirecting)
+  if (isLoading || isRedirecting) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="animate-pulse text-emerald-400 font-mono">Checking authentication...</div>
+      <div className="min-h-screen flex items-center justify-center p-6 bg-black">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+          <div className="text-emerald-400 font-mono text-sm">
+            {isRedirecting ? 'Redirecting...' : 'Checking authentication...'}
+          </div>
+        </div>
       </div>
     );
   }
 
-  // Don't show login form if already authenticated (will redirect)
-  if (isAuthenticated) {
-    return null;
-  }
-
+  // At this point: !isLoading && !isAuthenticated
+  // Show Login UI
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-md rounded-xl border-2 border-dashed border-white/20 bg-black/20 backdrop-blur-sm p-8">
-        <h1 className="text-3xl font-bold text-white">Login</h1>
-        <p className="mt-3 text-sm text-neutral-400">
-          Sign in to approve CLI device login and manage your Orca account.
-        </p>
+    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-gray-900 to-black">
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-8 shadow-2xl">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-white tracking-tight">Welcome</h1>
+          <p className="mt-3 text-sm text-neutral-400">
+            {userCode
+              ? 'Sign in to authorize your CLI device'
+              : 'Sign in to manage your Orca account'}
+          </p>
+        </div>
 
         <a
           href={googleLoginUrl}
-          className="mt-8 inline-flex w-full items-center justify-center gap-3 rounded-lg border-2 border-dashed border-white/20 bg-white px-4 py-3 text-sm font-semibold text-black transition-all hover:bg-white/90 hover:border-white/40 hover:scale-[1.02]"
+          className="group relative flex w-full items-center justify-center gap-3 rounded-xl bg-white px-4 py-3.5 text-sm font-semibold text-black transition-all hover:bg-neutral-200 active:scale-[0.98]"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
@@ -90,8 +92,11 @@ function LoginContent() {
           Continue with Google
         </a>
 
-        <div className="mt-8 text-sm text-center">
-          <Link href="/" className="text-neutral-400 hover:text-white transition-colors underline">
+        <div className="mt-8 text-center">
+          <Link
+            href="/"
+            className="text-xs text-neutral-500 hover:text-white transition-colors"
+          >
             ← Back to home
           </Link>
         </div>
@@ -103,8 +108,8 @@ function LoginContent() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="animate-pulse text-emerald-400 font-mono">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center p-6 bg-black">
+        <div className="animate-pulse text-neutral-500 font-mono text-sm">Loading...</div>
       </div>
     }>
       <LoginContent />
