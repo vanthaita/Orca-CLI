@@ -86,19 +86,19 @@ pub(crate) fn print_config_info(config: &crate::config::OrcaConfig) {
     }
     
     if let Some(ref key) = config.api.gemini_api_key {
-        print_info_line("Gemini API Key", &mask_token(key));
+        print_info_line("API Key", &mask_token(key));
     }
     
     if let Some(ref key) = config.api.openai_api_key {
-        print_info_line("OpenAI API Key", &mask_token(key));
+        print_info_line("API Key", &mask_token(key));
     }
     
     if let Some(ref key) = config.api.zai_api_key {
-        print_info_line("ZAI API Key", &mask_token(key));
+        print_info_line("API Key", &mask_token(key));
     }
     
     if let Some(ref key) = config.api.deepseek_api_key {
-        print_info_line("DeepSeek API Key", &mask_token(key));
+        print_info_line("API Key", &mask_token(key));
     }
     
     if let Ok(config_path) = crate::config::config_file_path() {

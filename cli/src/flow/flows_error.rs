@@ -41,9 +41,9 @@ pub(crate) fn print_friendly_error(err: &anyhow::Error) {
         return;
     }
 
-    if msg.contains("GEMINI_API_KEY") {
+    if msg.contains("API Key for '") || msg.contains("_API_KEY") {
         eprintln!(
-            "\n{} {}\n  Option 1: orca setup --api-key YOUR_KEY\n  Option 2: export GEMINI_API_KEY=YOUR_KEY",
+            "\n{} {}\n  Option 1: orca setup --api-key <KEY> (optionally: --provider <PROVIDER>)\n  Option 2: export <PROVIDER>_API_KEY=<KEY>",
             style("[i]").cyan().bold(),
             style("Hint:").cyan()
         );
@@ -112,7 +112,7 @@ pub(crate) fn print_friendly_error(err: &anyhow::Error) {
 
     if msg.contains("Gemini API") {
         eprintln!(
-            "\n{} {}\n  - Check GEMINI_API_KEY\n  - Try another model: --model gemini-2.5-flash\n  - If rate limited, retry later",
+            "\n{} {}\n  - Check your API key configuration (orca setup --api-key <KEY>)\n  - Try another model: --model <MODEL>\n  - If rate limited, retry later",
             style("[i]").cyan().bold(),
             style("Hint:").cyan()
         );
