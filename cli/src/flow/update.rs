@@ -49,7 +49,7 @@ pub async fn run_update_flow() -> Result<()> {
     if !resp.status().is_success() {
         if resp.status() == reqwest::StatusCode::NOT_FOUND {
             anyhow::bail!(
-                "Update endpoint not found (404). Tried: {}\n\nIf you set ORCA_API_BASE_URL or config.api.orca_base_url, ensure it points to the Orca API host (e.g. https://api.orcacli.codes) and that the server supports '{}/releases/latest'.",
+                "Update endpoint not found (404). Tried: {}\n\nIf you configured a custom Orca server URL, ensure it points to the Orca API host (e.g. https://api.orcacli.codes) and that the server supports '{}/releases/latest'.",
                 releases_url,
                 api_prefix
             );
