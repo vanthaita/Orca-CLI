@@ -1,7 +1,7 @@
 <div align="center">
-  <img src="https://res.cloudinary.com/dq2z27agv/image/upload/q_auto,f_webp,w_1200/v1767689174/wfc4k1afjjmeq2lfauok.png" alt="Orca Logo" width="100%" />
+  <img src="https://res.cloudinary.com/dq2z27agv/image/upload/q_auto,f_webp,w_1200/v1767689659/c0b0wna5zvcn2m0spkei.png" alt="Orca Logo" width="100%" />
 
-  # Orca Shell
+  # ORCA CLI
 
   **AI-native Git workflow automation for modern developers.**
 
