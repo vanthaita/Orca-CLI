@@ -1,9 +1,7 @@
 use anyhow::{Context, Result};
 use console::style;
 use dialoguer::Select;
-use serde::Deserialize;
-
-use crate::flow::flows_login::UserMeResponse;
+ 
 
 /// Get device name for display
 fn get_device_name() -> String {
