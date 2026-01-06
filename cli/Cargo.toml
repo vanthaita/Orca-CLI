@@ -1,8 +1,8 @@
 [package]
 name = "orca"
-version = "0.1.11"
+version = "0.1.14"
 edition = "2024"
-description = "AI-powered Git commit manager using Gemini"
+description = "AI-powered Git Workflow"
 
 [dependencies]
 async-trait = "0.1"
