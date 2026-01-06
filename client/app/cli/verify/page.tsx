@@ -1,211 +1,132 @@
 'use client';
 
-import { useSearchParams, useRouter } from 'next/navigation';
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { AuthService } from '@/service/auth.service';
+import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import Link from 'next/link';
 
-import { useCliVerify } from '@/hook/useCliVerify';
-import { useMe } from '@/hook/useMe';
+function VerifyContent() {
+    const searchParams = useSearchParams();
+    const [userCode, setUserCode] = useState('');
+    const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+    const [message, setMessage] = useState('');
 
-export default function CliVerifyPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center p-6">
-          <div className="animate-pulse text-neutral-400 font-mono">Loading...</div>
+    useEffect(() => {
+        const code = searchParams.get('userCode');
+        if (code) {
+            setUserCode(code);
+        }
+    }, [searchParams]);
+
+    const handleVerify = async (e?: React.FormEvent) => {
+        e?.preventDefault();
+        if (!userCode.trim()) return;
+
+        setStatus('loading');
+        setMessage('');
+
+        try {
+            await AuthService.cliVerify(userCode);
+            setStatus('success');
+        } catch (error: any) {
+            setStatus('error');
+            setMessage(error?.response?.data?.message || 'Failed to verify code. Please try again.');
+        }
+    };
+
+    return (
+        <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
+            <div className="w-full max-w-md space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
+                <div className="text-center">
+                    <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+                        Device Login
+                    </h1>
+                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                        Enter the code displayed on your device
+                    </p>
+                </div>
+
+                {status === 'success' ? (
+                    <div className="flex flex-col items-center justify-center space-y-4 py-8 text-center text-green-600 dark:text-green-400 fade-in">
+                        <CheckCircle2 className="h-16 w-16" />
+                        <div className="space-y-2">
+                            <h3 className="text-xl font-semibold">Success!</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                You have successfully signed in to the CLI.
+                                <br />
+                                You can now close this window.
+                            </p>
+                        </div>
+                    </div>
+                ) : (
+                    <form onSubmit={handleVerify} className="mt-8 space-y-6">
+                        <div>
+                            <label htmlFor="user-code" className="sr-only">
+                                User Code
+                            </label>
+                            <input
+                                id="user-code"
+                                name="code"
+                                type="text"
+                                required
+                                value={userCode}
+                                onChange={(e) => setUserCode(e.target.value.toUpperCase())}
+                                className="block w-full rounded-md border-0 py-3 text-center text-2xl font-mono tracking-[0.5em] text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 dark:bg-gray-950 dark:text-white dark:ring-gray-700 sm:text-2xl"
+                                placeholder="ABCD-1234"
+                                maxLength={9}
+                            />
+                        </div>
+
+                        {status === 'error' && (
+                            <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">
+                                <div className="flex">
+                                    <div className="flex-shrink-0">
+                                        <AlertCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
+                                    </div>
+                                    <div className="ml-3">
+                                        <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                                            Verification Failed
+                                        </h3>
+                                        <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                                            <p>{message}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={status === 'loading' || !userCode}
+                            className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        >
+                            {status === 'loading' ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                                'Verify Device'
+                            )}
+                        </button>
+                    </form>
+                )}
+            </div>
+            <div className="mt-8">
+                <Link href="/" className="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-300">
+                    ← Back to Home
+                </Link>
+            </div>
         </div>
-      }
-    >
-      <CliVerifyInner />
-    </Suspense>
-  );
+    );
 }
 
-const CliVerifyInner = () => {
-  const searchParams = useSearchParams();
-  const me = useMe();
-  const verify = useCliVerify();
-  const router = useRouter(); // Import useRouter from next/navigation
-
-  const didAutoApprove = useRef(false);
-
-  const userCodeFromQuery = useMemo(() => {
-    const fromQuery = searchParams.get('userCode') ?? searchParams.get('code') ?? '';
-    return fromQuery.trim();
-  }, [searchParams]);
-
-  const [userCode, setUserCode] = useState(userCodeFromQuery);
-
-  useEffect(() => {
-    me.refetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Sync state if query param changes late
-  useEffect(() => {
-    if (userCodeFromQuery && userCodeFromQuery !== userCode) {
-      setUserCode(userCodeFromQuery);
-    }
-  }, [userCodeFromQuery, userCode]);
-
-  // Auto-approve logic
-  useEffect(() => {
-    // If we already tried to auto-approve, don't try again automatically to avoid loops
-    if (didAutoApprove.current) return;
-
-    // Conditions to attempt auto-approve:
-    // 1. We have a user (logged in)
-    // 2. We have a user code
-    // 3. We are not already verifying
-    // 4. We haven't succeeded yet
-    // 5. We are not loading user data
-    const canAutoApprove =
-      me.data?.user &&
-      !me.isLoading &&
-      userCodeFromQuery &&
-      !verify.isPending &&
-      !verify.isSuccess &&
-      !verify.isError;
-
-    if (canAutoApprove) {
-      console.log('[CliVerify] Auto-approving code:', userCodeFromQuery);
-      didAutoApprove.current = true;
-      verify.mutate(userCodeFromQuery, {
-        onError: () => {
-          didAutoApprove.current = false;
-        },
-      });
-    }
-  }, [me.data?.user, me.isLoading, userCodeFromQuery, verify.isPending, verify.isSuccess, verify.isError, verify]);
-
-  // Redirect if not logged in logic - handled by UI button instead for better UX, 
-  // but we can auto-redirect if we have the code and definitely no user.
-  useEffect(() => {
-    if (!me.isLoading && !me.data?.user && userCodeFromQuery) {
-      // Optional: Could auto-redirect here, but showing UI is often safer to avoid loops.
-      // leaving it as manual action or "Redirecting..." UI for now to be safe.
-    }
-  }, [me.isLoading, me.data, userCodeFromQuery]);
-
-  const handleLoginRedirect = () => {
-    const code = userCodeFromQuery || userCode;
-    const returnUrl = `/cli/verify?userCode=${encodeURIComponent(code)}`;
-    // Use the auth service helper? Or just direct link. 
-    // Usually standard login link wraps this.
-    // For now, let's just go to /login passing userCode so it can redirect back.
-    router.push(`/login?userCode=${encodeURIComponent(code)}`);
-  };
-
-  const statusText = useMemo(() => {
-    if (me.isLoading) return 'Checking authentication...';
-    if (!me.data?.user) return 'Sign in required to approve CLI login.';
-
-    if (verify.isPending) return 'Verifying code...';
-    if (verify.isSuccess) return 'Approved! You can close this tab.';
-    if (verify.isError) return 'Verification failed.';
-
-    if (!userCode.trim()) return 'Please enter the code displayed in your terminal.';
-
-    return 'Ready to approve.';
-  }, [verify.isPending, verify.isSuccess, verify.isError, me.isLoading, me.data, userCode]);
-
-  if (me.isError) {
+export default function CliVerifyPage() {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="max-w-md text-center">
-          <div className="text-red-500 font-semibold mb-2">Connection Error</div>
-          <div className="text-sm text-neutral-600 mb-4">
-            Could not connect to the authentication server.
-          </div>
-          <button
-            onClick={() => window.location.reload()}
-            className="text-xs bg-neutral-100 hover:bg-neutral-200 px-3 py-2 rounded-md transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-neutral-50">
-      <div className="w-full max-w-md rounded-xl border border-neutral-200 bg-white p-8 shadow-sm">
-
-        {/* Header Icon */}
-        <div className="flex justify-center mb-6">
-          <div className={`h-16 w-16 rounded-full flex items-center justify-center ${verify.isSuccess ? 'bg-green-100 text-green-600' : 'bg-neutral-100 text-neutral-600'
-            }`}>
-            {verify.isSuccess ? (
-              <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            ) : (
-              <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-              </svg>
-            )}
-          </div>
-        </div>
-
-        <h1 className="text-2xl font-bold text-center text-neutral-900 mb-2">
-          {verify.isSuccess ? 'Login Approved' : 'CLI Login Request'}
-        </h1>
-
-        <p className="text-center text-sm text-neutral-500 mb-8">
-          {statusText}
-        </p>
-
-        {verify.isSuccess ? (
-          <div className="bg-green-50 text-green-800 text-sm rounded-lg p-4 text-center">
-            You have successfully logged in to the CLI. You can now close this window.
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {me.data?.user ? (
-              <div className="bg-neutral-50 rounded-lg p-3 text-sm text-center border border-neutral-100">
-                Signed in as <span className="font-semibold">{me.data.user.email}</span>
-              </div>
-            ) : (
-              <button
-                onClick={handleLoginRedirect}
-                className="w-full py-3 px-4 bg-black text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
-              >
-                Sign in to Approve
-              </button>
-            )}
-
-            <div className="relative">
-              <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">
-                Confirmation Code
-              </label>
-              <input
-                value={userCode}
-                onChange={(e) => setUserCode(e.target.value.toUpperCase())}
-                placeholder="ABCD-EFGH"
-                className="w-full text-center text-2xl font-mono tracking-widest p-3 rounded-lg border border-neutral-300 focus:ring-2 focus:ring-black focus:border-transparent outline-none uppercase"
-                disabled={verify.isPending || verify.isSuccess}
-                maxLength={9}
-              />
+        <Suspense fallback={
+            <div className="flex min-h-screen items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
             </div>
-
-            {me.data?.user && (
-              <button
-                onClick={() => verify.mutate(userCode.trim())}
-                disabled={!userCode.trim() || verify.isPending}
-                className="w-full py-3 px-4 bg-black text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {verify.isPending ? 'Verifying...' : 'Approve Login'}
-              </button>
-            )}
-
-            {verify.isError && (
-              <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg">
-                {(verify.error as any)?.message || 'Something went wrong. Please try again.'}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+        }>
+            <VerifyContent />
+        </Suspense>
+    );
 }

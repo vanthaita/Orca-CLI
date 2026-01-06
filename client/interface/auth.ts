@@ -14,4 +14,5 @@ export type MeResponse = {
 
 export type CliVerifyResponse = {
   ok: boolean;
+  message?: string;
 };
