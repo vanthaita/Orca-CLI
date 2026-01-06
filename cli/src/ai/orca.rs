@@ -2,6 +2,7 @@ use super::CompletionProvider;
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use serde::de::DeserializeOwned;
 
 pub(crate) struct OrcaProvider {
     base_url: String,
@@ -51,7 +52,7 @@ impl CompletionProvider for OrcaProvider {
             anyhow::bail!("Orca server returned {}: {}", status, text);
         }
 
-        let parsed: OrcaChatResponse = serde_json::from_str(&text)
+        let parsed: OrcaChatResponse = parse_api_json(&text)
             .with_context(|| format!("Failed to parse Orca server response: {}", text))?;
 
         let trimmed = parsed.text.trim();
@@ -61,6 +62,16 @@ impl CompletionProvider for OrcaProvider {
 
         Ok(trimmed.to_string())
     }
+}
+
+fn parse_api_json<T: DeserializeOwned>(text: &str) -> Result<T> {
+    let value: serde_json::Value = serde_json::from_str(text).context("Failed to parse JSON")?;
+
+    if let Some(data) = value.get("data") {
+        return serde_json::from_value::<T>(data.clone()).context("Failed to parse JSON.data");
+    }
+
+    serde_json::from_value::<T>(value).context("Failed to parse JSON")
 }
 
 #[derive(Debug, Serialize)]
