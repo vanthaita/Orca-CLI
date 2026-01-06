@@ -18,6 +18,13 @@ Orca is a command-line toolset designed to remove friction from your daily devel
 
 Instead of fighting with git commands and writing boilerplate descriptions, let Orca handle the choreography so you can focus on shipping features.
 
+## A New Philosophy for Version Control
+Git is powerful, but noisy. It requires you to manually stage, commit, and push hundreds of times. Orca changes this by introducing an agentic layer between you and Git.
+
+Instead of micro-managing commits, you describe your intent or let Orca infer it. Orca analyzes your changes, groups them semantically using advanced AI models, and generates clean, meaningful history that tells a story.
+
+It's not just a wrapper; it's a workflow engine designed for the era of AI-assisted coding.
+
 ## ✨ Features
 
 - **🧠 Intelligent Commits**: Analyzes your diffs and generates conventional commit messages automatically.

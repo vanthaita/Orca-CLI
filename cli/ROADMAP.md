@@ -1,8 +1,7 @@
 # Orca CLI Roadmap — Wrap Git + AI Workflow Engine
 
-Git is powerful, but noisy. It requires you to manually stage, commit, and push hundreds of times.
-
-Orca changes this by introducing an agentic layer between you and Git.
+## A New Philosophy for Version Control
+Git is powerful, but noisy. It requires you to manually stage, commit, and push hundreds of times. Orca changes this by introducing an agentic layer between you and Git.
 
 Instead of micro-managing commits, you describe your intent or let Orca infer it. Orca analyzes your changes, groups them semantically using advanced AI models, and generates clean, meaningful history that tells a story.
 
