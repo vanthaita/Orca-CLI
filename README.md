@@ -1,99 +1,114 @@
-# Orca Cli
+<div align="center">
+  <img src="https://res.cloudinary.com/dq2z27agv/image/upload/q_auto,f_webp,w_1200/v1767689174/wfc4k1afjjmeq2lfauok.png" alt="Orca Logo" width="100%" />
 
-Orca Cli is a command-line toolset for helping with day-to-day Git workflows (commit message generation, planning, publishing, and utilities).
+  # Orca Shell
 
-## Repository structure
+  **AI-native Git workflow automation for modern developers.**
 
-- `cli/`
-  - Rust CLI (the actual Orca CLI)
-- `client/`
-  - Next.js app (UI / companion project)
+  [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+  [![Rust](https://img.shields.io/badge/built_with-Rust-d83018.svg)](https://www.rust-lang.org/)
+  [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+</div>
 
-## Requirements
+<br />
 
-- Rust toolchain (stable)
-- Node.js (LTS recommended) + npm
+## 🌊 What is Orca?
 
-## Getting started
+Orca is a command-line toolset designed to remove friction from your daily development workflow. It uses advanced AI to understand your code changes, generate semantic commit messages, plan complex refactors, and automate the pull request process.
 
-## Install Orca CLI (Windows)
+Instead of fighting with git commands and writing boilerplate descriptions, let Orca handle the choreography so you can focus on shipping features.
 
-1) Download the latest Windows build from GitHub Releases:
+## ✨ Features
 
-- https://github.com/vanthaita/Orca/releases/latest
+- **🧠 Intelligent Commits**: Analyzes your diffs and generates conventional commit messages automatically.
+- **🗺️ Strategic Planning**: Generates a `plan.json` for complex tasks, allowing you to review and edit the strategy before execution.
+- **🚀 Zero-Friction Releases**: Handles the entire publish flow—commits, pushes, and creates a PR with a generated summary in one command.
+- **🔒 Local-First Privacy**: Your code stays on your machine. Orca interacts with AI providers securely using your own API keys.
+- **⚡ Blazing Fast**: Built with Rust for instant startup times and high performance.
 
-2) Recommended: Install with MSI (Git Bash style)
+## 📦 Installation
 
-- Download `OrcaSetup.msi`
-- Run the installer (Next → Next → Finish)
-- Open a new terminal and run:
+### Windows
 
-```powershell
-orca --version
-```
+**Option 1: MSI Installer (Recommended)**
+1. Download the latest `OrcaSetup.msi` from [Releases](https://github.com/vanthaita/Orca/releases/latest).
+2. Run the installer.
+3. Open a new terminal and type `orca`.
 
-Note: Windows SmartScreen may warn for unsigned installers. Code signing can reduce these warnings.
+**Option 2: Portable Zip**
+1. Download `orca-x86_64-pc-windows-msvc.zip`.
+2. Extract the archive.
+3. Add the folder to your system `PATH`.
 
-3) Fallback: Portable zip
+### From Source
 
-- Extract `orca-x86_64-pc-windows-msvc.zip` and locate `orca.exe`
-
-Run it from that folder (PowerShell):
-
-```powershell
-.\orca.exe --version
-```
-
-Optional: Add to PATH so you can run `orca` anywhere:
-
-- Move `orca.exe` to `C:\Tools\orca\orca.exe`
-- Add `C:\Tools\orca\` to your user/system `Path`
-- Open a new terminal and run:
-
-```powershell
-orca --version
-```
-
-If you see errors like `VCRUNTIME140.dll was not found`, install **Microsoft Visual C++ Redistributable (x64)** for VS 2015-2022.
-
-## Development
-
-### Rust CLI (`cli/`)
+Requirements: [Rust](https://rustup.rs/) (stable) and [Node.js](https://nodejs.org/).
 
 ```bash
-cargo build
-cargo run -- --help
+# Clone the repository
+git clone https://github.com/vanthaita/Orca.git
+cd Orca
+
+# Build the CLI
+cd cli
+cargo install --path .
 ```
 
-### Next.js app (`client/`)
+## 🛠️ Usage
+
+### 1. Setup
+Configure your preferred AI provider and API keys.
 
 ```bash
-npm ci
-npm run dev
+orca setup --provider openai --api-key sk-...
 ```
 
-## Common scripts
+### 2. The Daily Driver
+Stage changes and generate a commit message in one go.
 
-### Next.js (`client/`)
+```bash
+# Verify changes and commit
+orca commit
+```
 
-- `npm run dev`
-- `npm run build`
-- `npm run start`
-- `npm run lint`
+### 3. Advanced Planning
+For complex features, generate a plan first.
 
-### Rust (`cli/`)
+```bash
+# Generate a plan based on current changes or a prompt
+orca plan --out plan.json
 
-- `cargo fmt` (if rustfmt installed)
-- `cargo clippy` (if clippy installed)
-- `cargo test`
+# ... Edit plan.json manually if needed ...
 
-## CI
+# Execute the plan
+orca apply --file plan.json
+```
 
-GitHub Actions runs CI for:
+### 4. Publishing
+Ship your changes to GitHub without leaving the terminal.
 
-- Rust (build + test)
-- Node/Next.js (install + lint + build)
+```bash
+# Commits, pushes, and opens a PR
+orca publish --branch feat/my-new-feature
+```
 
-## License
+## ⌨️ Commands
 
-TBD
+| Command | Description |
+|---------|-------------|
+| `orca commit` | Analyze changes and create a commit. |
+| `orca plan` | Generate a detailed execution plan. |
+| `orca apply` | Execute a plan file. |
+| `orca publish` | Commit, push, and create a PR. |
+| `orca setup` | Configure AI providers and settings. |
+| `orca login` | Authenticate with Orca Cloud. |
+| `orca doctor` | Check environment health. |
+| `orca update` | Update to the latest version. |
+
+## 🤝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to get started.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
