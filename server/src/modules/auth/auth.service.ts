@@ -68,14 +68,36 @@ export class AuthService {
     return out;
   }
 
-  async startCliLogin(): Promise<{
+  private async checkDeviceCodeRateLimit(ipAddress: string): Promise<void> {
+    const rateLimitHours = 1;
+    const maxCodesPerIP = Number(process.env.CLI_DEVICE_CODE_RATE_LIMIT ?? 10);
+    const since = new Date(Date.now() - rateLimitHours * 60 * 60 * 1000);
+
+    const count = await this.cliDeviceCodesRepo.count({
+      where: {
+        ipAddress,
+        createdAt: { $gte: since } as any,
+      },
+    });
+
+    if (count >= maxCodesPerIP) {
+      throw new UnauthorizedException(`Rate limit exceeded. Maximum ${maxCodesPerIP} device codes per hour.`);
+    }
+  }
+
+  async startCliLogin(ipAddress?: string): Promise<{
     deviceCode: string;
     userCode: string;
     verificationUrl: string;
     expiresIn: number;
     interval: number;
   }> {
-    this.logger.log(`[CLI Login] Starting login flow`);
+    this.logger.log(`[CLI Login] Starting login flow from IP: ${ipAddress ?? 'unknown'}`);
+
+    if (ipAddress) {
+      await this.checkDeviceCodeRateLimit(ipAddress);
+    }
+
     const deviceCode = randomBytes(48).toString('base64url');
     const deviceCodeHash = this.hashToken(deviceCode);
 
@@ -90,6 +112,9 @@ export class AuthService {
       userId: null,
       approvedAt: null,
       expiresAt,
+      attempts: 0,
+      lastPollAt: null,
+      ipAddress: ipAddress ?? null,
     });
 
     await this.cliDeviceCodesRepo.save(record);
@@ -135,17 +160,26 @@ export class AuthService {
     return { ok: true };
   }
 
-  async pollCliLogin(deviceCode: string): Promise<
+  async pollCliLogin(
+    deviceCode: string,
+    deviceName?: string,
+    deviceFingerprint?: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<
     | { status: 'authorization_pending'; interval: number }
+    | { status: 'slow_down'; interval: number }
     | { status: 'expired' }
     | { status: 'ok'; accessToken: string; expiresIn: number }
   > {
     const interval = Number(process.env.CLI_DEVICE_POLL_INTERVAL_SEC ?? 2);
+    const minInterval = Number(process.env.CLI_POLL_MIN_INTERVAL_SEC ?? 1);
+    const maxAttempts = Number(process.env.CLI_POLL_MAX_ATTEMPTS ?? 300);
+
     const deviceCodeHash = this.hashToken(deviceCode);
     const device = await this.cliDeviceCodesRepo.findOne({ where: { deviceCodeHash } });
 
     if (!device) {
-      // this.logger.debug(`[CLI Login] Poll: Device not found`);
       return { status: 'expired' };
     }
 
@@ -155,8 +189,28 @@ export class AuthService {
       return { status: 'expired' };
     }
 
+    // Rate limiting: check poll interval
+    if (device.lastPollAt) {
+      const timeSinceLastPoll = Date.now() - device.lastPollAt.getTime();
+      if (timeSinceLastPoll < minInterval * 1000) {
+        this.logger.warn(`[CLI Login] Poll: Too frequent, returning slow_down`);
+        return { status: 'slow_down', interval: interval * 2 };
+      }
+    }
+
+    // Update poll tracking
+    device.attempts += 1;
+    device.lastPollAt = new Date();
+
+    // Check max attempts
+    if (device.attempts > maxAttempts) {
+      this.logger.warn(`[CLI Login] Poll: Max attempts exceeded`);
+      return { status: 'slow_down', interval: interval * 2 };
+    }
+
+    await this.cliDeviceCodesRepo.save(device);
+
     if (!device.approvedAt || !device.userId) {
-      // this.logger.debug(`[CLI Login] Poll: Pending approval`);
       return { status: 'authorization_pending', interval };
     }
 
@@ -167,13 +221,17 @@ export class AuthService {
     const tokenDays = Number(process.env.CLI_TOKEN_DAYS ?? 30);
     const expiresAt = new Date(Date.now() + tokenDays * 24 * 60 * 60 * 1000);
 
-    const label = 'cli';
     const token = this.cliTokensRepo.create({
       tokenHash,
       userId: device.userId,
       expiresAt,
       revokedAt: null,
-      label,
+      label: deviceName ?? 'cli',
+      deviceName: deviceName ?? null,
+      deviceFingerprint: deviceFingerprint ?? null,
+      ipAddress: ipAddress ?? null,
+      userAgent: userAgent ?? null,
+      lastUsedAt: new Date(),
     });
 
     await this.cliTokensRepo.save(token);
@@ -200,6 +258,17 @@ export class AuthService {
       token.revokedAt = new Date();
       await this.cliTokensRepo.save(token);
     }
+    return { ok: true };
+  }
+
+  async renameCliToken(userId: string, tokenId: string, newName: string): Promise<{ ok: true }> {
+    const token = await this.cliTokensRepo.findOne({ where: { id: tokenId, userId } });
+    if (!token) {
+      throw new UnauthorizedException('Token not found');
+    }
+    token.deviceName = newName;
+    token.label = newName;
+    await this.cliTokensRepo.save(token);
     return { ok: true };
   }
 

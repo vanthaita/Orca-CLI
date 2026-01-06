@@ -22,6 +22,21 @@ export class CliToken {
   @Column({ type: 'varchar', length: 255, nullable: true })
   label!: string | null;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  deviceName!: string | null;
+
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  deviceFingerprint!: string | null;
+
+  @Column({ type: 'varchar', length: 45, nullable: true })
+  ipAddress!: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  userAgent!: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  lastUsedAt!: Date | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 }

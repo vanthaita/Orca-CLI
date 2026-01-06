@@ -23,6 +23,15 @@ export class CliDeviceCode {
   @Column({ type: 'timestamptz', nullable: true })
   approvedAt!: Date | null;
 
+  @Column({ type: 'int', default: 0 })
+  attempts!: number;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  lastPollAt!: Date | null;
+
+  @Column({ type: 'varchar', length: 45, nullable: true })
+  ipAddress!: string | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 }

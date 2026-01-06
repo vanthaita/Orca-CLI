@@ -18,13 +18,15 @@ type CliStartResponse = {
   interval: number;
 };
 
-type CliPollBody = { deviceCode?: string };
+type CliPollBody = { deviceCode?: string; deviceName?: string; deviceFingerprint?: string };
 type CliPollResponse =
   | { status: 'authorization_pending'; interval: number }
+  | { status: 'slow_down'; interval: number }
   | { status: 'expired' }
   | { status: 'ok'; accessToken: string; expiresIn: number };
 
 type CliVerifyBody = { userCode?: string };
+type RenameTokenBody = { name?: string };
 
 @Controller('auth')
 export class AuthController {
@@ -32,17 +34,22 @@ export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
   @Get('cli/start')
-  async cliStart(): Promise<CliStartResponse> {
-    return this.authService.startCliLogin();
+  async cliStart(@Req() req: Request): Promise<CliStartResponse> {
+    const ipAddress = this.extractIpAddress(req);
+    return this.authService.startCliLogin(ipAddress);
   }
 
   @Post('cli/poll')
-  async cliPoll(@Body() body: CliPollBody): Promise<CliPollResponse> {
+  async cliPoll(@Req() req: Request, @Body() body: CliPollBody): Promise<CliPollResponse> {
     const deviceCode = body.deviceCode?.trim();
     if (!deviceCode) {
       throw new UnauthorizedException('Missing deviceCode');
     }
-    return this.authService.pollCliLogin(deviceCode);
+    const deviceName = body.deviceName?.trim();
+    const deviceFingerprint = body.deviceFingerprint?.trim();
+    const ipAddress = this.extractIpAddress(req);
+    const userAgent = req.headers['user-agent'];
+    return this.authService.pollCliLogin(deviceCode, deviceName, deviceFingerprint, ipAddress, userAgent);
   }
 
   @Post('cli/verify')
@@ -75,6 +82,10 @@ export class AuthController {
       tokens: tokens.map((t) => ({
         id: t.id,
         label: t.label,
+        deviceName: t.deviceName,
+        deviceFingerprint: t.deviceFingerprint,
+        ipAddress: t.ipAddress,
+        lastUsedAt: t.lastUsedAt,
         createdAt: t.createdAt,
         expiresAt: t.expiresAt,
         revokedAt: t.revokedAt,
@@ -90,6 +101,28 @@ export class AuthController {
       throw new UnauthorizedException('Missing user');
     }
     return this.authService.revokeCliToken(userId, id);
+  }
+
+  @Post('cli/tokens/:id/rename')
+  @UseGuards(JwtAuthGuard)
+  async cliRename(@Req() req: Request, @Param('id') id: string, @Body() body: RenameTokenBody) {
+    const userId = (req as any).user?.sub as string | undefined;
+    if (!userId) {
+      throw new UnauthorizedException('Missing user');
+    }
+    const newName = body.name?.trim();
+    if (!newName) {
+      throw new UnauthorizedException('Missing name');
+    }
+    return this.authService.renameCliToken(userId, id, newName);
+  }
+
+  private extractIpAddress(req: Request): string | undefined {
+    const forwarded = req.headers['x-forwarded-for'];
+    if (typeof forwarded === 'string') {
+      return forwarded.split(',')[0].trim();
+    }
+    return req.socket?.remoteAddress;
   }
 
   @Get('google')
@@ -135,14 +168,9 @@ export class AuthController {
     let safePath = '/dashboard';
 
     if (state) {
-      // Decode if it looks encoded, though express query parser usually handles it.
-      // But purely client-side might send it raw.
-      // If it starts with / it's a path.
       if (state.startsWith('/')) {
         safePath = state;
       } else {
-        // If it doesn't start with /, strictly it might be invalid or a full URL (which we shouldn't trust blindly for open redirect reasons, but here we assume internal paths)
-        // Let's assume it's a relative path without leading slash
         safePath = `/${state}`;
       }
     }
