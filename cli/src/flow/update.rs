@@ -83,11 +83,34 @@ pub async fn run_update_flow() -> Result<()> {
     if !cfg!(target_os = "windows") {
         println!(
             "\n{}\n{}\n{}",
-            style("Automatic updates are currently only supported on Windows.").yellow().bold(),
-            style("To update on this platform, download the latest release from:").yellow(),
-            style(&release_info.url).cyan().underlined()
+            style("Update on this platform will run the official installer script:").yellow().bold(),
+            style("curl -fsSL https://raw.githubusercontent.com/vanthaita/orca-releases/main/install.sh | sh").cyan(),
+            style("This will modify files on your system.").yellow()
         );
-        return Ok(());
+
+        if !dialoguer::Confirm::new()
+            .with_prompt("Do you want to update now?")
+            .default(true)
+            .interact()?
+        {
+            println!("Update cancelled.");
+            return Ok(());
+        }
+
+        let status = Command::new("sh")
+            .args([
+                "-c",
+                "curl -fsSL https://raw.githubusercontent.com/vanthaita/orca-releases/main/install.sh | sh",
+            ])
+            .status()
+            .context("Failed to run installer script (requires: sh, curl)")?;
+
+        if status.success() {
+            println!("{}", style("Update completed.").green());
+            return Ok(());
+        }
+
+        anyhow::bail!("Installer script failed with status: {}", status);
     }
     
     if !dialoguer::Confirm::new()
