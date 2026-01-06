@@ -7,8 +7,8 @@ pub(crate) const ORCA_API_HOST: &str = "https://api.orcacli.codes";
 pub(crate) const ORCA_API_PREFIX: &str = "api/v1";
 
 const DEFAULT_ORCA_BASE_URL: &str = match option_env!("ORCA_DEFAULT_API_BASE_URL") {
-    Some(v) => v,
-    None => ORCA_API_HOST,
+    Some(v) if !v.is_empty() => v,
+    _ => ORCA_API_HOST,
 };
 
 /// Orca CLI configuration structure
