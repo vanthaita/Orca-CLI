@@ -1,133 +1,26 @@
 
-import { TerminalIcon } from "./icons";
-
-interface CommandItemProps {
-    command: string;
-    description: string;
-    args?: { arg: string; desc: string }[];
-}
-
-const CommandItem = ({ command, description, args }: CommandItemProps) => {
-    return (
-        <div className="border-2 border-dashed border-white/20 bg-neutral-900/50 p-6 rounded-lg hover:border-emerald-500/30 transition-colors group">
-            <div className="font-mono text-emerald-400 font-bold mb-2 text-lg">
-                {command}
-            </div>
-            <p className="text-neutral-400 mb-4 text-sm leading-relaxed">
-                {description}
-            </p>
-            {args && args.length > 0 && (
-                <div className="space-y-2 border-t-2 border-dashed border-white/15 pt-4">
-                    <div className="text-xs uppercase tracking-wider text-neutral-500 font-bold">
-                        Arguments
-                    </div>
-                    <ul className="space-y-1">
-                        {args.map((arg, idx) => (
-                            <li key={idx} className="grid grid-cols-[1fr_2fr] gap-4 text-sm font-mono">
-                                <span className="text-neutral-300 bg-white/5 py-0.5 px-2 rounded w-fit h-fit">
-                                    {arg.arg}
-                                </span>
-                                <span className="text-neutral-500">{arg.desc}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
-        </div>
-    );
-};
+import Link from "next/link";
+import { BookIcon, TerminalIcon } from "./icons";
 
 export const HelpSection = () => {
     return (
-        <section id="help" className="grid gap-16 py-10 border-t-2 border-dashed border-white/20">
+        <section id="help" className="grid gap-16 py-16 border-t-2 border-dashed border-white/20">
             <div className="text-center max-w-2xl mx-auto">
                 <h2 className="text-3xl font-bold tracking-tight mb-4 uppercase inline-flex items-center gap-2 justify-center">
                     <TerminalIcon className="h-5 w-5 text-emerald-400" />
                     Command Reference
                 </h2>
-                <p className="text-neutral-400">
+                <p className="text-neutral-400 mb-8">
                     Complete guide to the Orca CLI toolset.
                 </p>
-            </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <CommandItem
-                    command="orca --version"
-                    description="Print version information (global flag)."
-                    args={[
-                        { arg: "--version / -V", desc: "Show version table" },
-                        { arg: "--yes / -y", desc: "Auto-confirm prompts" },
-                        { arg: "--yes-pr", desc: "Auto-confirm PR creation prompts" },
-                    ]}
-                />
-                <CommandItem
-                    command="orca setup"
-                    description="Initialize your local identity and configure global or local preferences."
-                    args={[
-                        { arg: "--provider", desc: "Provider to configure (gemini, openai, zai, deepseek)" },
-                        { arg: "--api-key", desc: "API key for the selected provider" },
-                        { arg: "--name", desc: "Set your git user.name" },
-                        { arg: "--email", desc: "Set your git user.email" },
-                        { arg: "--local", desc: "Save to local repo config only" },
-                    ]}
-                />
-                <CommandItem
-                    command="orca doctor"
-                    description="Diagnose your environment. Checks for git repo, API keys, and required tools."
-                />
-                <CommandItem
-                    command="orca commit"
-                    description="Analyze staged changes and generate semantic commit groups using multiple AI models."
-                    args={[
-                        { arg: "--confirm", desc: "Ask for confirmation before running git commands" },
-                        { arg: "--model", desc: "Specify AI model" },
-                        { arg: "--dry-run", desc: "Preview plan without applying" },
-                    ]}
-                />
-                <CommandItem
-                    command="orca plan"
-                    description="Generate a commit plan and save it to a JSON file for later execution."
-                    args={[
-                        { arg: "--model", desc: "Specify AI model" },
-                        { arg: "--out", desc: "Output file path (e.g. plan.json)" },
-                        { arg: "--json-only", desc: "Output raw JSON to stdout" },
-                    ]}
-                />
-                <CommandItem
-                    command="orca apply"
-                    description="Execute a previously generated plan file."
-                    args={[
-                        { arg: "--file", desc: "Path to plan JSON file" },
-                        { arg: "--confirm", desc: "Ask for confirmation before running git commands" },
-                        { arg: "--dry-run", desc: "Print the plan only (no git commands)" },
-                        { arg: "--push", desc: "Push changes after committing" },
-                        { arg: "--publish", desc: "Create/switch branch, push -u, and propose creating a PR" },
-                        { arg: "--branch", desc: "Branch name to use when publishing" },
-                        { arg: "--base", desc: "Base branch for PR (default: main)" },
-                        { arg: "--pr", desc: "Create PR via GitHub CLI (gh)" },
-                    ]}
-                />
-                <CommandItem
-                    command="orca publish"
-                    description="Apply a plan and publish to GitHub (create/switch branch, push -u, create PR)."
-                    args={[
-                        { arg: "plan.json", desc: "Path to plan JSON file (positional)" },
-                        { arg: "--confirm", desc: "Ask for confirmation before running git commands" },
-                        { arg: "--dry-run", desc: "Print the plan only (no git commands)" },
-                        { arg: "--branch", desc: "Branch name to use (optional)" },
-                        { arg: "--base", desc: "Base branch for PR (default: main)" },
-                        { arg: "--pr", desc: "Create PR via GitHub CLI (gh)" },
-                    ]}
-                />
-                <CommandItem
-                    command="orca publish-current"
-                    description="Publish current commits: create/switch branch, push -u, and create PR."
-                    args={[
-                        { arg: "--branch", desc: "Branch name to use (optional)" },
-                        { arg: "--base", desc: "Base branch for PR (default: main)" },
-                        { arg: "--pr", desc: "Create PR via GitHub CLI (gh)" },
-                    ]}
-                />
+                <Link
+                    href="/guide"
+                    className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-lg font-bold hover:bg-emerald-400 transition-colors"
+                >
+                    <BookIcon className="h-4 w-4" />
+                    View Full Documentation
+                </Link>
             </div>
         </section>
     );
