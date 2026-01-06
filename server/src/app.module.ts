@@ -14,6 +14,8 @@ import { AiUsageDaily } from './modules/ai/entities/ai-usage-daily.entity';
 
 
 
+import { ReleaseModule } from './modules/release/release.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -59,6 +61,7 @@ import { AiUsageDaily } from './modules/ai/entities/ai-usage-daily.entity';
     }),
     AuthModule,
     AiModule,
+    ReleaseModule,
   ],
   controllers: [AppController],
   providers: [AppService],
