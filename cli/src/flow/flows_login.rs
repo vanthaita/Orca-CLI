@@ -82,14 +82,45 @@ fn parse_api_json<T: DeserializeOwned>(text: &str) -> Result<T> {
 #[serde(rename_all = "camelCase")]
 struct CliPollBody {
     device_code: String,
+    device_name: Option<String>,
+    device_fingerprint: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "status", rename_all = "snake_case")]
 enum CliPollResponse {
     AuthorizationPending { interval: u64 },
+    SlowDown { interval: u64 },
     Expired,
     Ok { access_token: String, expires_in: u64 },
+}
+
+fn get_device_name() -> String {
+    hostname::get()
+        .ok()
+        .and_then(|h| h.into_string().ok())
+        .unwrap_or_else(|| "cli".to_string())
+}
+
+fn generate_device_fingerprint() -> String {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+
+    let mut hasher = DefaultHasher::new();
+    
+    // Include hostname
+    if let Ok(hostname) = hostname::get() {
+        hostname.hash(&mut hasher);
+    }
+    
+    // Include username
+    if let Ok(username) = std::env::var("USER")
+        .or_else(|_| std::env::var("USERNAME"))
+    {
+        username.hash(&mut hasher);
+    }
+    
+    format!("{:x}", hasher.finish())
 }
 
 pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
@@ -173,6 +204,14 @@ pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
         .map(|p| format!("{}{}", base_url.trim_end_matches('/'), p))
         .collect();
     let device_code = start.device_code.clone();
+    let device_name = get_device_name();
+    let device_fingerprint = generate_device_fingerprint();
+
+    println!(
+        "{} {}",
+        style("Device:").cyan().bold(),
+        style(&device_name).green()
+    );
 
     let deadline = std::time::Instant::now() + Duration::from_secs(start.expires_in);
     let mut interval = Duration::from_secs(start.interval.max(1));
@@ -187,6 +226,8 @@ pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
 
         let body = CliPollBody {
             device_code: device_code.clone(),
+            device_name: Some(device_name.clone()),
+            device_fingerprint: Some(device_fingerprint.clone()),
         };
 
         let mut last_err: Option<anyhow::Error> = None;
@@ -232,6 +273,11 @@ pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
                 interval = Duration::from_secs(i.max(1));
                 tokio::time::sleep(interval).await;
             }
+            CliPollResponse::SlowDown { interval: i } => {
+                pb.set_message("Slowing down requests...");
+                interval = Duration::from_secs(i.max(2));
+                tokio::time::sleep(interval).await;
+            }
             CliPollResponse::Expired => {
                 pb.finish_and_clear();
                 anyhow::bail!("Login expired. Please run `orca login` again.");
@@ -247,6 +293,11 @@ pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
                     "{} {}",
                     style("[✓]").green().bold(),
                     style("Logged in successfully.").green()
+                );
+                println!(
+                    "{} Device '{}' registered",
+                    style("[✓]").green().bold(),
+                    style(&device_name).green().bold()
                 );
                 return Ok(());
             }
