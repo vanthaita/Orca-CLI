@@ -1,5 +1,5 @@
 use crate::git::{ensure_git_repo, run_git};
-use anyhow::{Context, Result};
+use anyhow::Result;
 use console::style;
 use std::process::Command;
 

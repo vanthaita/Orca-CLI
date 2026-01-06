@@ -1,7 +1,6 @@
 use crate::flow::flows_spinner::spinner;
 use anyhow::{Context, Result};
 use console::style;
-use indicatif::ProgressBar;
 use serde::{Deserialize, Serialize};
 use serde::de::DeserializeOwned;
 use std::time::Duration;
@@ -92,7 +91,13 @@ enum CliPollResponse {
     AuthorizationPending { interval: u64 },
     SlowDown { interval: u64 },
     Expired,
-    Ok { access_token: String, expires_in: u64 },
+    Ok {
+        #[serde(alias = "accessToken")]
+        access_token: String,
+        #[serde(alias = "expiresIn")]
+        #[allow(dead_code)]
+        expires_in: u64,
+    },
 }
 
 fn get_device_name() -> String {
@@ -214,7 +219,7 @@ pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
     );
 
     let deadline = std::time::Instant::now() + Duration::from_secs(start.expires_in);
-    let mut interval = Duration::from_secs(start.interval.max(1));
+    let mut _interval = Duration::from_secs(start.interval.max(1));
 
     let pb = spinner("Waiting for approval...");
 
@@ -270,13 +275,13 @@ pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
 
         match poll {
             CliPollResponse::AuthorizationPending { interval: i } => {
-                interval = Duration::from_secs(i.max(1));
-                tokio::time::sleep(interval).await;
+                _interval = Duration::from_secs(i.max(1));
+                tokio::time::sleep(_interval).await;
             }
             CliPollResponse::SlowDown { interval: i } => {
                 pb.set_message("Slowing down requests...");
-                interval = Duration::from_secs(i.max(2));
-                tokio::time::sleep(interval).await;
+                _interval = Duration::from_secs(i.max(2));
+                tokio::time::sleep(_interval).await;
             }
             CliPollResponse::Expired => {
                 pb.finish_and_clear();
