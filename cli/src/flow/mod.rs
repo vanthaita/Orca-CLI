@@ -7,4 +7,8 @@ pub(crate) mod flows_menu;
 pub(crate) mod flows_plan;
 pub(crate) mod flows_publish;
 pub(crate) mod flows_setup;
+pub(crate) mod flows_setup;
 pub(crate) mod flows_spinner;
+pub(crate) mod update;
+
+pub use update::run_update_flow;

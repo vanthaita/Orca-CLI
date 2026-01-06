@@ -70,6 +70,7 @@ async fn run() -> Result<()> {
         crate::cli::Commands::Login { server } => flows::run_login_flow(server).await?,
         crate::cli::Commands::Menu => flows::run_menu_flow().await?,
         crate::cli::Commands::Doctor => flows::run_doctor_flow().await?,
+        crate::cli::Commands::Update => flows::run_update_flow().await?,
     }
 
     Ok(())

@@ -161,6 +161,9 @@ pub(crate) enum Commands {
 
     /// Check environment (git repo, working tree, API key)
     Doctor,
+
+    /// Check for updates and auto-upgrade
+    Update,
 }
 
 #[cfg(test)]
