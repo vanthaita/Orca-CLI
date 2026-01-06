@@ -118,7 +118,11 @@ pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<Path
     }
 
     let changed_files = files_from_status_porcelain(&status);
-    let pb = spinner("Asking AI model to analyze changes and propose commit plan...");
+    let spinner_msg = format!(
+        "Asking model '{}' to analyze changes and propose commit plan...",
+        model
+    );
+    let pb = spinner(&spinner_msg);
     
     // Truncate diff if it's extremely large (safety limit ~20MB)
     // Server now supports up to 50MB
