@@ -5,6 +5,7 @@ import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './google-auth.guard';
 import { GoogleUserPayload } from './google.strategy';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { CliTokenGuard } from '../ai/cli-token.guard';
 
 type RequestWithUser = Request & { user: GoogleUserPayload };
 type RequestWithCookies = Request & { cookies?: Record<string, string | undefined> };
@@ -50,6 +51,23 @@ export class AuthController {
     const ipAddress = this.extractIpAddress(req);
     const userAgent = req.headers['user-agent'];
     return this.authService.pollCliLogin(deviceCode, deviceName, deviceFingerprint, ipAddress, userAgent);
+  }
+
+  @Get('cli/me')
+  @UseGuards(CliTokenGuard)
+  async cliMe(@Req() req: Request) {
+    const userId = (req as any).user?.sub as string | undefined;
+    if (!userId) {
+      throw new UnauthorizedException('Missing user');
+    }
+
+    const user = await this.authService.findUserById(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Return structure matching UserMeResponse in CLI
+    return { data: { email: user.email, name: user.name } };
   }
 
   @Post('cli/verify')
