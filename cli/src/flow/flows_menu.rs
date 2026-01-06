@@ -3,12 +3,7 @@ use console::style;
 use dialoguer::Select;
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
-struct UserMeResponse {
-    email: Option<String>,
-    #[serde(alias = "name")]
-    full_name: Option<String>,
-}
+use crate::flow::flows_login::UserMeResponse;
 
 /// Get device name for display
 fn get_device_name() -> String {
@@ -18,64 +13,7 @@ fn get_device_name() -> String {
         .unwrap_or_else(|| "unknown".to_string())
 }
 
-/// Fetch user information from Orca API
-async fn fetch_user_info() -> Result<UserMeResponse> {
-    let base_url = crate::config::get_orca_base_url()?;
-    let token = crate::config::get_orca_token()?;
-    
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(10))
-        .build()
-        .context("Failed to build HTTP client")?;
-    
-    let paths = vec![
-        format!("/{}/auth/me", crate::config::ORCA_API_PREFIX),
-        "/auth/me".to_string(),
-    ];
-    
-    let mut last_err = None;
-    for path in paths {
-        let url = format!("{}{}", base_url.trim_end_matches('/'), path);
-        
-        match client
-            .get(&url)
-            .bearer_auth(&token)
-            .send()
-            .await
-        {
-            Ok(resp) => {
-                if resp.status().is_success() {
-                    let text = resp.text().await.context("Failed to read response")?;
-                    
-                    // Try to parse from .data field first
-                    if let Ok(value) = serde_json::from_str::<serde_json::Value>(&text) {
-                        if let Some(data) = value.get("data") {
-                            if let Ok(user) = serde_json::from_value::<UserMeResponse>(data.clone()) {
-                                return Ok(user);
-                            }
-                        }
-                    }
-                    
-                    // Try direct parse
-                    if let Ok(user) = serde_json::from_str::<UserMeResponse>(&text) {
-                        return Ok(user);
-                    }
-                    
-                    last_err = Some(anyhow::anyhow!("Failed to parse user info response"));
-                } else if resp.status() == reqwest::StatusCode::NOT_FOUND {
-                    continue;
-                } else {
-                    last_err = Some(anyhow::anyhow!("Server returned {}", resp.status()));
-                }
-            }
-            Err(e) => {
-                last_err = Some(anyhow::anyhow!(e));
-            }
-        }
-    }
-    
-    Err(last_err.unwrap_or_else(|| anyhow::anyhow!("Failed to fetch user info")))
-}
+// Local fetch_user_info removed, using crate::flow::flows_login::fetch_user_info
 
 /// Show account information
 async fn show_account_info() -> Result<()> {
@@ -87,7 +25,7 @@ async fn show_account_info() -> Result<()> {
     
     if config.api.provider == "orca" && config.api.orca_token.is_some() {
         // Try to fetch from API
-        match fetch_user_info().await {
+        match crate::flow::flows_login::fetch_user_info().await {
             Ok(user) => {
                 if let Some(email) = user.email {
                     println!("  {} {}", style("📧 Email:").cyan().bold(), style(&email).green());

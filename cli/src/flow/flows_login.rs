@@ -128,10 +128,118 @@ fn generate_device_fingerprint() -> String {
     format!("{:x}", hasher.finish())
 }
 
+#[derive(Debug, Deserialize)]
+pub(crate) struct UserMeResponse {
+    pub(crate) email: Option<String>,
+    #[serde(alias = "name")]
+    pub(crate) full_name: Option<String>,
+}
+
+/// Fetch user information from Orca API
+pub(crate) async fn fetch_user_info() -> Result<UserMeResponse> {
+    let base_url = crate::config::get_orca_base_url()?;
+    let token = crate::config::get_orca_token()?;
+    
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(10))
+        .build()
+        .context("Failed to build HTTP client")?;
+    
+    let paths = vec![
+        format!("/{}/auth/cli/me", crate::config::ORCA_API_PREFIX),
+        "/auth/cli/me".to_string(),
+    ];
+    
+    let mut last_err = None;
+    for path in paths {
+        let url = format!("{}{}", base_url.trim_end_matches('/'), path);
+        
+        match client
+            .get(&url)
+            .bearer_auth(&token)
+            .send()
+            .await
+        {
+            Ok(resp) => {
+                if resp.status().is_success() {
+                    let text = resp.text().await.context("Failed to read response")?;
+                    
+                    // Try to parse from .data field first
+                    if let Ok(value) = serde_json::from_str::<serde_json::Value>(&text) {
+                        if let Some(data) = value.get("data") {
+                            if let Ok(user) = serde_json::from_value::<UserMeResponse>(data.clone()) {
+                                return Ok(user);
+                            }
+                        }
+                    }
+                    
+                    // Try direct parse
+                    if let Ok(user) = serde_json::from_str::<UserMeResponse>(&text) {
+                        return Ok(user);
+                    }
+                    
+                    last_err = Some(anyhow::anyhow!("Failed to parse user info response"));
+                } else if resp.status() == reqwest::StatusCode::NOT_FOUND {
+                    continue;
+                } else {
+                    last_err = Some(anyhow::anyhow!("Server returned {}", resp.status()));
+                }
+            }
+            Err(e) => {
+                last_err = Some(anyhow::anyhow!(e));
+            }
+        }
+    }
+    
+    Err(last_err.unwrap_or_else(|| anyhow::anyhow!("Failed to fetch user info")))
+}
+
 pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
     println!("{}", style("[orca login]").bold().cyan());
 
     let mut config = crate::config::load_config().unwrap_or_default();
+    
+    // Check if already logged in and token is valid
+    if config.api.provider == "orca" && config.api.orca_token.is_some() {
+        let pb = spinner("Checking authentication status...");
+        match fetch_user_info().await {
+            Ok(user) => {
+                pb.finish_and_clear();
+                println!(
+                    "{} {}",
+                    style("ℹ").blue().bold(),
+                    style("You are already logged in.").blue()
+                );
+                
+                if let Some(email) = user.email {
+                    println!("  Email: {}", style(email).cyan());
+                }
+                
+                println!();
+                
+                let confirm = dialoguer::Confirm::new()
+                    .with_prompt("Do you want to logout and login with a different account?")
+                    .default(false)
+                    .interact()
+                    .context("Failed to read confirmation")?;
+                
+                if !confirm {
+                    println!("Login cancelled.");
+                    return Ok(());
+                }
+                
+                // Clear token and continue with login
+                config.api.orca_token = None;
+                config.api.provider = "gemini".to_string(); // Temporary fallback
+                crate::config::save_config(&config)?;
+                println!("Logged out successfully. Starting new login session...\n");
+            }
+            Err(_) => {
+                pb.finish_and_clear();
+                // Token invalid or network error, proceed with login (silently ignore)
+            }
+        }
+    }
 
     if let Some(s) = server {
         config.api.orca_base_url = Some(s);
