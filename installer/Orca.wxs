@@ -9,7 +9,7 @@
     Compressed="yes"
     Scope="perMachine"
   >
-    <MajorUpgrade DowngradeErrorMessage="A newer version of Orca is already installed." AllowSameVersionUpgrades="yes" AllowDowngrades="yes" />
+    <MajorUpgrade AllowDowngrades="yes" />
 
     <MediaTemplate EmbedCab="yes" />
 
