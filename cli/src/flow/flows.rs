@@ -107,8 +107,8 @@ pub(crate) async fn run_setup_flow(
     super::flows_setup::run_setup_flow(provider, api_key, name, email, local).await
 }
 
-pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
-    super::flows_login::run_login_flow(server).await
+pub(crate) async fn run_login_flow() -> Result<()> {
+    super::flows_login::run_login_flow().await
 }
 
 pub(crate) async fn run_menu_flow() -> Result<()> {

@@ -150,11 +150,7 @@ pub(crate) enum Commands {
     },
 
     /// Login via browser to obtain a CLI token (remote Orca server mode)
-    Login {
-        /// Orca server base URL (e.g. https://api.orcacli.codes)
-        #[arg(long)]
-        server: Option<String>,
-    },
+    Login,
 
     /// Interactive menu for account management and settings
     Menu,

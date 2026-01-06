@@ -297,7 +297,7 @@ pub(crate) async fn run_menu_flow() -> Result<()> {
                     // Trigger login flow
                     println!("{}", style("Starting Orca login...").cyan());
                     println!();
-                    if let Err(e) = super::flows_login::run_login_flow(None).await {
+                    if let Err(e) = super::flows_login::run_login_flow().await {
                         crate::ui::menu::print_warning(&format!("Login failed: {}", e));
                     } else {
                         crate::ui::menu::print_success("Successfully logged in!");

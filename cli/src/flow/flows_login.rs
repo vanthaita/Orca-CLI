@@ -194,7 +194,7 @@ pub(crate) async fn fetch_user_info() -> Result<UserMeResponse> {
     Err(last_err.unwrap_or_else(|| anyhow::anyhow!("Failed to fetch user info")))
 }
 
-pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
+pub(crate) async fn run_login_flow() -> Result<()> {
     println!("{}", style("[orca login]").bold().cyan());
 
     let mut config = crate::config::load_config().unwrap_or_default();
@@ -241,17 +241,7 @@ pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
         }
     }
 
-    if let Some(s) = server {
-        config.api.orca_base_url = Some(s);
-    }
-
-    let base_url = crate::config::get_orca_base_url().or_else(|_| {
-        config
-            .api
-            .orca_base_url
-            .clone()
-            .ok_or_else(|| anyhow::anyhow!("Missing Orca server URL. Set ORCA_API_BASE_URL or run: orca login --server <URL>"))
-    })?;
+    let base_url = crate::config::get_orca_base_url()?;
 
     if !base_url.starts_with("http://") && !base_url.starts_with("https://") {
         anyhow::bail!(
@@ -398,7 +388,6 @@ pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
             CliPollResponse::Ok { access_token, .. } => {
                 pb.finish_and_clear();
                 config.api.provider = "orca".to_string();
-                config.api.orca_base_url = Some(base_url);
                 config.api.orca_token = Some(access_token);
                 crate::config::save_config(&config)?;
 

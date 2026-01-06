@@ -77,10 +77,6 @@ pub(crate) fn print_config_info(config: &crate::config::OrcaConfig) {
     
     print_info_line("Active Provider", &config.api.provider);
     
-    if let Some(ref url) = config.api.orca_base_url {
-        print_info_line("Orca Server", url);
-    }
-    
     if let Some(ref token) = config.api.orca_token {
         print_info_line("Orca Token", &mask_token(token));
     }

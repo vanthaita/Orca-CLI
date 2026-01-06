@@ -67,7 +67,7 @@ async fn run() -> Result<()> {
         crate::cli::Commands::Setup { provider, api_key, name, email, local } => {
             flows::run_setup_flow(provider, api_key, name, email, local).await?
         }
-        crate::cli::Commands::Login { server } => flows::run_login_flow(server).await?,
+        crate::cli::Commands::Login => flows::run_login_flow().await?,
         crate::cli::Commands::Menu => flows::run_menu_flow().await?,
         crate::cli::Commands::Doctor => flows::run_doctor_flow().await?,
         crate::cli::Commands::Update => flows::run_update_flow().await?,
