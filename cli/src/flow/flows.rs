@@ -14,6 +14,7 @@ pub(crate) async fn generate_plan(
     super::flows_plan::generate_plan(model, status, diff, log).await
 }
 
+#[allow(dead_code)]
 pub(crate) fn print_no_remote_guidance() {
     super::flows_error::print_no_remote_guidance();
 }
@@ -104,6 +105,10 @@ pub(crate) async fn run_setup_flow(
 
 pub(crate) async fn run_login_flow(server: Option<String>) -> Result<()> {
     super::flows_login::run_login_flow(server).await
+}
+
+pub(crate) async fn run_menu_flow() -> Result<()> {
+    super::flows_menu::run_menu_flow().await
 }
 
 pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<PathBuf>) -> Result<()> {

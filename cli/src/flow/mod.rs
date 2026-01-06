@@ -3,6 +3,7 @@ pub(crate) mod flows_apply;
 pub(crate) mod flows_doctor;
 pub(crate) mod flows_error;
 pub(crate) mod flows_login;
+pub(crate) mod flows_menu;
 pub(crate) mod flows_plan;
 pub(crate) mod flows_publish;
 pub(crate) mod flows_setup;

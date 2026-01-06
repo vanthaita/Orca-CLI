@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[command(name = "orca")]
-#[command(about = "Generate grouped git commits using Gemini", long_about = None)]
+#[command(about = "AI-powered Git workflow automation and commit management", long_about = None)]
 #[command(disable_version_flag = true, arg_required_else_help = true)]
 pub(crate) struct Cli {
     #[arg(long, short = 'V', action = clap::ArgAction::SetTrue, global = true)]
@@ -155,6 +155,9 @@ pub(crate) enum Commands {
         #[arg(long)]
         server: Option<String>,
     },
+
+    /// Interactive menu for account management and settings
+    Menu,
 
     /// Check environment (git repo, working tree, API key)
     Doctor,
