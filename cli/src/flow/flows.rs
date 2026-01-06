@@ -53,10 +53,10 @@ pub(crate) async fn run_commit_flow(confirm: bool, dry_run: bool, model: &str) -
 
     let changed_files = files_from_status_porcelain(&status);
 
-    let pb = spinner("Asking Gemini to analyze changes and propose commit plan...");
+    let pb = spinner("Asking AI model to analyze changes and propose commit plan...");
     let mut plan = generate_plan(model, &status, &diff, &log).await?;
     pb.finish_and_clear();
-    eprintln!("{} {}", style("[✓]").green().bold(), style("Plan received from Gemini").green());
+    eprintln!("{} {}", style("[✓]").green().bold(), style("Plan received").green());
     normalize_plan_files(&mut plan, &changed_files);
 
     println!("\n{}", style("Proposed Plan:").bold().cyan());

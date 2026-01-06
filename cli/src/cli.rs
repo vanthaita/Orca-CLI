@@ -30,14 +30,14 @@ pub(crate) enum Commands {
         #[arg(long, default_value_t = false)]
         dry_run: bool,
 
-        /// Gemini model name (used when no plan file is provided)
+        /// Model name (used when no plan file is provided)
         #[arg(long, default_value = "gemini-2.5-flash")]
         model: String,
     },
 
     /// Generate a commit plan (no git add/commit)
     Plan {
-        /// Gemini model name
+        /// Model name
         #[arg(long, default_value = "gemini-2.5-flash")]
         model: String,
 

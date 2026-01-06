@@ -118,7 +118,7 @@ pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<Path
     }
 
     let changed_files = files_from_status_porcelain(&status);
-    let pb = spinner("Asking Gemini to analyze changes and propose commit plan...");
+    let pb = spinner("Asking AI model to analyze changes and propose commit plan...");
     
     // Truncate diff if it's extremely large (safety limit ~20MB)
     // Server now supports up to 50MB
@@ -141,7 +141,7 @@ pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<Path
         );
     }
     
-    eprintln!("{} {}", style("[✓]").green().bold(), style("Plan received from Gemini").green());
+    eprintln!("{} {}", style("[✓]").green().bold(), style("Plan received").green());
     normalize_plan_files(&mut plan, &changed_files);
 
     let plan_json = serde_json::to_string_pretty(&plan)?;
