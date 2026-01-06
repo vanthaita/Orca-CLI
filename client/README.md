@@ -2,6 +2,8 @@
 
 This folder contains the Next.js app for Orca (landing page / UI companion).
 
+See the main project overview in the root README: `../README.md`.
+
 ## Requirements
 
 - Node.js 18+ (LTS recommended)
