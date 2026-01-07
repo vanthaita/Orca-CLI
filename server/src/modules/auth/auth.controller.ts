@@ -235,6 +235,42 @@ export class AuthController {
     return { ok: true };
   }
 
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const userId = (req as any).user?.sub as string | undefined;
+    if (!userId) {
+      throw new UnauthorizedException('Missing user');
+    }
+
+    // Invalidate refresh token in database
+    await this.authService.clearRefreshToken(userId);
+
+    // Clear cookies
+    const isProd = process.env.NODE_ENV === 'production';
+    const cookieDomain = process.env.COOKIE_DOMAIN;
+
+    res.cookie('accessToken', '', {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
+      ...(cookieDomain && { domain: cookieDomain }),
+      path: '/',
+      maxAge: 0,
+    });
+
+    res.cookie('refreshToken', '', {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
+      ...(cookieDomain && { domain: cookieDomain }),
+      path: '/api/v1/auth',
+      maxAge: 0,
+    });
+
+    return { ok: true };
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   async me(@Req() req: Request) {

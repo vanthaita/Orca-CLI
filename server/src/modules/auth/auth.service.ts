@@ -293,6 +293,15 @@ export class AuthService {
     return { refreshToken };
   }
 
+  async clearRefreshToken(userId: string): Promise<void> {
+    const user = await this.usersRepo.findOne({ where: { id: userId } });
+    if (user) {
+      user.projectRefreshTokenHash = null;
+      user.projectRefreshTokenExpiresAt = null;
+      await this.usersRepo.save(user);
+    }
+  }
+
   async rotateRefreshToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
     const hashed = this.hashToken(refreshToken);
     const user = await this.usersRepo.findOne({ where: { projectRefreshTokenHash: hashed } });
