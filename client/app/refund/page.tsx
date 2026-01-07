@@ -33,17 +33,26 @@ export default function RefundPage() {
                         <section className="mb-12">
                             <h2 className="text-2xl font-semibold text-white mb-4">2. Subscription Refunds</h2>
                             <p className="mb-4">
-                                If you are not satisfied with your purchase of a paid subscription (e.g., Pro or Team plans), you may request a refund within <strong>14 days</strong> of your initial purchase.
+                                If you are not satisfied with your purchase of a paid subscription (e.g., Pro or Team plans), you may request a refund within <strong>7 days</strong> of your initial purchase.
                             </p>
                             <p className="mb-4">
                                 To be eligible for a refund, you must contact our support team and provide proof of purchase. We reserve the right to decline a refund request if we detect abuse of the policy or if the account has violated our Terms of Service.
+                            </p>
+                            <p className="mb-4">
+                                Refunds are granted only if the product has not been significantly used, defined as usage below a reasonable threshold of AI requests.
+                            </p>
+                            <p className="mb-4">
+                                Due to the computational costs associated with AI-powered features, we reserve the right to deny refunds in cases of excessive usage or abuse.
+                            </p>
+                            <p className="mb-4">
+                                Subscription renewals are non-refundable.
                             </p>
                         </section>
 
                         <section className="mb-12">
                             <h2 className="text-2xl font-semibold text-white mb-4">3. Cancellation</h2>
                             <p className="mb-4">
-                                You can cancel your subscription at any time. Your cancellation will take effect at the end of the current paid term. There are no refunds for partial months or unused time after the 14-day money-back guarantee period has expired.
+                                You can cancel your subscription at any time. Your cancellation will take effect at the end of the current paid term. There are no refunds for partial months or unused time after the 7-day money-back guarantee period has expired.
                             </p>
                         </section>
 

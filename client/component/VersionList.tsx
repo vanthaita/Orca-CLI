@@ -28,6 +28,10 @@ export const VersionList = ({ releases, className = "" }: VersionListProps) => {
 
     if (!releases || releases.length === 0) return null;
 
+    const latestRelease = [...releases].sort(
+        (a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
+    )[0];
+
     return (
         <div className={cn("w-full overflow-hidden rounded-xl border-2 border-dashed border-white/20 bg-white/5", className)}>
             <div className="flex items-center justify-between border-b border-white/15 bg-white/5 px-4">
@@ -113,35 +117,75 @@ export const VersionList = ({ releases, className = "" }: VersionListProps) => {
             </div>
 
             {viewMode === "download" ? (
-                <div className="divide-y divide-white/15 max-h-[300px] overflow-y-auto custom-scrollbar">
-                    {releases.map((release) => {
-                        const date = new Date(release.published_at).toLocaleDateString("en-US", {
+                <div className="px-6 py-4">
+                    {(() => {
+                        const date = new Date(latestRelease.published_at).toLocaleDateString("en-US", {
                             year: "numeric",
                             month: "short",
                             day: "numeric",
                         });
 
-                        const msiAsset = release.assets.find((a) => a.name.endsWith(".msi"));
-                        const downloadUrl = msiAsset?.browser_download_url || release.html_url;
+                        const assets = latestRelease.assets || [];
+
+                        const windowsAsset =
+                            assets.find((a) => a.name.toLowerCase().endsWith(".msi")) ||
+                            assets.find((a) => a.name.toLowerCase().endsWith(".exe"));
+
+                        const macAsset =
+                            assets.find((a) => /mac|osx|darwin/i.test(a.name) && a.name.toLowerCase().endsWith(".dmg")) ||
+                            assets.find((a) => /mac|osx|darwin/i.test(a.name) && a.name.toLowerCase().endsWith(".pkg")) ||
+                            assets.find((a) => /mac|osx|darwin/i.test(a.name) && a.name.toLowerCase().endsWith(".zip"));
+
+                        const linuxAsset =
+                            assets.find((a) => /linux/i.test(a.name) && a.name.toLowerCase().endsWith(".tar.gz")) ||
+                            assets.find((a) => /linux/i.test(a.name) && a.name.toLowerCase().endsWith(".appimage")) ||
+                            assets.find((a) => /linux/i.test(a.name) && a.name.toLowerCase().endsWith(".deb")) ||
+                            assets.find((a) => /linux/i.test(a.name) && a.name.toLowerCase().endsWith(".rpm"));
 
                         return (
-                            <div key={release.tag_name} className="flex items-center justify-between px-6 py-4 hover:bg-white/5 transition-colors group">
-                                <div className="flex flex-col gap-1">
-                                    <span className="font-mono text-sm font-bold text-emerald-400 group-hover:text-emerald-300">
-                                        {release.tag_name}
-                                    </span>
-                                    <span className="text-xs text-neutral-500">{date}</span>
+                            <div className="flex flex-col gap-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex flex-col gap-1">
+                                        <span className="font-mono text-sm font-bold text-emerald-400">
+                                            {latestRelease.tag_name}
+                                        </span>
+                                        <span className="text-xs text-neutral-500">{date}</span>
+                                    </div>
+                                    <Link
+                                        href={latestRelease.html_url}
+                                        target="_blank"
+                                        className="text-xs bg-white/10 hover:bg-white/20 text-neutral-300 px-3 py-1.5 rounded-md transition-colors font-medium"
+                                    >
+                                        View Release
+                                    </Link>
                                 </div>
-                                <Link
-                                    href={downloadUrl}
-                                    target="_blank"
-                                    className="text-xs bg-white/10 hover:bg-white/20 text-neutral-300 px-3 py-1.5 rounded-md transition-colors font-medium"
-                                >
-                                    {msiAsset ? "Download MSI" : "View Release"}
-                                </Link>
+
+                                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                                    <Link
+                                        href={windowsAsset?.browser_download_url || latestRelease.html_url}
+                                        target="_blank"
+                                        className="text-xs bg-white/10 hover:bg-white/20 text-neutral-300 px-3 py-2 rounded-md transition-colors font-medium text-center"
+                                    >
+                                        Windows
+                                    </Link>
+                                    <Link
+                                        href={macAsset?.browser_download_url || latestRelease.html_url}
+                                        target="_blank"
+                                        className="text-xs bg-white/10 hover:bg-white/20 text-neutral-300 px-3 py-2 rounded-md transition-colors font-medium text-center"
+                                    >
+                                        macOS
+                                    </Link>
+                                    <Link
+                                        href={linuxAsset?.browser_download_url || latestRelease.html_url}
+                                        target="_blank"
+                                        className="text-xs bg-white/10 hover:bg-white/20 text-neutral-300 px-3 py-2 rounded-md transition-colors font-medium text-center"
+                                    >
+                                        Linux
+                                    </Link>
+                                </div>
                             </div>
                         );
-                    })}
+                    })()}
                 </div>
             ) : viewMode === "cli" ? (
                 <div className="p-6">
