@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
 import type { AiChatRequest, AiChatResponse, AiProvider } from './ai.types';
 import { AiUsageDaily } from './entities/ai-usage-daily.entity';
+import { PlanService } from '../user/plan.service';
 
 @Injectable()
 export class AiService {
@@ -12,7 +13,8 @@ export class AiService {
     private readonly usersRepo: Repository<User>,
     @InjectRepository(AiUsageDaily)
     private readonly usageRepo: Repository<AiUsageDaily>,
-  ) {}
+    private readonly planService: PlanService,
+  ) { }
 
   async chat(userId: string, req: AiChatRequest): Promise<AiChatResponse> {
     if (!req || !req.model || !req.systemPrompt || !req.userPrompt) {
@@ -165,13 +167,13 @@ export class AiService {
       throw new UnauthorizedException('User not found');
     }
 
-    const plan = (user.plan ?? 'free').toLowerCase();
-    if (plan !== 'free') {
+    // Get daily limit from PlanService
+    const limit = this.planService.getDailyLimit(user);
+
+    // null means unlimited (Pro/Team plans)
+    if (limit === null) {
       return;
     }
-
-    const defaultLimit = Number(process.env.FREE_DAILY_REQUEST_LIMIT ?? 50);
-    const limit = user.dailyRequestLimit ?? defaultLimit;
 
     const day = this.dayKeyUtc(new Date());
     let usage = await this.usageRepo.findOne({ where: { userId, day } });
@@ -180,7 +182,9 @@ export class AiService {
     }
 
     if (usage.requestCount >= limit) {
-      throw new BadRequestException('Daily request limit exceeded');
+      throw new BadRequestException(
+        `Daily AI request limit exceeded (${limit} requests/day). Upgrade to Pro plan for unlimited access at https://orcacli.codes/pricing`,
+      );
     }
 
     usage.requestCount += 1;

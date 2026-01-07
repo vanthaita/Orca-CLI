@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { UserPlan } from '../../../common/enums/user-plan.enum';
 
 @Entity({ name: 'users' })
 export class User {
@@ -35,7 +36,13 @@ export class User {
 
   @Index()
   @Column({ type: 'varchar', length: 32, default: 'free' })
-  plan!: string;
+  plan!: UserPlan;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  planExpiresAt!: Date | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  teamId!: string | null;
 
   @Column({ type: 'int', nullable: true })
   dailyRequestLimit!: number | null;

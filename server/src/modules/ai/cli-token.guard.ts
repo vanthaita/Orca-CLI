@@ -1,12 +1,13 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import type { Request } from 'express';
 import { AuthService } from '../auth/auth.service';
+import { User } from '../auth/entities/user.entity';
 
 @Injectable()
 export class CliTokenGuard implements CanActivate {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<Request>();
 
     const authHeader = req.headers['authorization'];
@@ -19,15 +20,19 @@ export class CliTokenGuard implements CanActivate {
       throw new UnauthorizedException('Missing bearer token');
     }
 
-    // Note: CanActivate supports async, but our signature here is sync.
-    // We rely on Nest allowing Promise return; so cast to any to keep TS happy in this codebase.
-    return (this.authService.validateCliToken(token).then((v) => {
-      if (!v) {
-        throw new UnauthorizedException('Invalid CLI token');
-      }
+    const validation = await this.authService.validateCliToken(token);
+    if (!validation) {
+      throw new UnauthorizedException('Invalid CLI token');
+    }
 
-      (req as any).user = { sub: v.userId, typ: 'cli' };
-      return true;
-    }) as any) as boolean;
+    // Fetch full user object for plan validation
+    const user = await this.authService.findUserById(validation.userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Attach full user object to request
+    (req as any).user = user;
+    return true;
   }
 }
