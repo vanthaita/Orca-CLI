@@ -1,7 +1,7 @@
 {
     "name": "@vanthaita/orca",
     "version": "0.1.14",
-    "description": "AI-native Git workflow automation for modern developers",
+    "description": "AI-powered Git Workflow automation for modern developers",
     "bin": {
         "orca": "./bin/orca"
     },
