@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
 import Providers from "./providers";
+import { AdminShortcut } from "@/component/AdminShortcut";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,6 +49,7 @@ export default function RootLayout({
       >
         <Providers>
           <AuthProvider>
+            <AdminShortcut />
             {children}
           </AuthProvider>
         </Providers>
