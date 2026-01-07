@@ -56,7 +56,7 @@ export class AuthController {
   @Get('cli/me')
   @UseGuards(CliTokenGuard)
   async cliMe(@Req() req: Request) {
-    const userId = (req as any).user?.sub as string | undefined;
+    const userId = (req as any).user?.id as string | undefined;
     if (!userId) {
       throw new UnauthorizedException('Missing user');
     }
@@ -79,7 +79,7 @@ export class AuthController {
       throw new UnauthorizedException('Missing userCode');
     }
 
-    const userId = (req as any).user?.sub as string | undefined;
+    const userId = (req as any).user?.id as string | undefined;
     if (!userId) {
       throw new UnauthorizedException('Missing user');
     }
@@ -90,7 +90,7 @@ export class AuthController {
   @Get('cli/tokens')
   @UseGuards(JwtAuthGuard)
   async cliTokens(@Req() req: Request) {
-    const userId = (req as any).user?.sub as string | undefined;
+    const userId = (req as any).user?.id as string | undefined;
     if (!userId) {
       throw new UnauthorizedException('Missing user');
     }
@@ -114,7 +114,7 @@ export class AuthController {
   @Post('cli/tokens/:id/revoke')
   @UseGuards(JwtAuthGuard)
   async cliRevoke(@Req() req: Request, @Param('id') id: string) {
-    const userId = (req as any).user?.sub as string | undefined;
+    const userId = (req as any).user?.id as string | undefined;
     if (!userId) {
       throw new UnauthorizedException('Missing user');
     }
@@ -124,7 +124,7 @@ export class AuthController {
   @Post('cli/tokens/:id/rename')
   @UseGuards(JwtAuthGuard)
   async cliRename(@Req() req: Request, @Param('id') id: string, @Body() body: RenameTokenBody) {
-    const userId = (req as any).user?.sub as string | undefined;
+    const userId = (req as any).user?.id as string | undefined;
     if (!userId) {
       throw new UnauthorizedException('Missing user');
     }
@@ -238,7 +238,7 @@ export class AuthController {
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const userId = (req as any).user?.sub as string | undefined;
+    const userId = (req as any).user?.id as string | undefined;
     if (!userId) {
       throw new UnauthorizedException('Missing user');
     }
@@ -274,7 +274,7 @@ export class AuthController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   async me(@Req() req: Request) {
-    const userId = (req as any).user?.sub as string | undefined;
+    const userId = (req as any).user?.id as string | undefined;
     if (!userId) {
       throw new UnauthorizedException('Missing user');
     }

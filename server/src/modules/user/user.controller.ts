@@ -19,20 +19,13 @@ export class UserController {
     ) { }
 
     private async getUserFromRequest(req: Request): Promise<User> {
-        // Check if user is already attached (from CliTokenGuard)
+        // Check if user is already attached (from CliTokenGuard or JwtAuthGuard)
         let user = (req as any).user as User | undefined;
 
-        // If not, try to get from JWT payload
+        // JwtAuthGuard and CliTokenGuard both return the full User entity
+        // so we should already have the complete user object
         if (!user || !user.id) {
-            const userId = (req as any).user?.sub as string | undefined;
-            if (!userId) {
-                throw new UnauthorizedException('User not found');
-            }
-            const foundUser = await this.authService.findUserById(userId);
-            if (!foundUser) {
-                throw new UnauthorizedException('User not found');
-            }
-            user = foundUser;
+            throw new UnauthorizedException('User not found');
         }
 
         return user;
