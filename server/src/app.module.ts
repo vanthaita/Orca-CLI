@@ -11,11 +11,9 @@ import { CliDeviceCode } from './modules/auth/entities/cli-device-code.entity';
 import { CliToken } from './modules/auth/entities/cli-token.entity';
 import { User } from './modules/auth/entities/user.entity';
 import { AiUsageDaily } from './modules/ai/entities/ai-usage-daily.entity';
-
-
-
 import { ReleaseModule } from './modules/release/release.module';
 import { UserModule } from './modules/user/user.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -32,14 +30,27 @@ import { UserModule } from './modules/user/user.module';
             customProps: (req, res) => ({
               context: 'HTTP',
             }),
-            transport: isProduction
-              ? undefined
-              : {
-                target: 'pino-pretty',
-                options: {
-                  singleLine: true,
+            transport: {
+              targets: [
+                ...(isProduction
+                  ? []
+                  : [
+                    {
+                      target: 'pino-pretty',
+                      options: {
+                        singleLine: true,
+                      },
+                    },
+                  ]),
+                {
+                  target: 'pino/file',
+                  options: {
+                    destination: 'logs/app.log',
+                    mkdir: true,
+                  },
                 },
-              },
+              ],
+            },
           },
         };
       },
@@ -64,6 +75,7 @@ import { UserModule } from './modules/user/user.module';
     AiModule,
     ReleaseModule,
     UserModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

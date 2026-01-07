@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { UserPlan } from '../../../common/enums/user-plan.enum';
+import { UserRole } from '../../../common/enums/user-role.enum';
 
 @Entity({ name: 'users' })
 export class User {
@@ -37,6 +38,9 @@ export class User {
   @Index()
   @Column({ type: 'varchar', length: 32, default: 'free' })
   plan!: UserPlan;
+
+  @Column({ type: 'varchar', length: 32, default: 'user' })
+  role!: UserRole;
 
   @Column({ type: 'timestamptz', nullable: true })
   planExpiresAt!: Date | null;
