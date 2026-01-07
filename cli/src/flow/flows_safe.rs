@@ -6,14 +6,14 @@ use std::collections::HashSet;
 
 // Secret patterns to detect
 const SECRET_PATTERNS: &[(&str, &str)] = &[
-    (r"(?i)(api[_-]?key|apikey)\s*[:=]\s*['\"]?[a-z0-9]{20,}['\"]?", "API Key"),
-    (r"(?i)(secret[_-]?key|secretkey)\s*[:=]\s*['\"]?[a-z0-9]{20,}['\"]?", "Secret Key"),
-    (r"(?i)(access[_-]?token|accesstoken)\s*[:=]\s*['\"]?[a-z0-9]{20,}['\"]?", "Access Token"),
-    (r"(?i)(auth[_-]?token|authtoken)\s*[:=]\s*['\"]?[a-z0-9]{20,}['\"]?", "Auth Token"),
-    (r"(?i)(password|passwd|pwd)\s*[:=]\s*['\"]?[^\s'\";]{8,}['\"]?", "Password"),
+    (r#"(?i)(api[_-]?key|apikey)\s*[:=]\s*['"]?[a-z0-9]{20,}['"]?"#, "API Key"),
+    (r#"(?i)(secret[_-]?key|secretkey)\s*[:=]\s*['"]?[a-z0-9]{20,}['"]?"#, "Secret Key"),
+    (r#"(?i)(access[_-]?token|accesstoken)\s*[:=]\s*['"]?[a-z0-9]{20,}['"]?"#, "Access Token"),
+    (r#"(?i)(auth[_-]?token|authtoken)\s*[:=]\s*['"]?[a-z0-9]{20,}['"]?"#, "Auth Token"),
+    (r#"(?i)(password|passwd|pwd)\s*[:=]\s*['"]?[^\s'";]{8,}['"]?"#, "Password"),
     (r"-----BEGIN (RSA|DSA|EC|OPENSSH|PGP) PRIVATE KEY-----", "Private Key"),
     (r"(?i)(aws_access_key_id|aws_secret_access_key)\s*[:=]", "AWS Credentials"),
-    (r"(?i)(github|gitlab)_token\s*[:=]\s*['\"]?[a-z0-9]{20,}['\"]?", "GitHub/GitLab Token"),
+    (r#"(?i)(github|gitlab)_token\s*[:=]\s*['"]?[a-z0-9]{20,}['"]?"#, "GitHub/GitLab Token"),
     (r"(?i)Bearer\s+[a-zA-Z0-9\-._~+/]+=*", "Bearer Token"),
     (r"sk-[a-zA-Z0-9]{32,}", "OpenAI API Key"),
 ];

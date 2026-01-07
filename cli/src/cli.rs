@@ -190,6 +190,7 @@ pub(crate) enum Commands {
     Stack(StackCommands),
 
     /// Git safety checks (secret scanning, preflight)
+    #[command(subcommand)]
     Safe(SafeCommands),
 }
 
