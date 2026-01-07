@@ -21,6 +21,11 @@ pub(crate) async fn run_apply_flow(
     base: &str,
     pr: bool,
 ) -> Result<()> {
+    // Check if user has Pro/Team plan when using --publish
+    if publish {
+        crate::plan_guard::require_feature(crate::plan_types::FeaturePermission::AutoPublish).await?;
+    }
+
     ensure_git_repo()?;
 
     println!("{}", style("[orca apply]").bold().cyan());

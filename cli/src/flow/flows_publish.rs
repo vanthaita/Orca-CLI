@@ -74,6 +74,9 @@ pub(crate) fn print_github_pr_url(branch: &str, base: &str) -> Result<()> {
 }
 
 pub(crate) async fn run_publish_current_flow(branch: Option<&str>, base: &str, pr: bool) -> Result<()> {
+    // Check if user has Pro/Team plan for auto-publish feature
+    crate::plan_guard::require_feature(crate::plan_types::FeaturePermission::AutoPublish).await?;
+
     ensure_git_repo()?;
 
     println!("{}", style("[orca publish-current]").bold().cyan());
