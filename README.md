@@ -35,29 +35,67 @@ It's not just a wrapper; it's a workflow engine designed for the era of AI-assis
 
 ## 📦 Installation
 
-### Windows
+Choose your preferred installation method:
 
-**Option 1: MSI Installer (Recommended)**
-1. Download the latest `OrcaSetup.msi` from [Releases](https://github.com/vanthaita/Orca/releases/latest).
+### npm (Cross-platform)
+
+```bash
+npm install -g @vanthaita/orca
+```
+
+### Bun (Cross-platform)
+
+```bash
+bun install -g @vanthaita/orca
+```
+
+### Homebrew (macOS/Linux)
+
+```bash
+brew tap vanthaita/orca
+brew install orca
+```
+
+### Winget (Windows)
+
+```bash
+winget install vanthaita.Orca
+```
+
+### Shell Script (Linux/macOS)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/vanthaita/orca-releases/main/install.sh | sh
+```
+
+### Windows MSI Installer
+
+**Recommended for Windows users**
+
+1. Download the latest `OrcaSetup-<version>.msi` from [Releases](https://github.com/vanthaita/orca-releases/releases/latest).
 2. Run the installer.
-3. Open a new terminal and type `orca`.
+3. Open a new terminal and type `orca --help`.
 
-**Option 2: Portable Zip**
-1. Download `orca-x86_64-pc-windows-msvc.zip`.
-2. Extract the archive.
-3. Add the folder to your system `PATH`.
+### Portable Archive
+
+Download the appropriate archive for your platform from [Releases](https://github.com/vanthaita/orca-releases/releases/latest):
+
+- **Windows**: `orca-x86_64-pc-windows-msvc.zip`
+- **macOS**: `orca-x86_64-apple-darwin.tar.gz`
+- **Linux**: `orca-x86_64-unknown-linux-gnu.tar.gz`
+
+Extract and add to your system PATH.
 
 ### From Source
 
-Requirements: [Rust](https://rustup.rs/) (stable) and [Node.js](https://nodejs.org/).
+Requirements: [Rust](https://rustup.rs/) (stable)
 
 ```bash
 # Clone the repository
 git clone https://github.com/vanthaita/Orca.git
-cd Orca
+cd Orca/cli
 
-# Build the CLI
-cd cli
+# Build and install
 cargo install --path .
 ```
 
