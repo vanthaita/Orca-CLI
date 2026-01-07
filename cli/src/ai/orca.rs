@@ -49,7 +49,7 @@ impl CompletionProvider for OrcaProvider {
         let text = resp.text().await.context("Failed to read Orca server response")?;
 
         if !status.is_success() {
-            anyhow::bail!("Orca server returned {}: {}", status, text);
+            return Err(crate::api_client::handle_api_error(status, &text));
         }
 
         let parsed: OrcaChatResponse = parse_api_json(&text)

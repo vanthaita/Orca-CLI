@@ -55,7 +55,9 @@ pub async fn run_update_flow() -> Result<()> {
             );
         }
 
-        anyhow::bail!("Server returned error: {}", resp.status());
+        let status = resp.status();
+        let text = resp.text().await.unwrap_or_default();
+        return Err(crate::api_client::handle_api_error(status, &text));
     }
 
     let body = resp.text().await.context("Failed to read update response body")?;

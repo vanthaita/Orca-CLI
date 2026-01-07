@@ -45,11 +45,7 @@ async fn try_start(
             continue;
         }
 
-        return Err(CliStartError::Other(anyhow::anyhow!(
-            "Server returned {}: {}",
-            status,
-            text
-        )));
+        return Err(CliStartError::Other(crate::api_client::handle_api_error(status, &text)));
     }
 
     Err(CliStartError::Other(
@@ -182,7 +178,9 @@ pub(crate) async fn fetch_user_info() -> Result<UserMeResponse> {
                 } else if resp.status() == reqwest::StatusCode::NOT_FOUND {
                     continue;
                 } else {
-                    last_err = Some(anyhow::anyhow!("Server returned {}", resp.status()));
+                    let status = resp.status();
+                    let text = resp.text().await.unwrap_or_default();
+                    last_err = Some(crate::api_client::handle_api_error(status, &text));
                 }
             }
             Err(e) => {
@@ -352,7 +350,7 @@ pub(crate) async fn run_login_flow() -> Result<()> {
                         text = Some(resp_text);
                         break;
                     }
-                    last_err = Some(anyhow::anyhow!("Server returned {}: {}", status, resp_text));
+                    last_err = Some(crate::api_client::handle_api_error(status, &resp_text));
                 }
                 Err(e) => {
                     last_err = Some(anyhow::anyhow!(e).context("Failed to call /auth/cli/poll"));

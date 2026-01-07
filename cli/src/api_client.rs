@@ -53,10 +53,7 @@ impl OrcaApiClient {
             .context("Failed to read server response")?;
 
         if !status.is_success() {
-            if status.as_u16() == 401 {
-                anyhow::bail!("Authentication failed. Please run 'orca login' to sign in again.");
-            }
-            anyhow::bail!("Server returned {}: {}", status, text);
+            return Err(handle_api_error(status, &text));
         }
 
         self.parse_api_json(&text)
@@ -74,4 +71,37 @@ impl OrcaApiClient {
 
         serde_json::from_value::<T>(value).context("Failed to parse JSON")
     }
+}
+
+pub fn handle_api_error(status: reqwest::StatusCode, text: &str) -> anyhow::Error {
+    if status.as_u16() == 401 {
+        return anyhow::anyhow!("Authentication failed. Please run 'orca login' to sign in again.");
+    }
+
+    if let Ok(json) = serde_json::from_str::<serde_json::Value>(text) {
+        // Check for nested message object like { "message": { "message": "...", "error": "..." } }
+        if let Some(msg_obj) = json.get("message").and_then(|m| m.as_object()) {
+            if let Some(inner_msg) = msg_obj.get("message").and_then(|m| m.as_str()) {
+                if !inner_msg.is_empty() {
+                    return anyhow::anyhow!("{}", inner_msg);
+                }
+            }
+        }
+        
+        // Check for simple message string { "message": "..." }
+        if let Some(msg_str) = json.get("message").and_then(|m| m.as_str()) {
+             if !msg_str.is_empty() {
+                return anyhow::anyhow!("{}", msg_str);
+            }
+        }
+        
+        // Check for error string { "error": "..." }
+        if let Some(err_str) = json.get("error").and_then(|e| e.as_str()) {
+             if !err_str.is_empty() {
+                return anyhow::anyhow!("{}", err_str);
+            }
+        }
+    }
+
+    anyhow::anyhow!("Server returned {}: {}", status, text)
 }
