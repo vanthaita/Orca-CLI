@@ -8,8 +8,12 @@ import { AuthService } from './auth.service';
 import { CliDeviceCode } from './entities/cli-device-code.entity';
 import { CliToken } from './entities/cli-token.entity';
 import { User } from './entities/user.entity';
+
 import { GoogleStrategy } from './google.strategy';
 import { JwtStrategy } from './jwt.strategy';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { CliTokenGuard } from '../ai/cli-token.guard';
+import { UnifiedAuthGuard } from './unified-auth.guard';
 
 @Module({
   imports: [
@@ -23,7 +27,7 @@ import { JwtStrategy } from './jwt.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy, JwtStrategy],
-  exports: [AuthService],
+  providers: [AuthService, GoogleStrategy, JwtStrategy, JwtAuthGuard, CliTokenGuard, UnifiedAuthGuard],
+  exports: [AuthService, UnifiedAuthGuard],
 })
-export class AuthModule {}
+export class AuthModule { }

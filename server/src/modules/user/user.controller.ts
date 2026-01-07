@@ -2,6 +2,7 @@ import { Body, Controller, Get, Req, UnauthorizedException, UseGuards } from '@n
 import type { Request } from 'express';
 import { CliTokenGuard } from '../ai/cli-token.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { UnifiedAuthGuard } from '../auth/unified-auth.guard';
 import { User } from '../auth/entities/user.entity';
 import { AuthService } from '../auth/auth.service';
 import { PlanService } from './plan.service';
@@ -32,14 +33,14 @@ export class UserController {
     }
 
     @Get('plan')
-    @UseGuards(JwtAuthGuard, CliTokenGuard)
+    @UseGuards(UnifiedAuthGuard)
     async getPlan(@Req() req: Request) {
         const user = await this.getUserFromRequest(req);
         return this.planService.getPlanConfig(user);
     }
 
     @Get('features')
-    @UseGuards(JwtAuthGuard, CliTokenGuard)
+    @UseGuards(UnifiedAuthGuard)
     async getFeatures(@Req() req: Request) {
         const user = await this.getUserFromRequest(req);
         return {
@@ -48,7 +49,7 @@ export class UserController {
     }
 
     @Get('usage')
-    @UseGuards(JwtAuthGuard, CliTokenGuard)
+    @UseGuards(UnifiedAuthGuard)
     async getUsage(@Req() req: Request) {
         const user = await this.getUserFromRequest(req);
 
