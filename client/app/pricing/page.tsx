@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { ComponentType } from "react";
 import { PricingCard, PricingTier } from "@/component/PricingCard";
+import { FeatureComparison } from "@/component/FeatureComparison";
 import { SiteHeader } from "@/component/SiteHeader";
 import { SiteFooter } from "@/component/SiteFooter";
 
@@ -11,54 +12,68 @@ export const metadata: Metadata = {
 
 const TIERS: PricingTier[] = [
     {
-        name: "Community",
+        name: "Free",
         price: "Free",
         description: "Perfect for open source maintainers and hobbyists.",
         ctaText: "Get Started",
-        ctaLink: "/download",
+        ctaLink: "/login",
         features: [
-            { text: "BYOK (Gemini, OpenAI, Zai, DeepSeek)", included: true },
-            { text: "Local AI Commit Generation", included: true },
-            { text: "Public Repositories", included: true },
-            { text: "Basic Terminal UI", included: true },
+            { text: "7 AI commits per day", included: true },
+            { text: "Gemini Flash AI model", included: true },
+            { text: "Core Git wrapper (unlimited)", included: true },
+            { text: "Basic commit messages", included: true },
             { text: "Community Support", included: true },
-            { text: "Advanced Context Analysis", included: false },
-            { text: "Team Governance", included: false },
+            { text: "Auto-PR workflow", included: false },
+            { text: "AI Conflict Resolution", included: false },
         ]
     },
     {
-        name: "Pro (Coming Soon)",
-        price: "$10",
+        name: "Pro",
+        price: "$7",
         description: "For professional developers who want to move fast.",
         highlighted: true,
-        ctaText: "Start Free Trial",
+        ctaText: "Start 14-Day Free Trial",
         ctaLink: "/login?plan=pro",
         features: [
-            { text: "Core Git Wrapper", included: true },
-            { text: "Local AI Commit Generation", included: true },
-            { text: "Unlimited Repositories", included: true },
-            { text: "Advanced Context Analysis", included: true },
-            { text: "Priority Support", included: true },
-            { text: "PR Description Generation", included: true },
-            { text: "Team Governance", included: false },
+            { text: "Unlimited AI commits", included: true },
+            { text: "Auto-PR workflow (orca publish)", included: true },
+            { text: "AI Conflict Resolution", included: true },
+            { text: "AI Release Notes", included: true },
+            { text: "Custom Instructions", included: true },
+            { text: "Email Support", included: true },
+            { text: "Team Dashboard", included: false },
         ]
     },
     {
-        name: "Team (Coming Soon)",
-        price: "$29",
-        description: "For teams that need consistency and control.",
-        ctaText: "Contact Sales",
-        ctaLink: "mailto:sales@orcacli.codes",
+        name: "Team",
+        price: "$20",
+        description: "For teams that need collaboration and consistency.",
+        ctaText: "Start 14-Day Free Trial",
+        ctaLink: "/login?plan=team",
         features: [
-            { text: "Core Git Wrapper", included: true },
-            { text: "Local AI Commit Generation", included: true },
-            { text: "Unlimited Repositories", included: true },
-            { text: "Advanced Context Analysis", included: true },
+            { text: "Everything in Pro", included: true },
+            { text: "Up to 5 team members", included: true },
+            { text: "Shared Team Templates", included: true },
+            { text: "Team Analytics Dashboard", included: true },
             { text: "Priority Support", included: true },
-            { text: "PR Description Generation", included: true },
-            { text: "Team Governance & Audit", included: true },
         ]
     }
+    // {
+    //     name: "Team (Coming Soon)",
+    //     price: "$29",
+    //     description: "For teams that need consistency and control.",
+    //     ctaText: "Contact Sales",
+    //     ctaLink: "mailto:sales@orcacli.codes",
+    //     features: [
+    //         { text: "Core Git Wrapper", included: true },
+    //         { text: "Local AI Commit Generation", included: true },
+    //         { text: "Unlimited Repositories", included: true },
+    //         { text: "Advanced Context Analysis", included: true },
+    //         { text: "Priority Support", included: true },
+    //         { text: "PR Description Generation", included: true },
+    //         { text: "Team Governance & Audit", included: true },
+    //     ]
+    // }
 ];
 
 export default function PricingPage() {
@@ -83,12 +98,15 @@ export default function PricingPage() {
                         ))}
                     </div>
 
+                    {/* Feature Comparison Table */}
+                    <FeatureComparison />
+
                     <div className="mt-24 rounded-2xl border border-white/10 bg-white/5 p-8 md:p-12 text-center">
                         <h3 className="mb-4 text-2xl font-bold text-white">Need a custom solution?</h3>
                         <p className="mb-8 text-neutral-400 max-w-2xl mx-auto">
                             For large enterprises with specific security and compliance requirements, we offer custom deployment options.
                         </p>
-                        <a href="mailto:enterprise@orcacli.codes" className="inline-flex items-center justify-center rounded-lg bg-white text-black px-6 py-3 font-semibold hover:bg-neutral-200 transition-colors">
+                        <a href="mailto:orcacli2026@gmail.com" className="inline-flex items-center justify-center rounded-lg bg-white text-black px-6 py-3 font-semibold hover:bg-neutral-200 transition-colors">
                             Contact Enterprise Sales
                         </a>
                     </div>
