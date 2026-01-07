@@ -199,7 +199,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          git add install.sh
+           git add install.sh
           if git diff --staged --quiet; then
             echo "No changes to install.sh"
           else
@@ -208,3 +208,194 @@ jobs:
             git push -u origin main
           fi
 
+  publish-npm:
+    name: Publish to npm
+    needs: build-and-upload
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Compute version
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Update package.json version
+        working-directory: cli
+        run: |
+          npm version $VERSION --no-git-tag-version
+
+      - name: Publish to npm
+        working-directory: cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm publish --access public
+
+  update-homebrew:
+    name: Update Homebrew Formula
+    needs: build-and-upload
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: source
+
+      - name: Compute version
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Download release artifacts
+        env:
+          GH_TOKEN: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
+        run: |
+          gh release download $GITHUB_REF_NAME \
+            --repo vanthaita/orca-releases \
+            --pattern "orca-x86_64-apple-darwin.tar.gz" \
+            --pattern "orca-x86_64-unknown-linux-gnu.tar.gz"
+
+      - name: Compute SHA256
+        id: sha
+        run: |
+          SHA_DARWIN=$(sha256sum orca-x86_64-apple-darwin.tar.gz | cut -d' ' -f1)
+          SHA_LINUX=$(sha256sum orca-x86_64-unknown-linux-gnu.tar.gz | cut -d' ' -f1)
+          echo "SHA_DARWIN=$SHA_DARWIN" >> "$GITHUB_ENV"
+          echo "SHA_LINUX=$SHA_LINUX" >> "$GITHUB_ENV"
+
+      - name: Clone Homebrew tap
+        env:
+          GH_TOKEN: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
+        run: |
+          git clone "https://oauth2:${GH_TOKEN}@github.com/vanthaita/homebrew-orca.git" tap
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update formula
+        run: |
+          cat > tap/Formula/orca.rb << 'EOF'
+          class Orca < Formula
+            desc "AI-native Git workflow automation for modern developers"
+            homepage "https://orcacli.codes"
+            version "${{ env.VERSION }}"
+            license "MIT"
+
+            on_macos do
+              if Hardware::CPU.intel?
+                url "https://github.com/vanthaita/orca-releases/releases/download/${{ github.ref_name }}/orca-x86_64-apple-darwin.tar.gz"
+                sha256 "${{ env.SHA_DARWIN }}"
+              else
+                url "https://github.com/vanthaita/orca-releases/releases/download/${{ github.ref_name }}/orca-x86_64-apple-darwin.tar.gz"
+                sha256 "${{ env.SHA_DARWIN }}"
+              end
+            end
+
+            on_linux do
+              if Hardware::CPU.intel?
+                url "https://github.com/vanthaita/orca-releases/releases/download/${{ github.ref_name }}/orca-x86_64-unknown-linux-gnu.tar.gz"
+                sha256 "${{ env.SHA_LINUX }}"
+              end
+            end
+
+            def install
+              bin.install "orca"
+            end
+
+            test do
+              system "#{bin}/orca", "--version"
+            end
+          end
+          EOF
+
+      - name: Commit and push
+        working-directory: tap
+        env:
+          GH_TOKEN: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
+        run: |
+          git add Formula/orca.rb
+          if git diff --staged --quiet; then
+            echo "No changes to formula"
+          else
+            git commit -m "Update Orca to ${{ env.VERSION }}"
+            git push
+          fi
+
+  update-winget:
+    name: Update Winget Manifest
+    needs: build-and-upload
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute version
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          echo "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Download MSI
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
+        run: |
+          gh release download ${{ github.ref_name }} `
+            --repo vanthaita/orca-releases `
+            --pattern "OrcaSetup-*.msi"
+
+      - name: Compute SHA256
+        shell: pwsh
+        run: |
+          $msiFile = Get-Item OrcaSetup-*.msi | Select-Object -First 1
+          $hash = (Get-FileHash -Path $msiFile.FullName -Algorithm SHA256).Hash
+          echo "MSI_SHA256=$hash" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "MSI_FILENAME=$($msiFile.Name)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Update manifests
+        shell: pwsh
+        run: |
+          # Update version manifest
+          (Get-Content winget/vanthaita.Orca.yaml) `
+            -replace 'PackageVersion: .*', "PackageVersion: $env:VERSION" |
+            Set-Content winget/vanthaita.Orca.yaml
+
+          # Update installer manifest
+          (Get-Content winget/vanthaita.Orca.installer.yaml) `
+            -replace 'PackageVersion: .*', "PackageVersion: $env:VERSION" `
+            -replace 'InstallerUrl: .*', "InstallerUrl: https://github.com/vanthaita/orca-releases/releases/download/${{ github.ref_name }}/$env:MSI_FILENAME" `
+            -replace 'InstallerSha256: .*', "InstallerSha256: $env:MSI_SHA256" |
+            Set-Content winget/vanthaita.Orca.installer.yaml
+
+          # Update locale manifest
+          (Get-Content winget/vanthaita.Orca.locale.en-US.yaml) `
+            -replace 'PackageVersion: .*', "PackageVersion: $env:VERSION" `
+            -replace 'ReleaseNotes: .*', "ReleaseNotes: |-`n  See release notes at: https://github.com/vanthaita/orca-releases/releases/tag/${{ github.ref_name }}" `
+            -replace 'ReleaseNotesUrl: .*', "ReleaseNotesUrl: https://github.com/vanthaita/orca-releases/releases/tag/${{ github.ref_name }}" |
+            Set-Content winget/vanthaita.Orca.locale.en-US.yaml
+
+      - name: Create PR to winget-pkgs
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          Write-Host "Winget manifests updated locally. Manual PR creation to microsoft/winget-pkgs required."
+          Write-Host "Please follow the instructions at: https://github.com/microsoft/winget-pkgs/blob/master/CONTRIBUTING.md"
+          
+          # Upload manifests as artifacts for manual submission
+          
+      - name: Upload Winget Manifests
+        uses: actions/upload-artifact@v4
+        with:
+          name: winget-manifests-${{ env.VERSION }}
+          path: winget/
