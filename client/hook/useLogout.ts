@@ -22,8 +22,8 @@ export function useLogout() {
             queryClient.clear();
 
             // Clear cookies (backup in case server didn't)
-            document.cookie = 'accessToken=; path=/; max-age=0';
-            document.cookie = 'refreshToken=; path=/api/v1/auth; max-age=0';
+            document.cookie = 'access_token=; path=/; max-age=0';
+            document.cookie = 'refresh_token=; path=/api/v1/auth; max-age=0';
 
             // Redirect to home
             window.location.href = '/';

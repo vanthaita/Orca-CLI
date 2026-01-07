@@ -161,7 +161,7 @@ export class AuthController {
     const isProd = process.env.NODE_ENV === 'production';
     const cookieDomain = process.env.COOKIE_DOMAIN;
 
-    res.cookie('accessToken', projectAccessToken, {
+    res.cookie('access_token', projectAccessToken, {
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? 'none' : 'lax',
@@ -170,7 +170,7 @@ export class AuthController {
       maxAge: 15 * 60 * 1000,
     });
 
-    res.cookie('refreshToken', projectRefreshToken, {
+    res.cookie('refresh_token', projectRefreshToken, {
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? 'none' : 'lax',
@@ -204,7 +204,7 @@ export class AuthController {
     @Body() body: RefreshBody,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const refreshToken = body.refreshToken ?? req.cookies?.refreshToken;
+    const refreshToken = body.refreshToken ?? req.cookies?.refresh_token;
     if (!refreshToken) {
       throw new UnauthorizedException('Missing refresh token');
     }
@@ -214,7 +214,7 @@ export class AuthController {
     const isProd = process.env.NODE_ENV === 'production';
     const cookieDomain = process.env.COOKIE_DOMAIN;
 
-    res.cookie('accessToken', rotated.accessToken, {
+    res.cookie('access_token', rotated.accessToken, {
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? 'none' : 'lax',
@@ -223,7 +223,7 @@ export class AuthController {
       maxAge: 15 * 60 * 1000,
     });
 
-    res.cookie('refreshToken', rotated.refreshToken, {
+    res.cookie('refresh_token', rotated.refreshToken, {
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? 'none' : 'lax',
@@ -250,7 +250,7 @@ export class AuthController {
     const isProd = process.env.NODE_ENV === 'production';
     const cookieDomain = process.env.COOKIE_DOMAIN;
 
-    res.cookie('accessToken', '', {
+    res.cookie('access_token', '', {
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? 'none' : 'lax',
@@ -259,7 +259,7 @@ export class AuthController {
       maxAge: 0,
     });
 
-    res.cookie('refreshToken', '', {
+    res.cookie('refresh_token', '', {
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? 'none' : 'lax',
