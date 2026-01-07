@@ -4,7 +4,7 @@ use crate::git::{
 };
 use anyhow::{Context, Result};
 use console::style;
-use dialoguer::{Confirm, Input};
+use dialoguer::Confirm;
 
 /// Show current branch with status
 pub(crate) async fn run_branch_current_flow() -> Result<()> {

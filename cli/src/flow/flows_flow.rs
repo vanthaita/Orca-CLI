@@ -76,7 +76,7 @@ pub(crate) async fn run_flow_start(
 }
 
 /// Finish current flow (optionally push and create PR)
-pub(crate) async fn run_flow_finish(push: bool, pr: bool, yes: bool, yes_pr: bool) -> Result<()> {
+pub(crate) async fn run_flow_finish(push: bool, pr: bool, yes: bool, _yes_pr: bool) -> Result<()> {
     ensure_git_repo()?;
     
     println!("{}", style("[orca flow finish]").bold().cyan());

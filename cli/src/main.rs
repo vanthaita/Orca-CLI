@@ -119,7 +119,7 @@ async fn run() -> Result<()> {
                 flows::run_tidy_squash_flow(base.as_deref(), cli.yes).await?
             }
             crate::cli::TidyCommands::Fixup { commit } => {
-                flows::run_tidy_fixup_flow(commit).await?
+                flows::run_tidy_fixup_flow(&commit).await?
             }
             crate::cli::TidyCommands::Amend { no_edit } => {
                 flows::run_tidy_amend_flow(no_edit, cli.yes).await?
@@ -139,20 +139,20 @@ async fn run() -> Result<()> {
         // Release and tag commands
         crate::cli::Commands::Release(release_cmd) => match release_cmd {
             crate::cli::ReleaseCommands::Tag { version, message, push } => {
-                flows::run_release_tag_flow(version, message.as_deref(), push, cli.yes).await?
+                flows::run_release_tag_flow(&version, message.as_deref(), push, cli.yes).await?
             }
             crate::cli::ReleaseCommands::Notes { from, to, ai } => {
                 flows::run_release_notes_flow(from.as_deref(), to.as_deref(), ai).await?
             }
             crate::cli::ReleaseCommands::Create { version, notes, ai } => {
-                flows::run_release_create_flow(version, notes.as_deref(), ai, cli.yes).await?
+                flows::run_release_create_flow(&version, notes.as_deref(), ai, cli.yes).await?
             }
         },
         
         // Stacked branches commands
         crate::cli::Commands::Stack(stack_cmd) => match stack_cmd {
             crate::cli::StackCommands::Start { branch } => {
-                flows::run_stack_start_flow(branch, cli.yes).await?
+                flows::run_stack_start_flow(&branch, cli.yes).await?
             }
             crate::cli::StackCommands::List => flows::run_stack_list_flow().await?,
             crate::cli::StackCommands::Rebase { onto } => {
@@ -169,7 +169,7 @@ async fn run() -> Result<()> {
                 flows::run_safe_scan_flow(all).await?
             }
             crate::cli::SafeCommands::Preflight { operation, protection } => {
-                flows::run_safe_preflight_flow(operation, protection.as_deref()).await?
+                flows::run_safe_preflight_flow(&operation, protection.as_deref()).await?
             }
         },
     }

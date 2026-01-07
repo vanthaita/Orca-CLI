@@ -1,7 +1,6 @@
 use crate::git::{ensure_git_repo, run_git};
 use anyhow::Result;
 use console::style;
-use std::path::Path;
 
 /// Show conflicted files and current state
 pub(crate) async fn run_conflict_status_flow() -> Result<()> {

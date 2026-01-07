@@ -1,7 +1,7 @@
 use crate::git::{current_branch, ensure_git_repo, checkout_branch, run_git, branch_exists};
 use anyhow::{Context, Result};
 use console::style;
-use dialoguer::{Confirm, Input};
+use dialoguer::Confirm;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -253,7 +253,7 @@ pub(crate) async fn run_stack_rebase_flow(onto: Option<&str>, yes: bool) -> Resu
 }
 
 /// Publish stack branches in order
-pub(crate) async fn run_stack_publish_flow(pr: bool, yes: bool, yes_pr: bool) -> Result<()> {
+pub(crate) async fn run_stack_publish_flow(pr: bool, yes: bool, _yes_pr: bool) -> Result<()> {
     // Check if user has Pro/Team plan when using --pr
     if pr {
         crate::plan_guard::require_feature(crate::plan_types::FeaturePermission::AutoPublish).await?;

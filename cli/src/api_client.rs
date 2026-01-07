@@ -15,6 +15,7 @@ impl OrcaApiClient {
         Ok(Self { base_url, token })
     }
 
+    #[allow(dead_code)]
     pub async fn get_user_plan(&self) -> Result<UserPlanInfo> {
         let url = format!(
             "{}/{}/user/plan",
