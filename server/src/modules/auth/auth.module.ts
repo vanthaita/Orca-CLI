@@ -28,6 +28,6 @@ import { UnifiedAuthGuard } from './unified-auth.guard';
   ],
   controllers: [AuthController],
   providers: [AuthService, GoogleStrategy, JwtStrategy, JwtAuthGuard, CliTokenGuard, UnifiedAuthGuard],
-  exports: [AuthService, UnifiedAuthGuard],
+  exports: [AuthService, JwtAuthGuard, CliTokenGuard, UnifiedAuthGuard],
 })
 export class AuthModule { }
