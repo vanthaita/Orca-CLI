@@ -228,3 +228,54 @@ pub(crate) fn checkout_branch(branch: &str, create_if_missing: bool) -> Result<(
     run_git(&["checkout", branch])?;
     Ok(())
 }
+
+pub(crate) fn is_working_tree_clean() -> Result<bool> {
+    let status = run_git(&["status", "--porcelain"])?;
+    Ok(status.trim().is_empty())
+}
+
+pub(crate) fn get_remote_name() -> Result<String> {
+    let remotes = run_git(&["remote"])?;
+    let first_remote = remotes.lines().next().unwrap_or("origin").trim();
+    if first_remote.is_empty() {
+        anyhow::bail!("No git remote configured");
+    }
+    Ok(first_remote.to_string())
+}
+
+pub(crate) fn list_branches() -> Result<Vec<String>> {
+    let output = run_git(&["branch", "--format=%(refname:short)"])?;
+    Ok(output
+        .lines()
+        .map(|l| l.trim().to_string())
+        .filter(|l| !l.is_empty())
+        .collect())
+}
+
+pub(crate) fn list_remote_branches(remote: &str) -> Result<Vec<String>> {
+    let output = run_git(&["branch", "-r", "--format=%(refname:short)"])?;
+    Ok(output
+        .lines()
+        .map(|l| l.trim().to_string())
+        .filter(|l| !l.is_empty() && l.starts_with(&format!("{}/", remote)))
+        .collect())
+}
+
+pub(crate) fn fetch_remote(remote: &str) -> Result<()> {
+    run_git(&["fetch", remote])?;
+    Ok(())
+}
+
+pub(crate) fn merge_upstream() -> Result<()> {
+    let upstream = upstream_ref()?
+        .ok_or_else(|| anyhow::anyhow!("No upstream branch configured"))?;
+    run_git(&["merge", &upstream])?;
+    Ok(())
+}
+
+pub(crate) fn rebase_upstream() -> Result<()> {
+    let upstream = upstream_ref()?
+        .ok_or_else(|| anyhow::anyhow!("No upstream branch configured"))?;
+    run_git(&["rebase", &upstream])?;
+    Ok(())
+}

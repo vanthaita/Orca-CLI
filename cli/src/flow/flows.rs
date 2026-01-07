@@ -143,3 +143,146 @@ pub(crate) async fn run_doctor_flow() -> Result<()> {
 pub(crate) async fn run_update_flow() -> Result<()> {
     super::update::run_update_flow().await
 }
+
+// Git wrapper flows
+pub(crate) async fn run_git_status_flow() -> Result<()> {
+    super::flows_git::run_git_status_flow().await
+}
+
+pub(crate) async fn run_git_log_flow(
+    n: Option<u32>,
+    oneline: bool,
+    graph: bool,
+    since: Option<String>,
+) -> Result<()> {
+    super::flows_git::run_git_log_flow(n, oneline, graph, since).await
+}
+
+pub(crate) async fn run_git_sync_flow(rebase: bool, yes: bool) -> Result<()> {
+    super::flows_git::run_git_sync_flow(rebase, yes).await
+}
+
+// Branch management flows
+pub(crate) async fn run_branch_current_flow() -> Result<()> {
+    super::flows_branch::run_branch_current_flow().await
+}
+
+pub(crate) async fn run_branch_list_flow(remote: bool) -> Result<()> {
+    super::flows_branch::run_branch_list_flow(remote).await
+}
+
+pub(crate) async fn run_branch_new_flow(
+    branch_type: &str,
+    name: &str,
+    base: Option<&str>,
+) -> Result<()> {
+    super::flows_branch::run_branch_new_flow(branch_type, name, base).await
+}
+
+pub(crate) async fn run_branch_publish_flow(yes: bool) -> Result<()> {
+    super::flows_branch::run_branch_publish_flow(yes).await
+}
+
+// Flow orchestration
+pub(crate) async fn run_flow_start(
+    flow_type: Option<&str>,
+    name: Option<&str>,
+    base: Option<&str>,
+) -> Result<()> {
+    super::flows_flow::run_flow_start(flow_type, name, base).await
+}
+
+pub(crate) async fn run_flow_finish(push: bool, pr: bool, yes: bool, yes_pr: bool) -> Result<()> {
+    super::flows_flow::run_flow_finish(push, pr, yes, yes_pr).await
+}
+
+// Tidy (history cleanup) flows
+pub(crate) async fn run_tidy_rebase_flow(onto: Option<&str>, autosquash: bool, yes: bool) -> Result<()> {
+    super::flows_tidy::run_tidy_rebase_flow(onto, autosquash, yes).await
+}
+
+pub(crate) async fn run_tidy_squash_flow(base: Option<&str>, yes: bool) -> Result<()> {
+    super::flows_tidy::run_tidy_squash_flow(base, yes).await
+}
+
+pub(crate) async fn run_tidy_fixup_flow(commit: &str) -> Result<()> {
+    super::flows_tidy::run_tidy_fixup_flow(commit).await
+}
+
+pub(crate) async fn run_tidy_amend_flow(no_edit: bool, yes: bool) -> Result<()> {
+    super::flows_tidy::run_tidy_amend_flow(no_edit, yes).await
+}
+
+// Conflict resolution flows
+pub(crate) async fn run_conflict_status_flow() -> Result<()> {
+    super::flows_conflict::run_conflict_status_flow().await
+}
+
+pub(crate) async fn run_conflict_guide_flow(ai: bool) -> Result<()> {
+    super::flows_conflict::run_conflict_guide_flow(ai).await
+}
+
+pub(crate) async fn run_conflict_continue_flow() -> Result<()> {
+    super::flows_conflict::run_conflict_continue_flow().await
+}
+
+pub(crate) async fn run_conflict_abort_flow(yes: bool) -> Result<()> {
+    super::flows_conflict::run_conflict_abort_flow(yes).await
+}
+
+// Release flows
+pub(crate) async fn run_release_tag_flow(
+    version: &str,
+    message: Option<&str>,
+    push: bool,
+    yes: bool,
+) -> Result<()> {
+    super::flows_release::run_release_tag_flow(version, message, push, yes).await
+}
+
+pub(crate) async fn run_release_notes_flow(
+    from: Option<&str>,
+    to: Option<&str>,
+    ai: bool,
+) -> Result<()> {
+    super::flows_release::run_release_notes_flow(from, to, ai).await
+}
+
+pub(crate) async fn run_release_create_flow(
+    version: &str,
+    notes_file: Option<&str>,
+    ai: bool,
+    yes: bool,
+) -> Result<()> {
+    super::flows_release::run_release_create_flow(version, notes_file, ai, yes).await
+}
+
+// Stack (stacked branches) flows
+pub(crate) async fn run_stack_start_flow(branch_name: &str, yes: bool) -> Result<()> {
+    super::flows_stack::run_stack_start_flow(branch_name, yes).await
+}
+
+pub(crate) async fn run_stack_list_flow() -> Result<()> {
+    super::flows_stack::run_stack_list_flow().await
+}
+
+pub(crate) async fn run_stack_rebase_flow(onto: Option<&str>, yes: bool) -> Result<()> {
+    super::flows_stack::run_stack_rebase_flow(onto, yes).await
+}
+
+pub(crate) async fn run_stack_publish_flow(pr: bool, yes: bool, yes_pr: bool) -> Result<()> {
+    super::flows_stack::run_stack_publish_flow(pr, yes, yes_pr).await
+}
+
+// Safety flows
+pub(crate) async fn run_safe_scan_flow(all: bool) -> Result<()> {
+    super::flows_safe::run_safe_scan_flow(all).await
+}
+
+pub(crate) async fn run_safe_preflight_flow(
+    operation: &str,
+    protection: Option<&str>,
+) -> Result<()> {
+    super::flows_safe::run_safe_preflight_flow(operation, protection).await
+}
+

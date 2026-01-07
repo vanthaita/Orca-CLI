@@ -8,5 +8,14 @@ pub(crate) mod flows_plan;
 pub(crate) mod flows_publish;
 pub(crate) mod flows_setup;
 pub(crate) mod flows_spinner;
+pub(crate) mod flows_git;
+pub(crate) mod flows_branch;
+pub(crate) mod flows_flow;
+pub(crate) mod flows_tidy;
+pub(crate) mod flows_conflict;
+pub(crate) mod flows_release;
+pub(crate) mod flows_stack;
+pub(crate) mod flows_safe;
 pub(crate) mod update;
+
 
