@@ -1,0 +1,43 @@
+{
+    "name": "@vanthaita/orca",
+    "version": "0.1.14",
+    "description": "AI-native Git workflow automation for modern developers",
+    "bin": {
+        "orca": "./bin/orca"
+    },
+    "scripts": {
+        "postinstall": "node ../scripts/install.js"
+    },
+    "keywords": [
+        "git",
+        "cli",
+        "ai",
+        "workflow",
+        "automation",
+        "commit",
+        "rust"
+    ],
+    "author": "vanthaita",
+    "license": "MIT",
+    "homepage": "https://orcacli.codes",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/vanthaita/Orca.git",
+        "directory": "cli"
+    },
+    "bugs": {
+        "url": "https://github.com/vanthaita/Orca/issues"
+    },
+    "engines": {
+        "node": ">=14.0.0"
+    },
+    "os": [
+        "darwin",
+        "linux",
+        "win32"
+    ],
+    "cpu": [
+        "x64",
+        "arm64"
+    ]
+}
