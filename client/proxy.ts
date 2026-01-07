@@ -1,25 +1,42 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { ORCA_API_BASE_URL, NEXT_PUBLIC_PREFIX_API } from '@/config/env';
 
-// Enable logging in production for debugging
-const log = (...args: unknown[]) => console.log('[Middleware]', ...args);
+const isDev = process.env.NODE_ENV === 'development';
+const log = (...args: unknown[]) => isDev && console.log('[Middleware]', ...args);
 
-function hasAuthCookie(request: NextRequest): boolean {
+async function verifyAuthFromAPI(request: NextRequest): Promise<boolean> {
     try {
-        // Check if access_token cookie exists
+        const verifyUrl = `${ORCA_API_BASE_URL}/${NEXT_PUBLIC_PREFIX_API}/auth/me`;
+
+        log('[Middleware] Attempting API verification:', verifyUrl);
+
         const cookieHeader = request.headers.get('cookie') || '';
 
         log('[Middleware] Cookie header:', cookieHeader);
 
-        // Simple check: if access_token cookie exists, consider user authenticated
-        // The actual validation will happen on the server side when API calls are made
-        const hasAccessToken = cookieHeader.includes('access_token=');
+        const response = await fetch(verifyUrl, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Cookie': cookieHeader,
+            },
+            credentials: 'include'
+        });
 
-        log('[Middleware] Has access token:', hasAccessToken);
+        if (!response.ok) {
+            const errorText = await response.text();
+            log('[Middleware] API verification failed with status:', response.status, errorText);
+            return false;
+        }
 
-        return hasAccessToken;
+        log('[Middleware] API verification result:', {
+            authenticated: true
+        });
+
+        return true;
     } catch (error) {
-        log('[Middleware] Cookie check error:', error instanceof Error ? error.message : 'Unknown error');
+        log('[Middleware] API verification error:', error instanceof Error ? error.message : 'Unknown error');
         return false;
     }
 }
@@ -37,7 +54,10 @@ export async function proxy(request: NextRequest) {
 
     const guestOnlyRoutes = ['/login'];
 
-    const isAuthenticated = hasAuthCookie(request);
+    const hasTokens = await verifyAuthFromAPI(request);
+    const shouldVerifyAuth = hasTokens;
+
+    const isAuthenticated = shouldVerifyAuth;
 
     const requiresAuth = protectedPrefixes.some(
         (prefix) => pathname === prefix || pathname.startsWith(prefix + '/')

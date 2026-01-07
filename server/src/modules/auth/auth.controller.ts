@@ -164,7 +164,7 @@ export class AuthController {
     res.cookie('access_token', projectAccessToken, {
       httpOnly: true,
       secure: isProd,
-      sameSite: isProd ? 'none' : 'lax',
+      sameSite: 'none',
       ...(cookieDomain && { domain: cookieDomain }), // Only set domain if defined
       path: '/',
       maxAge: 15 * 60 * 1000,
@@ -173,9 +173,9 @@ export class AuthController {
     res.cookie('refresh_token', projectRefreshToken, {
       httpOnly: true,
       secure: isProd,
-      sameSite: isProd ? 'none' : 'lax',
+      sameSite: 'none',
       ...(cookieDomain && { domain: cookieDomain }), // Only set domain if defined
-      path: '/api/v1/auth',
+      path: '/',
       maxAge: Number(process.env.JWT_REFRESH_DAYS ?? 30) * 24 * 60 * 60 * 1000,
     });
 
