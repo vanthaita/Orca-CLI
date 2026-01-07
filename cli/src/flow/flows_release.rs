@@ -1,5 +1,5 @@
-use crate::git::{current_branch, ensure_git_repo, run_git};
-use antml::{Context, Result};
+use crate::git::{ensure_git_repo, run_git};
+use anyhow::{Context, Result};
 use console::style;
 use dialoguer::{Confirm, Editor, Input};
 use std::process::Command;
@@ -173,7 +173,8 @@ pub(crate) async fn run_release_notes_flow(
             log
         );
         
-        match crate::ai::ask_ai(model, &prompt).await {
+        let provider = crate::ai::create_provider().await?;
+        match provider.generate_content(model, "", &prompt).await {
             Ok(notes) => {
                 println!("\n{}", style("Release Notes:").bold().green());
                 println!("{}", style("═".repeat(60)).dim());
@@ -270,7 +271,8 @@ pub(crate) async fn run_release_create_flow(
             tag_name, log
         );
         
-        crate::ai::ask_ai("gemini-2.0-flash-exp", &prompt).await?
+        let provider = crate::ai::create_provider().await?;
+        provider.generate_content("gemini-2.0-flash-exp", "", &prompt).await?
     } else {
         // Prompt user to edit
         Editor::new()
