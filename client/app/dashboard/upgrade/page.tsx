@@ -3,20 +3,21 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useMe } from '@/hook/useMe';
+import PaymentButton from '@/component/PaymentButton';
 
 export default function UpgradePage() {
     const me = useMe();
     const user = me.data?.user;
-    const [selectedPlan, setSelectedPlan] = useState<'pro' | 'team'>('pro');
+    const [selectedPlan, setSelectedPlan] = useState<'PRO' | 'TEAM'>('PRO');
     const [selectedDuration, setSelectedDuration] = useState<'1M' | '12M'>('12M');
-    const [copied, setCopied] = useState(false);
+    const [paymentError, setPaymentError] = useState<string | null>(null);
 
     const pricing = {
-        pro: {
+        PRO: {
             monthly: 170000,
             yearly: 1700000,
         },
-        team: {
+        TEAM: {
             monthly: 480000,
             yearly: 4800000,
         },
@@ -25,17 +26,6 @@ export default function UpgradePage() {
     const getPrice = () => {
         const plan = pricing[selectedPlan];
         return selectedDuration === '1M' ? plan.monthly : plan.yearly;
-    };
-
-    const getPaymentContent = () => {
-        if (!user?.email) return '';
-        return `ORCA ${user.email} ${selectedPlan.toUpperCase()} ${selectedDuration}`;
-    };
-
-    const handleCopy = async () => {
-        await navigator.clipboard.writeText(getPaymentContent());
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
     };
 
     const formatAmount = (amount: number) => {
@@ -74,10 +64,10 @@ export default function UpgradePage() {
                 {/* Pricing Plans */}
                 <div className="grid md:grid-cols-2 gap-6 mb-10">
                     <button
-                        onClick={() => setSelectedPlan('pro')}
-                        className={`border-2 border-dashed p-8 rounded-xl transition-all text-left ${selectedPlan === 'pro'
-                                ? 'border-emerald-500 bg-emerald-500/10'
-                                : 'border-white/20 bg-black/20 hover:border-white/40'
+                        onClick={() => setSelectedPlan('PRO')}
+                        className={`border-2 border-dashed p-8 rounded-xl transition-all text-left ${selectedPlan === 'PRO'
+                            ? 'border-emerald-500 bg-emerald-500/10'
+                            : 'border-white/20 bg-black/20 hover:border-white/40'
                             }`}
                     >
                         <h2 className="text-2xl font-black text-white mb-2 uppercase">Pro Tier</h2>
@@ -92,10 +82,10 @@ export default function UpgradePage() {
                     </button>
 
                     <button
-                        onClick={() => setSelectedPlan('team')}
-                        className={`border-2 border-dashed p-8 rounded-xl transition-all text-left ${selectedPlan === 'team'
-                                ? 'border-emerald-500 bg-emerald-500/10'
-                                : 'border-white/20 bg-black/20 hover:border-white/40'
+                        onClick={() => setSelectedPlan('TEAM')}
+                        className={`border-2 border-dashed p-8 rounded-xl transition-all text-left ${selectedPlan === 'TEAM'
+                            ? 'border-emerald-500 bg-emerald-500/10'
+                            : 'border-white/20 bg-black/20 hover:border-white/40'
                             }`}
                     >
                         <h2 className="text-2xl font-black text-white mb-2 uppercase">Team Tier</h2>
@@ -117,8 +107,8 @@ export default function UpgradePage() {
                         <button
                             onClick={() => setSelectedDuration('1M')}
                             className={`border-2 border-dashed p-4 rounded-lg transition-all ${selectedDuration === '1M'
-                                    ? 'border-emerald-500 bg-emerald-500/10 text-white'
-                                    : 'border-white/20 text-neutral-400 hover:border-white/40'
+                                ? 'border-emerald-500 bg-emerald-500/10 text-white'
+                                : 'border-white/20 text-neutral-400 hover:border-white/40'
                                 }`}
                         >
                             <div className="font-bold text-lg">Monthly</div>
@@ -127,8 +117,8 @@ export default function UpgradePage() {
                         <button
                             onClick={() => setSelectedDuration('12M')}
                             className={`border-2 border-dashed p-4 rounded-lg transition-all relative ${selectedDuration === '12M'
-                                    ? 'border-emerald-500 bg-emerald-500/10 text-white'
-                                    : 'border-white/20 text-neutral-400 hover:border-white/40'
+                                ? 'border-emerald-500 bg-emerald-500/10 text-white'
+                                : 'border-white/20 text-neutral-400 hover:border-white/40'
                                 }`}
                         >
                             <div className="absolute -top-3 right-4 bg-emerald-500 text-black px-2 py-1 text-xs font-bold rounded">
@@ -140,57 +130,52 @@ export default function UpgradePage() {
                     </div>
                 </div>
 
-                {/* Payment Instructions */}
+                {/* Payment Section */}
                 <div className="border-2 border-dashed border-white/20 bg-black/20 p-8 rounded-xl">
                     <h3 className="text-xl font-bold text-white mb-6 border-b-2 border-dashed border-white/20 pb-3">
-                        Payment Instructions
+                        Complete Payment
                     </h3>
 
                     <div className="space-y-6">
-                        <div>
-                            <div className="text-sm text-neutral-500 uppercase tracking-wide mb-2">Step 1: Transfer Amount</div>
-                            <div className="bg-black/40 border-2 border-dashed border-emerald-500/30 rounded-lg p-4">
-                                <div className="text-2xl font-black text-emerald-400">{formatAmount(getPrice())}</div>
+                        {/* Payment Amount Display */}
+                        <div className="bg-black/40 border-2 border-dashed border-emerald-500/30 rounded-lg p-6 text-center">
+                            <div className="text-sm text-neutral-500 uppercase tracking-wide mb-2">Total Amount</div>
+                            <div className="text-3xl font-black text-emerald-400">{formatAmount(getPrice())}</div>
+                            <div className="text-sm text-neutral-400 mt-2">
+                                {selectedPlan} Plan • {selectedDuration === '1M' ? 'Monthly' : 'Yearly'}
                             </div>
                         </div>
 
-                        <div>
-                            <div className="text-sm text-neutral-500 uppercase tracking-wide mb-2">Step 2: Bank Account</div>
-                            <div className="bg-black/40 border-2 border-dashed border-emerald-500/30 rounded-lg p-4">
-                                <div className="text-white font-bold mb-2">Vietcombank</div>
-                                <div className="text-neutral-300 font-mono">0123456789</div>
-                                <div className="text-neutral-500 text-sm mt-2">Recipient: ORCA CLI</div>
+                        {/* Error Message */}
+                        {paymentError && (
+                            <div className="bg-red-500/10 border-2 border-dashed border-red-500/50 rounded-lg p-4">
+                                <div className="text-red-400 font-bold">⚠️ Payment Error</div>
+                                <div className="text-neutral-300 text-sm mt-1">{paymentError}</div>
                             </div>
-                        </div>
+                        )}
 
-                        <div>
-                            <div className="text-sm text-neutral-500 uppercase tracking-wide mb-2">
-                                Step 3: Payment Content (Copy This)
-                            </div>
-                            <div className="bg-black/40 border-2 border-dashed border-emerald-500/30 rounded-lg p-4">
-                                <div className="flex items-center justify-between gap-4">
-                                    <code className="text-emerald-400 font-mono text-sm flex-1">{getPaymentContent()}</code>
-                                    <button
-                                        onClick={handleCopy}
-                                        className="border-2 border-dashed border-emerald-500/50 bg-emerald-500/10 px-4 py-2 text-emerald-400 hover:bg-emerald-500/20 transition-all text-sm font-bold"
-                                    >
-                                        {copied ? '✓ Copied!' : 'Copy'}
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="text-xs text-neutral-600 mt-2">
-                                ⚠️ Important: Copy this content exactly as shown
-                            </div>
-                        </div>
+                        {/* Payment Button */}
+                        <PaymentButton
+                            plan={selectedPlan}
+                            duration={selectedDuration}
+                            amount={getPrice()}
+                            onError={setPaymentError}
+                        />
 
-                        <div className="bg-yellow-500/10 border-2 border-dashed border-yellow-500/50 rounded-lg p-4">
-                            <div className="text-yellow-400 font-bold mb-2">📌 Important Notes:</div>
+                        {/* Payment Info */}
+                        <div className="bg-blue-500/10 border-2 border-dashed border-blue-500/50 rounded-lg p-4">
+                            <div className="text-blue-400 font-bold mb-2">🔒 Secure Payment Process</div>
                             <ul className="text-neutral-300 text-sm space-y-1">
-                                <li>• Payment will be processed automatically within a few minutes</li>
-                                <li>• Your plan will be upgraded immediately after payment confirmation</li>
-                                <li>• You can check payment status in Payment History</li>
-                                <li>• For support, contact admin</li>
+                                <li>• You will be redirected to SePay secure payment page</li>
+                                <li>• Scan the QR code with your banking app to complete payment</li>
+                                <li>• Your plan will be upgraded automatically after payment confirmation</li>
+                                <li>• Payment typically processes within 1-2 minutes</li>
                             </ul>
+                        </div>
+
+                        {/* Support Notice */}
+                        <div className="text-center text-neutral-500 text-sm">
+                            Having issues? <Link href="/dashboard" className="text-emerald-400 hover:underline">Contact support</Link>
                         </div>
                     </div>
                 </div>
