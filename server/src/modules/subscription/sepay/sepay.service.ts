@@ -6,18 +6,91 @@ import { User } from '../../auth/entities/user.entity';
 import { SepayWebhookDto, ParsedPaymentContent } from './dto/sepay-webhook.dto';
 import { UserPlan } from '../../../common/enums/user-plan.enum';
 import { getPlanPrice, getDurationInMonths, PaymentDuration, PLAN_PRICING } from './subscription.config';
+import { PaymentCheckoutResponse } from './dto/create-payment.dto';
+import { SePayPgClient } from 'sepay-pg-node';
 import * as crypto from 'crypto';
 
 @Injectable()
 export class SepayService {
     private readonly logger = new Logger(SepayService.name);
+    private readonly sepayClient: SePayPgClient;
 
     constructor(
         @InjectRepository(SepayTransaction)
         private readonly transactionRepo: Repository<SepayTransaction>,
         @InjectRepository(User)
         private readonly userRepo: Repository<User>,
-    ) { }
+    ) {
+        // Initialize SePay client
+        this.sepayClient = new SePayPgClient({
+            env: (process.env.SEPAY_ENV || 'sandbox') as 'sandbox' | 'production',
+            merchant_id: process.env.SEPAY_MERCHANT_ID || '',
+            secret_key: process.env.SEPAY_SECRET_KEY || '',
+        });
+
+        this.logger.log(`SePay client initialized in ${process.env.SEPAY_ENV || 'sandbox'} mode`);
+    }
+
+    /**
+     * Create payment checkout URL and form fields for user to scan QR and pay
+     */
+    async createPaymentCheckout(
+        user: User,
+        plan: UserPlan,
+        duration: PaymentDuration
+    ): Promise<PaymentCheckoutResponse> {
+        // Validate plan
+        if (plan !== UserPlan.PRO && plan !== UserPlan.TEAM) {
+            throw new BadRequestException('Invalid plan. Must be PRO or TEAM');
+        }
+
+        // Get pricing
+        const amount = getPlanPrice(plan, duration);
+        if (!amount) {
+            throw new BadRequestException('Invalid plan or duration combination');
+        }
+
+        // Generate unique order invoice number
+        const timestamp = Date.now();
+        const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const orderInvoiceNumber = `ORCA-${plan}-${duration}-${timestamp}-${randomSuffix}`;
+
+        // Create payment description with parseable format
+        // Format: "ORCA {email} {PLAN} {DURATION}"
+        const description = `ORCA ${user.email} ${plan} ${duration}`;
+
+        // Get success/error/cancel URLs
+        const baseUrl = process.env.CLIENT_URL || 'https://orcacli.codes';
+        const successUrl = `${baseUrl}/dashboard/subscription?payment=success&order=${orderInvoiceNumber}`;
+        const errorUrl = `${baseUrl}/dashboard/subscription?payment=error&order=${orderInvoiceNumber}`;
+        const cancelUrl = `${baseUrl}/dashboard/subscription?payment=cancel&order=${orderInvoiceNumber}`;
+
+        this.logger.log(`Creating payment checkout for user ${user.email}: ${plan} ${duration} - ${amount} VND`);
+
+        // Initialize checkout URL
+        const checkoutURL = this.sepayClient.checkout.initCheckoutUrl();
+
+        // Initialize form fields
+        const formFields = this.sepayClient.checkout.initOneTimePaymentFields({
+            payment_method: 'BANK_TRANSFER',
+            order_invoice_number: orderInvoiceNumber,
+            order_amount: amount,
+            currency: 'VND',
+            order_description: description,
+            success_url: successUrl,
+            error_url: errorUrl,
+            cancel_url: cancelUrl,
+        });
+
+        return {
+            checkoutURL,
+            formFields,
+            orderInvoiceNumber,
+            amount,
+            description,
+        };
+    }
+
 
     /**
      * Process incoming webhook from SePay
