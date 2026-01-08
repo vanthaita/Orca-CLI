@@ -21,7 +21,9 @@ export function useAdminLogs(lines: number = 100) {
     return useQuery<LogEntry[]>({
         queryKey: ['admin', 'logs', lines],
         queryFn: async () => {
-            return await apiClient.get(`/admin/logs?lines=${lines}`);
+            const response = await apiClient.get(`/admin/logs?lines=${lines}`) as any;
+            if (Array.isArray(response)) return response;
+            return response.logs || [];
         },
         retry: 1,
         staleTime: 30 * 1000, // 30 seconds

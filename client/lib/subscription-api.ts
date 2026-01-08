@@ -15,7 +15,8 @@ export interface PaymentCheckoutData {
 }
 
 export async function initiatePayment(data: InitiatePaymentRequest): Promise<PaymentCheckoutData> {
-    return apiClient.post('/subscription/sepay/initiate-payment', data);
+    const response = await apiClient.post('/subscription/sepay/initiate-payment', data) as any;
+    return response.data;
 }
 
 export async function getPaymentHistory(): Promise<{ transactions: PaymentTransaction[] }> {

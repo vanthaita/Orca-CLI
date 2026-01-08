@@ -24,7 +24,8 @@ export function useAdminUsers() {
     return useQuery<User[]>({
         queryKey: ['admin', 'users'],
         queryFn: async () => {
-            return await apiClient.get('/admin/users');
+            const response = await apiClient.get('/admin/users') as any;
+            return response.users || [];
         },
         retry: 1,
         staleTime: 1 * 60 * 1000, // 1 minute
