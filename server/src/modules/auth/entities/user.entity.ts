@@ -51,12 +51,6 @@ export class User {
   @Column({ type: 'int', nullable: true })
   dailyRequestLimit!: number | null;
 
-  @Column({ type: 'varchar', length: 32, nullable: true })
-  byokProvider!: string | null;
-
-  @Column({ type: 'text', nullable: true })
-  byokApiKey!: string | null;
-
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 

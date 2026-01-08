@@ -6,6 +6,7 @@ import { GoogleAuthGuard } from './google-auth.guard';
 import { GoogleUserPayload } from './google.strategy';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CliTokenGuard } from '../ai/cli-token.guard';
+import { UserResponseDto } from './dto/user-response.dto';
 
 type RequestWithUser = Request & { user: GoogleUserPayload };
 type RequestWithCookies = Request & { cookies?: Record<string, string | undefined> };
@@ -284,6 +285,6 @@ export class AuthController {
       throw new UnauthorizedException('User not found');
     }
 
-    return { user };
+    return { user: new UserResponseDto(user) };
   }
 }

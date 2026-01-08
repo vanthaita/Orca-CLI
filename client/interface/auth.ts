@@ -4,6 +4,7 @@ export type ProjectUser = {
   name: string | null;
   picture: string | null;
   plan: string;
+  role: string;
   createdAt: string;
   updatedAt: string;
 };
