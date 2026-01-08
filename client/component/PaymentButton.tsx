@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { initiatePayment } from '@/lib/subscription-api';
 
 interface PaymentButtonProps {
-    plan: 'PRO' | 'TEAM';
+    plan: 'pro' | 'team';
     duration: '1M' | '12M';
     amount: number;
     onError?: (error: string) => void;

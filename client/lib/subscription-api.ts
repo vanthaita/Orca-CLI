@@ -2,7 +2,7 @@ import { apiClient } from './api-client';
 import { PaymentTransaction, PaymentStats } from '@/interface/types';
 
 export interface InitiatePaymentRequest {
-    plan: 'PRO' | 'TEAM';
+    plan: 'pro' | 'team';
     duration: '1M' | '12M';
 }
 

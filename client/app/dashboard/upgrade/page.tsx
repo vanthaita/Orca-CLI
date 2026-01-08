@@ -8,16 +8,16 @@ import PaymentButton from '@/component/PaymentButton';
 export default function UpgradePage() {
     const me = useMe();
     const user = me.data?.user;
-    const [selectedPlan, setSelectedPlan] = useState<'PRO' | 'TEAM'>('PRO');
+    const [selectedPlan, setSelectedPlan] = useState<'pro' | 'team'>('pro');
     const [selectedDuration, setSelectedDuration] = useState<'1M' | '12M'>('12M');
     const [paymentError, setPaymentError] = useState<string | null>(null);
 
     const pricing = {
-        PRO: {
+        pro: {
             monthly: 170000,
             yearly: 1700000,
         },
-        TEAM: {
+        team: {
             monthly: 480000,
             yearly: 4800000,
         },
@@ -64,8 +64,8 @@ export default function UpgradePage() {
                 {/* Pricing Plans */}
                 <div className="grid md:grid-cols-2 gap-6 mb-10">
                     <button
-                        onClick={() => setSelectedPlan('PRO')}
-                        className={`border-2 border-dashed p-8 rounded-xl transition-all text-left ${selectedPlan === 'PRO'
+                        onClick={() => setSelectedPlan('pro')}
+                        className={`border-2 border-dashed p-8 rounded-xl transition-all text-left ${selectedPlan === 'pro'
                             ? 'border-emerald-500 bg-emerald-500/10'
                             : 'border-white/20 bg-black/20 hover:border-white/40'
                             }`}
@@ -82,8 +82,8 @@ export default function UpgradePage() {
                     </button>
 
                     <button
-                        onClick={() => setSelectedPlan('TEAM')}
-                        className={`border-2 border-dashed p-8 rounded-xl transition-all text-left ${selectedPlan === 'TEAM'
+                        onClick={() => setSelectedPlan('team')}
+                        className={`border-2 border-dashed p-8 rounded-xl transition-all text-left ${selectedPlan === 'team'
                             ? 'border-emerald-500 bg-emerald-500/10'
                             : 'border-white/20 bg-black/20 hover:border-white/40'
                             }`}
@@ -142,7 +142,7 @@ export default function UpgradePage() {
                             <div className="text-sm text-neutral-500 uppercase tracking-wide mb-2">Total Amount</div>
                             <div className="text-3xl font-black text-emerald-400">{formatAmount(getPrice())}</div>
                             <div className="text-sm text-neutral-400 mt-2">
-                                {selectedPlan} Plan • {selectedDuration === '1M' ? 'Monthly' : 'Yearly'}
+                                {selectedPlan.toUpperCase()} Plan • {selectedDuration === '1M' ? 'Monthly' : 'Yearly'}
                             </div>
                         </div>
 
