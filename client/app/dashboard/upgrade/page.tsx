@@ -16,10 +16,14 @@ export default function UpgradePage() {
         pro: {
             monthly: 170000,
             yearly: 1700000,
+            monthlyUSD: 7,
+            yearlyUSD: 70
         },
         team: {
             monthly: 480000,
             yearly: 4800000,
+            monthlyUSD: 20,
+            yearlyUSD: 200
         },
     };
 
@@ -34,8 +38,8 @@ export default function UpgradePage() {
 
     if (me.isLoading) {
         return (
-            <div className="min-h-screen bg-[#0c0c0c] flex items-center justify-center">
-                <div className="animate-pulse text-emerald-400 font-mono">Loading...</div>
+            <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
+                <div className="animate-pulse text-emerald-500 font-medium">Loading...</div>
             </div>
         );
     }
@@ -45,138 +49,194 @@ export default function UpgradePage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#0c0c0c] text-neutral-100">
-            <div className="max-w-6xl mx-auto px-6 py-14">
+        <div className="min-h-screen bg-neutral-950 text-neutral-200 font-sans selection:bg-emerald-500/30">
+            <div className="max-w-5xl mx-auto px-6 py-16">
                 {/* Header */}
-                <header className="flex items-center justify-between border-b-2 border-dashed border-white/20 pb-6 mb-10">
-                    <h1 className="text-3xl font-black text-white uppercase italic tracking-tighter">
-                        Upgrade Your Plan
-                    </h1>
+                <header className="mb-12 text-center">
                     <Link
                         href="/dashboard"
-                        className="inline-flex items-center gap-2 border-2 border-dashed border-white/20 bg-black/20 px-4 py-2 text-sm font-bold text-neutral-300 hover:text-white hover:border-emerald-500/50 transition-all"
-                        style={{ clipPath: "polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)" }}
+                        className="inline-flex items-center text-sm text-neutral-500 hover:text-white transition-colors mb-6"
                     >
-                        ← Back to Dashboard
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Back to Dashboard
                     </Link>
+                    <h1 className="text-4xl font-bold text-white mb-4 tracking-tight">
+                        Upgrade Your Plan
+                    </h1>
+                    <p className="text-neutral-400 text-lg max-w-2xl mx-auto">
+                        Unlock the full potential of Orca CLI with our Pro and Team plans.
+                        Powerful AI features, automated workflows, and more.
+                    </p>
                 </header>
 
-                {/* Pricing Plans */}
-                <div className="grid md:grid-cols-2 gap-6 mb-10">
-                    <button
-                        onClick={() => setSelectedPlan('pro')}
-                        className={`border-2 border-dashed p-8 rounded-xl transition-all text-left ${selectedPlan === 'pro'
-                            ? 'border-emerald-500 bg-emerald-500/10'
-                            : 'border-white/20 bg-black/20 hover:border-white/40'
-                            }`}
-                    >
-                        <h2 className="text-2xl font-black text-white mb-2 uppercase">Pro Tier</h2>
-                        <div className="text-emerald-400 font-bold mb-4">$7/month • $70/year</div>
-                        <ul className="space-y-2 text-sm text-neutral-300">
-                            <li>✅ Unlimited AI commits</li>
-                            <li>✅ Auto-PR Workflow</li>
-                            <li>✅ GPT-4o, Claude 3.5</li>
-                            <li>✅ AI Conflict Resolution</li>
-                            <li>✅ Auto Release Notes</li>
-                        </ul>
-                    </button>
-
-                    <button
-                        onClick={() => setSelectedPlan('team')}
-                        className={`border-2 border-dashed p-8 rounded-xl transition-all text-left ${selectedPlan === 'team'
-                            ? 'border-emerald-500 bg-emerald-500/10'
-                            : 'border-white/20 bg-black/20 hover:border-white/40'
-                            }`}
-                    >
-                        <h2 className="text-2xl font-black text-white mb-2 uppercase">Team Tier</h2>
-                        <div className="text-emerald-400 font-bold mb-4">$20/month • $200/year</div>
-                        <ul className="space-y-2 text-sm text-neutral-300">
-                            <li>✅ All Pro features</li>
-                            <li>✅ Shared Team Templates</li>
-                            <li>✅ Team Dashboard</li>
-                            <li>✅ Team Analytics</li>
-                            <li>✅ Priority Support</li>
-                        </ul>
-                    </button>
-                </div>
-
-                {/* Duration Selection */}
-                <div className="border-2 border-dashed border-white/20 bg-black/20 p-6 rounded-xl mb-10">
-                    <h3 className="text-lg font-bold text-white mb-4">Select Duration</h3>
-                    <div className="grid grid-cols-2 gap-4">
+                {/* Billing Cycle Toggle */}
+                <div className="flex justify-center mb-12">
+                    <div className="bg-neutral-900 p-1 rounded-lg inline-flex items-center relative">
                         <button
                             onClick={() => setSelectedDuration('1M')}
-                            className={`border-2 border-dashed p-4 rounded-lg transition-all ${selectedDuration === '1M'
-                                ? 'border-emerald-500 bg-emerald-500/10 text-white'
-                                : 'border-white/20 text-neutral-400 hover:border-white/40'
+                            className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${selectedDuration === '1M'
+                                ? 'bg-neutral-800 text-white shadow-sm'
+                                : 'text-neutral-400 hover:text-white'
                                 }`}
                         >
-                            <div className="font-bold text-lg">Monthly</div>
-                            <div className="text-sm">{formatAmount(pricing[selectedPlan].monthly)}</div>
+                            Monthly
                         </button>
                         <button
                             onClick={() => setSelectedDuration('12M')}
-                            className={`border-2 border-dashed p-4 rounded-lg transition-all relative ${selectedDuration === '12M'
-                                ? 'border-emerald-500 bg-emerald-500/10 text-white'
-                                : 'border-white/20 text-neutral-400 hover:border-white/40'
+                            className={`px-6 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${selectedDuration === '12M'
+                                ? 'bg-neutral-800 text-white shadow-sm'
+                                : 'text-neutral-400 hover:text-white'
                                 }`}
                         >
-                            <div className="absolute -top-3 right-4 bg-emerald-500 text-black px-2 py-1 text-xs font-bold rounded">
+                            Yearly
+                            <span className="text-[10px] font-bold bg-emerald-500 text-emerald-950 px-1.5 py-0.5 rounded-full">
                                 SAVE 17%
-                            </div>
-                            <div className="font-bold text-lg">Yearly</div>
-                            <div className="text-sm">{formatAmount(pricing[selectedPlan].yearly)}</div>
+                            </span>
                         </button>
                     </div>
                 </div>
 
-                {/* Payment Section */}
-                <div className="border-2 border-dashed border-white/20 bg-black/20 p-8 rounded-xl">
-                    <h3 className="text-xl font-bold text-white mb-6 border-b-2 border-dashed border-white/20 pb-3">
-                        Complete Payment
-                    </h3>
+                {/* Pricing Plans */}
+                <div className="grid md:grid-cols-2 gap-8 mb-16 max-w-4xl mx-auto">
+                    {/* Pro Plan */}
+                    <div
+                        onClick={() => setSelectedPlan('pro')}
+                        className={`relative rounded-2xl p-8 border-2 transition-all cursor-pointer hover:border-emerald-500/50 ${selectedPlan === 'pro'
+                            ? 'bg-neutral-900 border-emerald-500 shadow-xl shadow-emerald-500/10'
+                            : 'bg-neutral-900/50 border-neutral-800 hover:bg-neutral-900'
+                            }`}
+                    >
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 className="text-xl font-bold text-white">Pro Tier</h3>
+                                <p className="text-neutral-400 text-sm">For individual power users</p>
+                            </div>
+                            {selectedPlan === 'pro' && (
+                                <div className="bg-emerald-500 text-emerald-950 p-1 rounded-full">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                            )}
+                        </div>
+                        <div className="mb-6">
+                            <span className="text-3xl font-bold text-white">
+                                {formatAmount(selectedDuration === '1M' ? pricing.pro.monthly : pricing.pro.yearly)}
+                            </span>
+                            <span className="text-neutral-500 text-sm font-medium ml-2">
+                                / {selectedDuration === '1M' ? 'month' : 'year'}
+                            </span>
+                        </div>
+                        <ul className="space-y-4 mb-8">
+                            {[
+                                'Unlimited AI commits',
+                                'Auto-PR Workflow',
+                                'GPT-4o & Claude 3.5 Access',
+                                'AI Conflict Resolution',
+                                'Auto Release Notes'
+                            ].map((feature) => (
+                                <li key={feature} className="flex items-start text-neutral-300 text-sm">
+                                    <svg className="w-5 h-5 text-emerald-500 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    {feature}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
 
-                    <div className="space-y-6">
-                        {/* Payment Amount Display */}
-                        <div className="bg-black/40 border-2 border-dashed border-emerald-500/30 rounded-lg p-6 text-center">
-                            <div className="text-sm text-neutral-500 uppercase tracking-wide mb-2">Total Amount</div>
-                            <div className="text-3xl font-black text-emerald-400">{formatAmount(getPrice())}</div>
-                            <div className="text-sm text-neutral-400 mt-2">
-                                {selectedPlan.toUpperCase()} Plan • {selectedDuration === '1M' ? 'Monthly' : 'Yearly'}
+                    {/* Team Plan */}
+                    <div
+                        onClick={() => setSelectedPlan('team')}
+                        className={`relative rounded-2xl p-8 border-2 transition-all cursor-pointer hover:border-emerald-500/50 ${selectedPlan === 'team'
+                            ? 'bg-neutral-900 border-emerald-500 shadow-xl shadow-emerald-500/10'
+                            : 'bg-neutral-900/50 border-neutral-800 hover:bg-neutral-900'
+                            }`}
+                    >
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 className="text-xl font-bold text-white">Team Tier</h3>
+                                <p className="text-neutral-400 text-sm">For collaborative teams</p>
+                            </div>
+                            {selectedPlan === 'team' && (
+                                <div className="bg-emerald-500 text-emerald-950 p-1 rounded-full">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                            )}
+                        </div>
+                        <div className="mb-6">
+                            <span className="text-3xl font-bold text-white">
+                                {formatAmount(selectedDuration === '1M' ? pricing.team.monthly : pricing.team.yearly)}
+                            </span>
+                            <span className="text-neutral-500 text-sm font-medium ml-2">
+                                / {selectedDuration === '1M' ? 'month' : 'year'}
+                            </span>
+                        </div>
+                        <ul className="space-y-4 mb-8">
+                            {[
+                                'Everything in Pro',
+                                'Shared Team Templates',
+                                'Team Dashboard',
+                                'Team Usage Analytics',
+                                'Priority Support'
+                            ].map((feature) => (
+                                <li key={feature} className="flex items-start text-neutral-300 text-sm">
+                                    <svg className="w-5 h-5 text-emerald-500 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    {feature}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+
+                {/* Checkout Section */}
+                <div className="max-w-2xl mx-auto bg-neutral-900 rounded-xl p-8 border border-neutral-800">
+                    <div className="flex justify-between items-center mb-6 border-b border-neutral-800 pb-6">
+                        <div>
+                            <div className="text-sm text-neutral-400 font-medium uppercase tracking-wider mb-1">
+                                Summary
+                            </div>
+                            <div className="text-lg text-white font-medium">
+                                Upgrade to <span className="text-emerald-400 font-bold">{selectedPlan === 'pro' ? 'Pro' : 'Team'} Tier</span>
                             </div>
                         </div>
-
-                        {/* Error Message */}
-                        {paymentError && (
-                            <div className="bg-red-500/10 border-2 border-dashed border-red-500/50 rounded-lg p-4">
-                                <div className="text-red-400 font-bold">⚠️ Payment Error</div>
-                                <div className="text-neutral-300 text-sm mt-1">{paymentError}</div>
+                        <div className="text-right">
+                            <div className="text-sm text-neutral-400 font-medium uppercase tracking-wider mb-1">
+                                Total
                             </div>
-                        )}
-
-                        {/* Payment Button */}
-                        <PaymentButton
-                            plan={selectedPlan}
-                            duration={selectedDuration}
-                            amount={getPrice()}
-                            onError={setPaymentError}
-                        />
-
-                        {/* Payment Info */}
-                        <div className="bg-blue-500/10 border-2 border-dashed border-blue-500/50 rounded-lg p-4">
-                            <div className="text-blue-400 font-bold mb-2">🔒 Secure Payment Process</div>
-                            <ul className="text-neutral-300 text-sm space-y-1">
-                                <li>• You will be redirected to SePay secure payment page</li>
-                                <li>• Scan the QR code with your banking app to complete payment</li>
-                                <li>• Your plan will be upgraded automatically after payment confirmation</li>
-                                <li>• Payment typically processes within 1-2 minutes</li>
-                            </ul>
+                            <div className="text-2xl font-bold text-white">
+                                {formatAmount(getPrice())}
+                            </div>
                         </div>
+                    </div>
 
-                        {/* Support Notice */}
-                        <div className="text-center text-neutral-500 text-sm">
-                            Having issues? <Link href="/dashboard" className="text-emerald-400 hover:underline">Contact support</Link>
+                    {paymentError && (
+                        <div className="mb-6 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-lg text-sm flex items-start">
+                            <svg className="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {paymentError}
                         </div>
+                    )}
+
+                    <PaymentButton
+                        plan={selectedPlan}
+                        duration={selectedDuration}
+                        amount={getPrice()}
+                        onError={setPaymentError}
+                    />
+
+                    <div className="mt-6 flex items-center justify-center gap-2 text-neutral-500 text-xs">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        Secure payment via SePay. Activation is automatic.
                     </div>
                 </div>
             </div>
