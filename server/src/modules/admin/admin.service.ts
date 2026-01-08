@@ -1,7 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThanOrEqual } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
+import { UserResponseDto } from '../auth/dto/user-response.dto';
+import { UserRole } from '../../common/enums/user-role.enum';
+import { UserPlan } from '../../common/enums/user-plan.enum';
+import { AiUsageDaily } from '../ai/entities/ai-usage-daily.entity';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -10,14 +14,17 @@ export class AdminService {
     constructor(
         @InjectRepository(User)
         private usersRepository: Repository<User>,
+        @InjectRepository(AiUsageDaily)
+        private aiUsageRepository: Repository<AiUsageDaily>,
     ) { }
 
     async findAllUsers() {
-        return this.usersRepository.find({
+        const users = await this.usersRepository.find({
             order: {
                 createdAt: 'DESC',
             },
         });
+        return { users: UserResponseDto.fromArray(users) };
     }
 
     async findOneUser(id: string) {
@@ -25,18 +32,44 @@ export class AdminService {
         if (!user) {
             throw new NotFoundException(`User with ID ${id} not found`);
         }
-        return user;
+        return { user: new UserResponseDto(user) };
     }
 
-    async updateUserRole(id: string, role: string) {
-        // Basic implementation for enabling role updates if needed
-        // This allows an admin to promote others
-        // For now we just focus on viewing as requested
-        // but implementing update is easy and useful.
-        // ... skipping for now to strict adhere to reading, but user asked for "manage" ...
-        // "quản lý cập, logger hệ thống, .... để có thể xem dc chỉnh sủa dc" -> "edit" is requested.
-        // I should implement update.
-        return 'Not implemented yet';
+    async updateUserRole(id: string, role: UserRole) {
+        const user = await this.usersRepository.findOne({ where: { id } });
+        if (!user) {
+            throw new NotFoundException(`User with ID ${id} not found`);
+        }
+
+        user.role = role;
+        await this.usersRepository.save(user);
+
+        return {
+            ok: true,
+            message: `User role updated to ${role}`,
+            user: new UserResponseDto(user)
+        };
+    }
+
+    async updateUserPlan(id: string, plan: UserPlan, planExpiresAt?: string | null) {
+        const user = await this.usersRepository.findOne({ where: { id } });
+        if (!user) {
+            throw new NotFoundException(`User with ID ${id} not found`);
+        }
+
+        user.plan = plan;
+
+        if (planExpiresAt !== undefined) {
+            user.planExpiresAt = planExpiresAt ? new Date(planExpiresAt) : null;
+        }
+
+        await this.usersRepository.save(user);
+
+        return {
+            ok: true,
+            message: `User plan updated to ${plan}`,
+            user: new UserResponseDto(user)
+        };
     }
 
     async getSystemLogs(lines: number = 100) {
@@ -65,5 +98,66 @@ export class AdminService {
             console.error('Error reading log file', error);
             return { logs: [], message: 'Error reading log file' };
         }
+    }
+
+    async getSystemMetrics() {
+        const totalUsers = await this.usersRepository.count();
+
+        const usersByPlan = await this.usersRepository
+            .createQueryBuilder('user')
+            .select('user.plan', 'plan')
+            .addSelect('COUNT(*)', 'count')
+            .groupBy('user.plan')
+            .getRawMany();
+
+        const usersByRole = await this.usersRepository
+            .createQueryBuilder('user')
+            .select('user.role', 'role')
+            .addSelect('COUNT(*)', 'count')
+            .groupBy('user.role')
+            .getRawMany();
+
+        // Get today's AI usage stats
+        const today = this.dayKeyUtc(new Date());
+        const todayUsage = await this.aiUsageRepository
+            .createQueryBuilder('usage')
+            .select('SUM(usage.requestCount)', 'totalRequests')
+            .where('usage.day = :day', { day: today })
+            .getRawOne();
+
+        // Get recent signups (last 7 days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const recentSignups = await this.usersRepository.count({
+            where: {
+                createdAt: MoreThanOrEqual(sevenDaysAgo)
+            }
+        });
+
+        return {
+            totalUsers,
+            usersByPlan: usersByPlan.map(item => ({
+                plan: item.plan,
+                count: parseInt(item.count)
+            })),
+            usersByRole: usersByRole.map(item => ({
+                role: item.role,
+                count: parseInt(item.count)
+            })),
+            aiUsage: {
+                today: today,
+                totalRequests: todayUsage?.totalRequests ? parseInt(todayUsage.totalRequests) : 0
+            },
+            recentSignups: {
+                last7Days: recentSignups
+            }
+        };
+    }
+
+    private dayKeyUtc(d: Date): string {
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(d.getUTCDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
     }
 }
