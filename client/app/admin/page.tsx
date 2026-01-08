@@ -2,259 +2,130 @@
 
 import { useAdminUsers } from '@/hook/useAdminUsers';
 import { useAdminLogs } from '@/hook/useAdminLogs';
-import { useMe } from '@/hook/useMe';
-import { useLogout } from '@/hook/useLogout';
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-export default function AdminPage() {
-    const me = useMe();
-    const { data: users, isLoading: usersLoading, error: usersError } = useAdminUsers();
-    const [logLines, setLogLines] = useState(100);
-    const { data: logs, isLoading: logsLoading, error: logsError } = useAdminLogs(logLines);
-    const logout = useLogout();
+export default function AdminDashboardPage() {
+    const { data: users, isLoading: usersLoading } = useAdminUsers();
+    const { data: logs, isLoading: logsLoading } = useAdminLogs(10); // Only needed for quick preview
 
-    const user = me.data?.user;
-
-    // Check if user is admin and redirect if not
-    useEffect(() => {
-        if (me.isLoading) return;
-        if (!user || (user as any).role !== 'admin') {
-            setTimeout(() => {
-                window.location.href = '/';
-            }, 1000);
-        }
-    }, [me.isLoading, user]);
-
-    if (me.isLoading) {
-        return (
-            <div className="min-h-screen bg-[#0c0c0c] flex items-center justify-center">
-                <div className="animate-pulse text-emerald-400 font-mono">Loading...</div>
-            </div>
-        );
-    }
-
-    if (!user || (user as any).role !== 'admin') {
-        return (
-            <div className="min-h-screen bg-[#0c0c0c] flex items-center justify-center">
-                <div className="text-red-400 font-mono text-sm">Access Denied - Admin Only</div>
-            </div>
-        );
-    }
-
-    const handleLogout = () => {
-        logout.mutate();
-    };
+    const stats = [
+        {
+            label: 'Total Users',
+            value: users?.length || 0,
+            change: '+12%', // Mock data for visual 
+            icon: (
+                <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            ),
+            color: 'emerald'
+        },
+        {
+            label: 'Pro Subscribers',
+            value: users?.filter(u => u.plan === 'pro').length || 0,
+            change: '+5%',
+            icon: (
+                <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+            ),
+            color: 'blue'
+        },
+        {
+            label: 'Active Teams',
+            value: users?.filter(u => u.plan === 'team').length || 0,
+            change: '0%',
+            icon: (
+                <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+            ),
+            color: 'purple'
+        },
+    ];
 
     return (
-        <div className="min-h-screen bg-[#0c0c0c] text-neutral-100">
-            <div className="max-w-7xl mx-auto px-6 py-14">
-                {/* Header */}
-                <header className="flex items-center justify-between border-b-2 border-dashed border-white/20 pb-6 mb-10">
-                    <div>
-                        <Link href="/" className="text-2xl font-black text-white hover:text-emerald-400 transition-colors uppercase italic tracking-tighter inline-block mb-2">
-                            Orca CLI
-                        </Link>
-                        <p className="text-neutral-500 text-sm uppercase tracking-wide">Admin Dashboard</p>
+        <div className="space-y-8">
+            <header>
+                <h1 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-2">
+                    Dashboard Overview
+                </h1>
+                <p className="text-neutral-500 text-sm">Welcome back, Admin. System is running optimally.</p>
+            </header>
+
+            {/* Stats Grid */}
+            <div className="grid gap-6 md:grid-cols-3">
+                {stats.map((stat, idx) => (
+                    <div key={idx} className={`relative overflow-hidden group p-6 border border-dashed rounded-xl bg-black/20 backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-${stat.color}-500/50 ${stat.color === 'emerald' ? 'border-emerald-500/20' : stat.color === 'blue' ? 'border-blue-500/20' : 'border-purple-500/20'}`}>
+                        <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity bg-${stat.color}-500 rounded-bl-3xl`}>
+                            {stat.icon}
+                        </div>
+                        <div className="flex items-center gap-4 mb-2">
+                            <div className={`p-2 rounded-lg bg-${stat.color}-500/10 text-${stat.color}-400`}>
+                                {stat.icon}
+                            </div>
+                            <span className="text-neutral-500 font-bold text-sm uppercase tracking-wide">{stat.label}</span>
+                        </div>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-black text-white">{stat.value}</span>
+                            <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">{stat.change}</span>
+                        </div>
                     </div>
-                    <div className="flex gap-3">
-                        <Link
-                            href="/dashboard"
-                            className="inline-flex items-center gap-2 border-2 border-dashed border-white/20 bg-black/20 px-4 py-2 text-sm font-bold text-neutral-300 transition-all hover:bg-white/5 hover:border-emerald-500/50"
-                            style={{ clipPath: "polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)" }}
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                            </svg>
-                            Dashboard
+                ))}
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+                {/* Recent Activity / Logs Preview */}
+                <div className="border border-dashed border-white/20 bg-black/20 backdrop-blur-sm rounded-xl p-6">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-lg font-bold text-white">Live Activity</h2>
+                        <Link href="/admin/logs" className="text-xs text-emerald-400 hover:underline">View All &rarr;</Link>
+                    </div>
+
+                    <div className="space-y-3">
+                        {logsLoading ? (
+                            [1, 2, 3, 4].map(i => (
+                                <div key={i} className="h-8 bg-white/5 rounded animate-pulse" />
+                            ))
+                        ) : logs?.slice(0, 5).map((log, i) => (
+                            <div key={i} className="flex gap-3 text-xs font-mono border-l-2 border-white/10 pl-3 py-1">
+                                <span className={
+                                    (log.level ?? 30) >= 50 ? 'text-red-400' :
+                                        (log.level ?? 30) >= 40 ? 'text-yellow-400' : 'text-neutral-500'
+                                }>
+                                    {(log.level ?? 30) >= 50 ? 'ERR' : 'INF'}
+                                </span>
+                                <span className="text-neutral-300 truncate">{log.msg}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Quick Shortcuts */}
+                <div className="border border-dashed border-white/20 bg-black/20 backdrop-blur-sm rounded-xl p-6">
+                    <h2 className="text-lg font-bold text-white mb-6">Quick Actions</h2>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Link href="/admin/users" className="group p-4 bg-white/5 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/30 rounded-lg transition-all text-center">
+                            <div className="text-neutral-400 group-hover:text-emerald-400 mb-2 flex justify-center">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                </svg>
+                            </div>
+                            <span className="text-sm font-bold text-neutral-300 group-hover:text-white">View Users</span>
                         </Link>
-                        <button
-                            onClick={handleLogout}
-                            disabled={logout.isPending}
-                            className="inline-flex items-center gap-2 border-2 border-dashed border-red-500/50 bg-red-500/10 px-4 py-2 text-sm font-bold text-red-400 transition-all hover:bg-red-500/20 hover:border-red-500 disabled:opacity-50"
-                            style={{ clipPath: "polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px)" }}
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                            </svg>
-                            {logout.isPending ? 'Logging out...' : 'Logout'}
+                        <button className="group p-4 bg-white/5 hover:bg-purple-500/10 border border-transparent hover:border-purple-500/30 rounded-lg transition-all text-center disabled:opacity-50 cursor-not-allowed" title="Coming Soon">
+                            <div className="text-neutral-400 group-hover:text-purple-400 mb-2 flex justify-center">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </div>
+                            <span className="text-sm font-bold text-neutral-300 group-hover:text-white">Settings</span>
                         </button>
-                    </div>
-                </header>
-
-                <div className="grid gap-8">
-                    {/* Users Section */}
-                    <div className="border-2 border-dashed border-white/20 bg-black/20 backdrop-blur-sm p-8 rounded-xl">
-                        <h2 className="text-xl font-bold text-white mb-6 border-b-2 border-dashed border-white/20 pb-3">
-                            Users Management
-                        </h2>
-                        {usersLoading && (
-                            <div className="text-neutral-500 animate-pulse">Loading users...</div>
-                        )}
-                        {usersError && (
-                            <div className="text-red-400 text-sm">
-                                Error loading users: {(usersError as any)?.message || 'Unknown error'}
-                            </div>
-                        )}
-                        {users && (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left">
-                                    <thead>
-                                        <tr className="border-b-2 border-dashed border-white/20">
-                                            <th className="pb-3 pr-4 text-sm text-neutral-500 uppercase tracking-wide">Email</th>
-                                            <th className="pb-3 pr-4 text-sm text-neutral-500 uppercase tracking-wide">Name</th>
-                                            <th className="pb-3 pr-4 text-sm text-neutral-500 uppercase tracking-wide">Plan</th>
-                                            <th className="pb-3 pr-4 text-sm text-neutral-500 uppercase tracking-wide">Role</th>
-                                            <th className="pb-3 pr-4 text-sm text-neutral-500 uppercase tracking-wide">Created</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {users.map((user) => (
-                                            <tr key={user.id} className="border-b border-dashed border-white/10 hover:bg-white/5 transition-colors">
-                                                <td className="py-3 pr-4 text-sm text-neutral-300">{user.email || 'N/A'}</td>
-                                                <td className="py-3 pr-4 text-sm text-neutral-300">{user.name || 'N/A'}</td>
-                                                <td className="py-3 pr-4">
-                                                    <span className={`px-2 py-1 border border-dashed rounded text-xs font-bold uppercase ${user.plan === 'team'
-                                                            ? 'border-purple-500/50 bg-purple-500/10 text-purple-400'
-                                                            : user.plan === 'pro'
-                                                                ? 'border-blue-500/50 bg-blue-500/10 text-blue-400'
-                                                                : 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
-                                                        }`}>
-                                                        {user.plan}
-                                                    </span>
-                                                </td>
-                                                <td className="py-3 pr-4">
-                                                    <span className={`px-2 py-1 border border-dashed rounded text-xs font-bold uppercase ${user.role === 'admin'
-                                                            ? 'border-red-500/50 bg-red-500/10 text-red-400'
-                                                            : 'border-neutral-500/50 bg-neutral-500/10 text-neutral-400'
-                                                        }`}>
-                                                        {user.role}
-                                                    </span>
-                                                </td>
-                                                <td className="py-3 pr-4 text-sm text-neutral-500">
-                                                    {new Date(user.createdAt).toLocaleDateString()}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                                <div className="mt-6 text-sm text-neutral-600">
-                                    Total users: <span className="text-emerald-400 font-bold">{users.length}</span>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Logs Section */}
-                    <div className="border-2 border-dashed border-white/20 bg-black/20 backdrop-blur-sm p-8 rounded-xl">
-                        <div className="flex justify-between items-center mb-6 border-b-2 border-dashed border-white/20 pb-3">
-                            <h2 className="text-xl font-bold text-white">System Logs</h2>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => setLogLines(50)}
-                                    className={`px-3 py-1 text-sm font-bold transition-all border-2 border-dashed ${logLines === 50
-                                            ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
-                                            : 'border-white/20 bg-black/20 text-neutral-400 hover:border-emerald-500/30'
-                                        }`}
-                                    style={{ clipPath: "polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)" }}
-                                >
-                                    50
-                                </button>
-                                <button
-                                    onClick={() => setLogLines(100)}
-                                    className={`px-3 py-1 text-sm font-bold transition-all border-2 border-dashed ${logLines === 100
-                                            ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
-                                            : 'border-white/20 bg-black/20 text-neutral-400 hover:border-emerald-500/30'
-                                        }`}
-                                    style={{ clipPath: "polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)" }}
-                                >
-                                    100
-                                </button>
-                                <button
-                                    onClick={() => setLogLines(200)}
-                                    className={`px-3 py-1 text-sm font-bold transition-all border-2 border-dashed ${logLines === 200
-                                            ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
-                                            : 'border-white/20 bg-black/20 text-neutral-400 hover:border-emerald-500/30'
-                                        }`}
-                                    style={{ clipPath: "polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)" }}
-                                >
-                                    200
-                                </button>
-                            </div>
-                        </div>
-                        {logsLoading && (
-                            <div className="text-neutral-500 animate-pulse">Loading logs...</div>
-                        )}
-                        {logsError && (
-                            <div className="text-red-400 text-sm">
-                                Error loading logs: {(logsError as any)?.message || 'Unknown error'}
-                            </div>
-                        )}
-                        {logs && (
-                            <div className="bg-black/40 border-2 border-dashed border-emerald-500/20 rounded-lg p-4 max-h-[600px] overflow-y-auto font-mono text-xs">
-                                {logs.map((log, idx) => (
-                                    <div key={idx} className="mb-2 pb-2 border-b border-dashed border-white/5 last:border-0">
-                                        <div className="flex gap-3 items-start flex-wrap">
-                                            <span className={`px-2 py-0.5 border border-dashed rounded text-[10px] font-bold uppercase ${(log.level ?? 30) >= 50
-                                                    ? 'border-red-500/50 bg-red-500/20 text-red-300'
-                                                    : (log.level ?? 30) >= 40
-                                                        ? 'border-yellow-500/50 bg-yellow-500/20 text-yellow-300'
-                                                        : 'border-green-500/50 bg-green-500/20 text-green-300'
-                                                }`}>
-                                                {(log.level ?? 30) >= 50 ? 'ERROR' : (log.level ?? 30) >= 40 ? 'WARN' : 'INFO'}
-                                            </span>
-                                            <span className="text-neutral-500 whitespace-nowrap">
-                                                {log.time ? new Date(log.time).toLocaleTimeString() : ''}
-                                            </span>
-                                            {log.context && (
-                                                <span className="text-emerald-400 font-bold">[{log.context}]</span>
-                                            )}
-                                            <span className="flex-1 text-neutral-300">{log.msg || JSON.stringify(log)}</span>
-                                        </div>
-                                        {log.req && (
-                                            <div className="ml-20 mt-1 text-neutral-600 text-[10px]">
-                                                <span className="text-blue-400">{log.req.method}</span> {log.req.url} →
-                                                <span className={`ml-1 ${log.res?.statusCode >= 400 ? 'text-red-400' : 'text-green-400'}`}>
-                                                    {log.res?.statusCode}
-                                                </span>
-                                                <span className="text-neutral-500"> ({log.responseTime}ms)</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        <div className="mt-4 text-xs text-neutral-600">
-                            Showing latest {logLines} log entries • Auto-refresh enabled
-                        </div>
-                    </div>
-
-                    {/* Quick Stats */}
-                    <div className="border-2 border-dashed border-white/20 bg-black/20 backdrop-blur-sm p-8 rounded-xl">
-                        <h2 className="text-xl font-bold text-white mb-6 border-b-2 border-dashed border-white/20 pb-3">
-                            Quick Statistics
-                        </h2>
-                        <div className="grid gap-4 sm:grid-cols-3">
-                            <div className="border border-dashed border-emerald-500/30 bg-emerald-500/5 p-4 rounded-lg">
-                                <div className="text-sm text-neutral-500 uppercase tracking-wide mb-1">Total Users</div>
-                                <div className="text-3xl font-bold text-emerald-400">{users?.length || 0}</div>
-                            </div>
-                            <div className="border border-dashed border-blue-500/30 bg-blue-500/5 p-4 rounded-lg">
-                                <div className="text-sm text-neutral-500 uppercase tracking-wide mb-1">Pro Users</div>
-                                <div className="text-3xl font-bold text-blue-400">
-                                    {users?.filter(u => u.plan === 'pro').length || 0}
-                                </div>
-                            </div>
-                            <div className="border border-dashed border-purple-500/30 bg-purple-500/5 p-4 rounded-lg">
-                                <div className="text-sm text-neutral-500 uppercase tracking-wide mb-1">Team Users</div>
-                                <div className="text-3xl font-bold text-purple-400">
-                                    {users?.filter(u => u.plan === 'team').length || 0}
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
     );
 }
+
