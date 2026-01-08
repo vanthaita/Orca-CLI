@@ -20,8 +20,8 @@ export class SepayTransaction {
     id!: string;
 
     @Index({ unique: true })
-    @Column({ type: 'bigint', unique: true })
-    sepayId!: number;
+    @Column({ type: 'varchar', length: 100, unique: true })
+    sepayId!: string;
 
     @Column({ type: 'varchar', length: 100 })
     gateway!: string;

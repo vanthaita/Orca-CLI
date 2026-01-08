@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { SepayTransaction, TransactionStatus } from './entities/sepay-transaction.entity';
 import { User } from '../../auth/entities/user.entity';
 import { SepayWebhookDto, ParsedPaymentContent } from './dto/sepay-webhook.dto';
+import { SepayIpnDto } from './dto/sepay-ipn.dto';
 import { UserPlan } from '../../../common/enums/user-plan.enum';
 import { getPlanPrice, getDurationInMonths, PaymentDuration, PLAN_PRICING } from './subscription.config';
 import { PaymentCheckoutResponse } from './dto/create-payment.dto';
@@ -106,7 +107,7 @@ export class SepayService {
 
         // Check for duplicate transaction
         const existing = await this.transactionRepo.findOne({
-            where: { sepayId: payload.id }
+            where: { sepayId: String(payload.id) }
         });
 
         if (existing) {
@@ -116,7 +117,7 @@ export class SepayService {
 
         // Create transaction record
         const transaction = this.transactionRepo.create({
-            sepayId: payload.id,
+            sepayId: String(payload.id),
             gateway: payload.gateway,
             transactionDate: new Date(payload.transactionDate),
             accountNumber: payload.accountNumber,
@@ -285,6 +286,111 @@ export class SepayService {
             where: { userId },
             order: { createdAt: 'DESC' }
         });
+    }
+
+    /**
+     * Process IPN Webhook from SePay Payment Gateway
+     */
+    async processIpnWebhook(payload: SepayIpnDto) {
+        this.logger.log(`Processing SePay IPN: ${payload.notification_type}`);
+
+        if (payload.notification_type !== 'ORDER_PAID') {
+            return { success: true, message: 'Ignored notification type' };
+        }
+
+        const { transaction, order } = payload;
+
+        // Check for duplicate transaction
+        // Use transaction.transaction_id as sepayId
+        const existing = await this.transactionRepo.findOne({
+            where: { sepayId: transaction.transaction_id }
+        });
+
+        if (existing) {
+            this.logger.warn(`Duplicate IPN transaction: ${transaction.transaction_id}`);
+            // If it's already processed, return success
+            if (existing.status === TransactionStatus.PROCESSED) {
+                return { success: true, message: 'Already processed' };
+            }
+        }
+
+        // Create or update transaction
+        // If existing (but failed/pending), use it, otherwise create new
+        const txn = existing || this.transactionRepo.create({
+            sepayId: transaction.transaction_id,
+            gateway: 'SePay_Gateway', // or parse from somewhere
+            transactionDate: new Date(), // payload.timestamp is number? payload.transaction.transaction_date is string?
+            accountNumber: 'GATEWAY',
+            content: order.order_description,
+            transferType: 'in',
+            transferAmount: parseFloat(transaction.transaction_amount) || 0,
+            referenceCode: transaction.id, // Use UUID as ref
+            status: TransactionStatus.PENDING,
+        });
+
+        try {
+            // Check status
+            if (transaction.transaction_status !== 'APPROVED') {
+                throw new BadRequestException(`Transaction not approved: ${transaction.transaction_status}`);
+            }
+
+            // Parse content
+            const description = order.order_description || '';
+            const parsed = this.parsePaymentContent(description);
+
+            if (!parsed) {
+                // If we can't parse description, maybe we can rely on invoice number if we persisted orders?
+                // But current architecture doesn't seem to persist orders beforehand.
+                // We MUST rely on description as per current design.
+                throw new BadRequestException(`Could not parse payment content: ${description}`);
+            }
+
+            // Find user
+            const user = await this.userRepo.findOne({ where: { email: parsed.email } });
+            if (!user) {
+                throw new NotFoundException(`User not found: ${parsed.email}`);
+            }
+
+            // Validate plan/duration
+            const plan = this.validatePlan(parsed.plan);
+            const duration = this.validateDuration(parsed.duration);
+
+            // Validate amount
+            const expectedAmount = getPlanPrice(plan, duration);
+            if (!expectedAmount) {
+                throw new BadRequestException(`Invalid plan configuration: ${plan} ${duration}`);
+            }
+            const receivedAmount = parseFloat(transaction.transaction_amount);
+
+            // Allow variance
+            const variance = 1000;
+            if (Math.abs(receivedAmount - expectedAmount) > variance) {
+                throw new BadRequestException(`Amount mismatch. Expected ${expectedAmount}, got ${receivedAmount}`);
+            }
+
+            // Upgrade user
+            await this.upgradeUserPlan(user, plan, duration);
+
+            // Update transaction
+            txn.userId = user.id;
+            txn.planUpgrade = plan;
+            txn.duration = duration;
+            txn.status = TransactionStatus.PROCESSED;
+
+            await this.transactionRepo.save(txn);
+
+            this.logger.log(`IPN: Upgraded ${user.email} to ${plan} ${duration}`);
+
+            return { success: true };
+
+        } catch (error) {
+            this.logger.error('Error processing IPN:', error);
+            txn.status = TransactionStatus.FAILED;
+            txn.errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            await this.transactionRepo.save(txn);
+            // Return 200 to SePay but log error
+            return { success: false, message: txn.errorMessage };
+        }
     }
 
     /**

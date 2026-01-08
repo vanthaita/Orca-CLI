@@ -1,6 +1,7 @@
 import { Controller, Post, Body, Logger, HttpCode, Get, UseGuards, Req } from '@nestjs/common';
 import { SepayService } from './sepay.service';
 import { SepayWebhookDto } from './dto/sepay-webhook.dto';
+import { SepayIpnDto } from './dto/sepay-ipn.dto';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
@@ -109,8 +110,8 @@ export class SepayController {
      */
     @Post('ipn')
     @HttpCode(200)
-    async handleIpnWebhook(@Body() payload: SepayWebhookDto) {
-        // Just delegate to the main webhook handler
-        return this.handleWebhook(payload);
+    async handleIpnWebhook(@Body() payload: SepayIpnDto) {
+        // Delegate to the new IPN handler
+        return this.sepayService.processIpnWebhook(payload);
     }
 }
