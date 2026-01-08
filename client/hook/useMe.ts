@@ -12,8 +12,10 @@ export function useMe() {
         queryFn: async (): Promise<MeResponse> => {
             return await apiClient.get('/auth/me');
         },
-        retry: 1,
-        staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+        retry: 0, // Don't retry auth requests - let interceptor handle refresh
+        staleTime: 2 * 60 * 1000, // Consider data fresh for 2 minutes (reduced from 5)
         refetchOnWindowFocus: false,
+        refetchOnMount: true,
+        refetchOnReconnect: false,
     });
 }

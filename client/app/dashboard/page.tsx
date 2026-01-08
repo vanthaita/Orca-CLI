@@ -8,6 +8,7 @@ import { useLogout } from '@/hook/useLogout';
 import { usePlan } from '@/hook/usePlan';
 import { useUsage } from '@/hook/useUsage';
 import { useCliTokens, useRevokeToken, useRenameToken } from '@/hook/useCliTokens';
+import { redirectToLogin } from '@/lib/auth-utils';
 
 export default function DashboardPage() {
     const me = useMe();
@@ -24,13 +25,14 @@ export default function DashboardPage() {
 
     useEffect(() => {
         if (me.isLoading) return;
-        if (user) return;
 
-        // Not authenticated or session invalid -> redirect to login
-        setTimeout(() => {
-            window.location.href = '/login';
-        }, me.isError ? 2000 : 1000);
-    }, [me.isLoading, me.isError, user]);
+        // If not authenticated, redirect immediately
+        if (!user && (me.isError || me.isFetched)) {
+            // eslint-disable-next-line no-console
+            console.log('[Dashboard] User not authenticated, redirecting to login');
+            redirectToLogin('/dashboard');
+        }
+    }, [me.isLoading, me.isError, me.isFetched, user]);
 
     useEffect(() => {
         if (user) {
@@ -404,10 +406,22 @@ export default function DashboardPage() {
                                 ← Back to Home
                             </Link>
                             <Link
-                                href="/cli/verify"
+                                href="/dashboard/payments"
                                 className="border-2 border-dashed border-emerald-500/50 bg-emerald-500/10 px-4 py-3 text-emerald-400 hover:bg-emerald-500/20 transition-all rounded-lg font-bold text-center"
                             >
-                                Approve CLI Device
+                                💳 Payment History
+                            </Link>
+                            <Link
+                                href="/dashboard/upgrade"
+                                className="border-2 border-dashed border-blue-500/50 bg-blue-500/10 px-4 py-3 text-blue-400 hover:bg-blue-500/20 transition-all rounded-lg font-bold text-center"
+                            >
+                                ⬆️ Upgrade Plan
+                            </Link>
+                            <Link
+                                href="/cli/verify"
+                                className="border-2 border-dashed border-purple-500/50 bg-purple-500/10 px-4 py-3 text-purple-400 hover:bg-purple-500/20 transition-all rounded-lg font-bold text-center"
+                            >
+                                ✓ Approve CLI Device
                             </Link>
                         </div>
                     </div>

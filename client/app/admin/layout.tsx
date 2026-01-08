@@ -5,21 +5,25 @@ import { useLogout } from '@/hook/useLogout';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
+import { redirectToLogin } from '@/lib/auth-utils';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const me = useMe();
     const logout = useLogout();
     const pathname = usePathname();
     const user = me.data?.user;
+    const isAdmin = user && (user as any).role === 'admin';
 
     useEffect(() => {
         if (me.isLoading) return;
-        if (!user || (user as any).role !== 'admin') {
-            setTimeout(() => {
-                window.location.href = '/';
-            }, 1000);
+
+        // Redirect if not authenticated or not admin
+        if (!user || !isAdmin) {
+            // eslint-disable-next-line no-console
+            console.log('[Admin] Access denied, redirecting');
+            window.location.href = '/';
         }
-    }, [me.isLoading, user]);
+    }, [me.isLoading, user, isAdmin]);
 
     if (me.isLoading) {
         return (
@@ -29,7 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         );
     }
 
-    if (!user || (user as any).role !== 'admin') {
+    if (!user || !isAdmin) {
         return (
             <div className="min-h-screen bg-[#0c0c0c] flex items-center justify-center">
                 <div className="text-red-400 font-mono text-sm">Access Denied - Admin Only</div>
@@ -84,8 +88,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-4 py-3 text-sm font-bold transition-all border border-dashed rounded-lg group ${isActive
-                                        ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
-                                        : 'border-transparent text-neutral-400 hover:text-white hover:bg-white/5'
+                                    ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
+                                    : 'border-transparent text-neutral-400 hover:text-white hover:bg-white/5'
                                     }`}
                             >
                                 <span className={`transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>

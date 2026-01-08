@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
+import { performLogout } from '@/lib/auth-utils';
 
 /**
  * Hook to handle user logout
@@ -21,12 +22,8 @@ export function useLogout() {
             // Clear all React Query cache
             queryClient.clear();
 
-            // Clear cookies (backup in case server didn't)
-            document.cookie = 'access_token=; path=/; max-age=0';
-            document.cookie = 'refresh_token=; path=/api/v1/auth; max-age=0';
-
-            // Redirect to home
-            window.location.href = '/';
+            // Use centralized logout function
+            performLogout();
         },
     });
 }
