@@ -9,7 +9,6 @@ import {
   CodeCard,
   DashedCard,
   FaqSection,
-  HelpSection,
   LinuxIcon,
   MacIcon,
   ModelShowcase,
@@ -22,6 +21,7 @@ import {
   IntroductionSection,
   SiteHeader,
   SiteFooter,
+  WorkflowSection,
 } from "@/component";
 
 const Home = () => {
@@ -260,49 +260,9 @@ const Home = () => {
             </div>
           </section>
 
-          <section id="how-it-works" className="grid gap-8">
-            <div className="border-t-2 border-dashed border-white/20 pt-10">
-              <h2 className="text-2xl font-bold tracking-tight uppercase">Workflow</h2>
-            </div>
-
-
-            <div className="grid gap-6 sm:grid-cols-3">
-              <DashedCard className="min-h-[200px] flex flex-col justify-between" title="">
-                <div className="absolute top-4 right-4 text-4xl text-emerald-500/20 font-black group-hover:text-emerald-500/40 transition-colors">01</div>
-                <div>
-                  <div className="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-2">Commit</div>
-                  <div className="text-neutral-400 text-sm leading-relaxed">
-                    Guided prompts. Semantic grouping. Clean history by default.
-                  </div>
-                </div>
-              </DashedCard>
-
-              <DashedCard className="min-h-[200px] flex flex-col justify-between" title="">
-                <div className="absolute top-4 right-4 text-4xl text-emerald-500/20 font-black group-hover:text-emerald-500/40 transition-colors">02</div>
-                <div>
-                  <div className="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-2">Plan</div>
-                  <div className="text-neutral-400 text-sm leading-relaxed">
-                    Generate JSON execution plans. CI/CD ready artifacts.
-                  </div>
-                </div>
-              </DashedCard>
-
-              <DashedCard className="min-h-[200px] flex flex-col justify-between" title="">
-                <div className="absolute top-4 right-4 text-4xl text-emerald-500/20 font-black group-hover:text-emerald-500/40 transition-colors">03</div>
-                <div>
-                  <div className="text-sm font-bold uppercase tracking-wider text-emerald-400 mb-2">Publish</div>
-                  <div className="text-neutral-400 text-sm leading-relaxed">
-                    Zero-friction releases. Automated PR creation.
-                  </div>
-                </div>
-              </DashedCard>
-            </div>
-          </section>
-
+          <WorkflowSection />
 
           <SocialProof />
-
-          {/* <HelpSection /> */}
 
           <FaqSection />
 
@@ -314,14 +274,12 @@ const Home = () => {
                 code={dailyWorkflow}
               />
             </div>
-
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-2">
               <div className="text-sm text-neutral-500 font-mono">
                 CLI Version: <span className={`text-neutral-300 ${isLoading ? "animate-pulse" : ""}`}>{versionString}</span>
               </div>
             </div>
           </section>
-
           <SiteFooter />
         </main>
       </div>

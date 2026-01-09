@@ -12,6 +12,8 @@ export * from "./TerminalTypewriter";
 export * from "./TerminalWindow";
 export * from "./VersionList";
 export * from "./icons";
+export * from "./WorkflowSection";
+
 export * from "./PricingCard";
 export * from "./SiteHeader";
 export * from "./SiteFooter";
