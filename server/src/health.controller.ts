@@ -1,14 +1,16 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './modules/auth/entities/user.entity';
 
 @Controller('health')
 export class HealthController {
+    private readonly logger = new Logger(HealthController.name);
+
     constructor(
         @InjectRepository(User)
         private readonly userRepo: Repository<User>,
-    ) { }
+    ) {}
 
     @Get()
     async getHealth() {
@@ -54,7 +56,7 @@ export class HealthController {
             await this.userRepo.query('SELECT 1');
             return true;
         } catch (error) {
-            console.error('Database health check failed:', error);
+            this.logger.error('Database health check failed', error as Error);
             return false;
         }
     }

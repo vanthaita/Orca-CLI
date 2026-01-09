@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
@@ -11,12 +11,14 @@ import * as path from 'path';
 
 @Injectable()
 export class AdminService {
+    private readonly logger = new Logger(AdminService.name);
+
     constructor(
         @InjectRepository(User)
         private usersRepository: Repository<User>,
         @InjectRepository(AiUsageDaily)
         private aiUsageRepository: Repository<AiUsageDaily>,
-    ) { }
+    ) {}
 
     async findAllUsers() {
         const users = await this.usersRepository.find({
@@ -84,7 +86,6 @@ export class AdminService {
             const allLines = content.split('\n').filter((line) => line.trim() !== '');
             const recentLines = allLines.slice(-lines);
 
-            // Parse JSON logs if possible
             const parsedLogs = recentLines.map((line) => {
                 try {
                     return JSON.parse(line);
@@ -93,9 +94,9 @@ export class AdminService {
                 }
             });
 
-            return parsedLogs.reverse(); // Newest first
+            return parsedLogs.reverse();
         } catch (error) {
-            console.error('Error reading log file', error);
+            this.logger.error('Error reading log file', error as Error);
             return { logs: [], message: 'Error reading log file' };
         }
     }
@@ -117,7 +118,6 @@ export class AdminService {
             .groupBy('user.role')
             .getRawMany();
 
-        // Get today's AI usage stats
         const today = this.dayKeyUtc(new Date());
         const todayUsage = await this.aiUsageRepository
             .createQueryBuilder('usage')
@@ -125,7 +125,6 @@ export class AdminService {
             .where('usage.day = :day', { day: today })
             .getRawOne();
 
-        // Get recent signups (last 7 days)
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         const recentSignups = await this.usersRepository.count({

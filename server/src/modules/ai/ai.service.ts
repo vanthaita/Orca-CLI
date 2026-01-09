@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
@@ -8,13 +8,15 @@ import { PlanService } from '../user/plan.service';
 
 @Injectable()
 export class AiService {
+  private readonly logger = new Logger(AiService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly usersRepo: Repository<User>,
     @InjectRepository(AiUsageDaily)
     private readonly usageRepo: Repository<AiUsageDaily>,
     private readonly planService: PlanService,
-  ) { }
+  ) {}
 
   async chat(userId: string, req: AiChatRequest): Promise<AiChatResponse> {
     if (!req || !req.model || !req.systemPrompt || !req.userPrompt) {
@@ -35,8 +37,7 @@ export class AiService {
   }
 
   private readonly GEMINI_FALLBACK_MODELS = [
-    'models/gemini-2.0-flash-exp', // Putting 2.0 first as it's often better/faster if available (user didn't ask but good practice, keeping user list priority though)
-    // User requested list:
+    'models/gemini-2.0-flash-exp',
     'models/gemini-pro-latest',
     'models/gemini-flash-latest',
     'models/gemini-flash-lite-latest',
@@ -54,7 +55,6 @@ export class AiService {
     }
 
     const modelsToTry = [initialModel, ...this.GEMINI_FALLBACK_MODELS];
-    // Remove duplicates while preserving order (in case initialModel is in the fallback list)
     const uniqueModels = [...new Set(modelsToTry)];
 
     let lastError: any;
@@ -64,9 +64,8 @@ export class AiService {
         const text = await this.executeGeminiRequest(model, systemPrompt, userPrompt, apiKey);
         return text;
       } catch (error) {
-        console.warn(`Gemini model ${model} failed: ${error.message}`);
+        this.logger.warn(`Gemini model ${model} failed: ${(error as Error)?.message ?? String(error)}`);
         lastError = error;
-        // Continue to next model
       }
     }
 
@@ -201,10 +200,8 @@ export class AiService {
       throw new UnauthorizedException('User not found');
     }
 
-    // Get daily limit from PlanService
     const limit = this.planService.getDailyLimit(user);
 
-    // null means unlimited (Pro/Team plans)
     if (limit === null) {
       return;
     }
