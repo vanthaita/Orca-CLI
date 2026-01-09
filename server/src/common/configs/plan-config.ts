@@ -3,7 +3,7 @@ import { UserPlan } from '../enums/user-plan.enum';
 
 export interface PlanConfiguration {
     name: string;
-    dailyAiLimit: number | null; // null means unlimited
+    dailyAiLimit: number | null;
     features: FeaturePermission[];
     priceUsd: number;
     maxUsers: number;
@@ -19,7 +19,7 @@ export const PLAN_CONFIGS: Record<UserPlan, PlanConfiguration> = {
     },
     [UserPlan.PRO]: {
         name: 'Pro Tier',
-        dailyAiLimit: null, // Unlimited
+        dailyAiLimit: null,
         features: [
             FeaturePermission.AI_COMMIT,
             FeaturePermission.AUTO_PUBLISH,
@@ -31,7 +31,7 @@ export const PLAN_CONFIGS: Record<UserPlan, PlanConfiguration> = {
     },
     [UserPlan.TEAM]: {
         name: 'Team Tier',
-        dailyAiLimit: null, // Unlimited
+        dailyAiLimit: null,
         features: [
             FeaturePermission.AI_COMMIT,
             FeaturePermission.AUTO_PUBLISH,

@@ -39,8 +39,6 @@ async function bootstrap() {
 
   const allowAnyOrigin = corsOrigins.includes('*');
 
-  logger.log(`CORS Origins: ${JSON.stringify(corsOrigins)}`);
-
   const corsMethodsEnv = configService.get<string>('CORS_METHODS');
   const corsMethods = corsMethodsEnv
     ? corsMethodsEnv

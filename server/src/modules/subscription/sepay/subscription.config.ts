@@ -10,19 +10,14 @@ export interface PlanPricing {
     [UserPlan.TEAM]: PlanPrice;
 }
 
-/**
- * Subscription pricing in VND (Vietnamese Dong)
- * Based on: Pro $7/month, Team $20/month
- * Exchange rate: ~24,000 VND/USD
- */
 export const PLAN_PRICING: PlanPricing = {
     [UserPlan.PRO]: {
-        monthly: 170000, // $7/month
-        yearly: 1700000, // $70/year (~17% discount)
+        monthly: 170000,
+        yearly: 1700000,
     },
     [UserPlan.TEAM]: {
-        monthly: 480000, // $20/month
-        yearly: 4800000, // $200/year (~17% discount)
+        monthly: 480000,
+        yearly: 4800000,
     },
 };
 

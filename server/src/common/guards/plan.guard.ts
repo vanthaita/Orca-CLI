@@ -6,7 +6,7 @@ import { PLAN_KEY } from '../decorators/require-plan.decorator';
 
 @Injectable()
 export class PlanGuard implements CanActivate {
-    constructor(private reflector: Reflector) { }
+    constructor(private reflector: Reflector) {}
 
     canActivate(context: ExecutionContext): boolean {
         const requiredPlans = this.reflector.getAllAndOverride<UserPlan[]>(PLAN_KEY, [

@@ -5,7 +5,7 @@ import { UserRole } from '../enums/user-role.enum';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-    constructor(private reflector: Reflector) { }
+    constructor(private reflector: Reflector) {}
 
     canActivate(context: ExecutionContext): boolean {
         const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(ROLES_KEY, [
@@ -18,7 +18,6 @@ export class RolesGuard implements CanActivate {
         }
 
         const { user } = context.switchToHttp().getRequest();
-        // Assuming user is attached to request by AuthGuard
         if (!user || !user.role) {
             return false;
         }

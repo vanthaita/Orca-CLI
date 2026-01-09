@@ -33,7 +33,7 @@ type RenameTokenBody = { name?: string };
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   @Get('cli/start')
   async cliStart(@Req() req: Request): Promise<CliStartResponse> {
@@ -67,14 +67,12 @@ export class AuthController {
       throw new UnauthorizedException('User not found');
     }
 
-    // Return structure matching UserMeResponse in CLI
     return { data: { email: user.email, name: user.name } };
   }
 
   @Post('cli/verify')
   @UseGuards(JwtAuthGuard)
   async cliVerify(@Req() req: Request, @Body() body: CliVerifyBody) {
-    this.logger.log(`cliVerify endpoint hit`);
     const userCode = body.userCode?.trim();
     if (!userCode) {
       throw new UnauthorizedException('Missing userCode');
@@ -166,7 +164,7 @@ export class AuthController {
       httpOnly: true,
       secure: isProd,
       sameSite: 'none',
-      ...(cookieDomain && { domain: cookieDomain }), // Only set domain if defined
+      ...(cookieDomain && { domain: cookieDomain }),
       path: '/',
       maxAge: 15 * 60 * 1000,
     });
@@ -175,7 +173,7 @@ export class AuthController {
       httpOnly: true,
       secure: isProd,
       sameSite: 'none',
-      ...(cookieDomain && { domain: cookieDomain }), // Only set domain if defined
+      ...(cookieDomain && { domain: cookieDomain }),
       path: '/',
       maxAge: Number(process.env.JWT_REFRESH_DAYS ?? 30) * 24 * 60 * 60 * 1000,
     });
@@ -219,7 +217,7 @@ export class AuthController {
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? 'none' : 'lax',
-      ...(cookieDomain && { domain: cookieDomain }), // Only set domain if defined
+      ...(cookieDomain && { domain: cookieDomain }),
       path: '/',
       maxAge: 15 * 60 * 1000,
     });
@@ -228,7 +226,7 @@ export class AuthController {
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? 'none' : 'lax',
-      ...(cookieDomain && { domain: cookieDomain }), // Only set domain if defined
+      ...(cookieDomain && { domain: cookieDomain }),
       path: '/api/v1/auth',
       maxAge: Number(process.env.JWT_REFRESH_DAYS ?? 30) * 24 * 60 * 60 * 1000,
     });
@@ -244,10 +242,8 @@ export class AuthController {
       throw new UnauthorizedException('Missing user');
     }
 
-    // Invalidate refresh token in database
     await this.authService.clearRefreshToken(userId);
 
-    // Clear cookies
     const isProd = process.env.NODE_ENV === 'production';
     const cookieDomain = process.env.COOKIE_DOMAIN;
 

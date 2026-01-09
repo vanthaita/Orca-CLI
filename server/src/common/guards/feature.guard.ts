@@ -11,7 +11,7 @@ export class FeatureGuard implements CanActivate {
     constructor(
         private reflector: Reflector,
         private planService: PlanService,
-    ) { }
+    ) {}
 
     canActivate(context: ExecutionContext): boolean {
         const requiredFeatures = this.reflector.getAllAndOverride<FeaturePermission[]>(FEATURE_KEY, [

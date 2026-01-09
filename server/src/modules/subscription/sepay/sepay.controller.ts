@@ -14,12 +14,8 @@ import type { Request } from 'express';
 export class SepayController {
     private readonly logger = new Logger(SepayController.name);
 
-    constructor(private readonly sepayService: SepayService) { }
+    constructor(private readonly sepayService: SepayService) {}
 
-    /**
-     * Initiate payment - Create checkout URL and form fields
-     * This endpoint allows authenticated users to create a payment session
-     */
     @Post('initiate-payment')
     @UseGuards(JwtAuthGuard)
     async initiatePayment(
@@ -46,11 +42,6 @@ export class SepayController {
         }
     }
 
-    /**
-     * SePay webhook endpoint (IPN)
-     * This endpoint receives payment notifications from SePay
-     * Also available at /api/v1/sepay/ipn for compatibility
-     */
     @Post('webhook')
     @HttpCode(200)
     async handleWebhook(@Body() payload: SepayWebhookDto) {
@@ -63,7 +54,6 @@ export class SepayController {
             return result;
         } catch (error) {
             this.logger.error('Error processing webhook:', error);
-            // Still return 200 to SePay to avoid retries
             return {
                 success: false,
                 message: error instanceof Error ? error.message : 'Processing failed'
@@ -71,9 +61,6 @@ export class SepayController {
         }
     }
 
-    /**
-     * Get user's transaction history (protected endpoint)
-     */
     @Get('transactions')
     @UseGuards(JwtAuthGuard)
     async getUserTransactions(@Req() req: Request) {
@@ -94,9 +81,6 @@ export class SepayController {
         };
     }
 
-    /**
-     * Get transaction statistics (admin only)
-     */
     @Get('stats')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(UserRole.ADMIN)
@@ -104,21 +88,16 @@ export class SepayController {
         return this.sepayService.getTransactionStats();
     }
 
-    /**
-     * IPN Webhook endpoint (alias)
-     * Alternative route for SePay IPN configuration: /api/v1/sepay/ipn
-     */
     @Post('ipn')
     @HttpCode(200)
     async handleIpnWebhook(@Body() payload: SepayIpnDto) {
-        // Delegate to the new IPN handler
         return this.sepayService.processIpnWebhook(payload);
     }
 }
 
 @Controller('sepay')
 export class SepayIpnController {
-    constructor(private readonly sepayService: SepayService) { }
+    constructor(private readonly sepayService: SepayService) {}
 
     @Post('ipn')
     @HttpCode(200)

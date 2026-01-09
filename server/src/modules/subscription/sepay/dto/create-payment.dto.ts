@@ -14,7 +14,7 @@ export class CreatePaymentDto {
 
 export interface PaymentCheckoutResponse {
     checkoutURL: string;
-    formFields: any; // SDK returns object with mixed types (string, number, etc.)
+    formFields: any;
     orderInvoiceNumber: string;
     amount: number;
     description: string;

@@ -21,14 +21,11 @@ export class UserController {
         private readonly usageRepo: Repository<AiUsageDaily>,
         @InjectRepository(User)
         private readonly userRepo: Repository<User>,
-    ) { }
+    ) {}
 
     private async getUserFromRequest(req: Request): Promise<User> {
-        // Check if user is already attached (from CliTokenGuard or JwtAuthGuard)
         let user = (req as any).user as User | undefined;
 
-        // JwtAuthGuard and CliTokenGuard both return the full User entity
-        // so we should already have the complete user object
         if (!user || !user.id) {
             throw new UnauthorizedException('User not found');
         }
