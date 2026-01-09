@@ -115,3 +115,14 @@ export class SepayController {
         return this.sepayService.processIpnWebhook(payload);
     }
 }
+
+@Controller('sepay')
+export class SepayIpnController {
+    constructor(private readonly sepayService: SepayService) { }
+
+    @Post('ipn')
+    @HttpCode(200)
+    async handleIpn(@Body() payload: SepayIpnDto) {
+        return this.sepayService.processIpnWebhook(payload);
+    }
+}
