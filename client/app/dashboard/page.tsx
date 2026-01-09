@@ -95,8 +95,12 @@ export default function DashboardPage() {
                 {/* Header */}
                 <header className="flex items-center justify-between mb-8 pb-6 border-b border-neutral-800">
                     <Link href="/" className="text-xl font-bold text-white hover:text-emerald-400 transition-colors tracking-tight">
-                        Orca CLI
-                        <span className="text-emerald-500 ml-1.5 text-xs bg-emerald-500/10 px-2 py-0.5 rounded-full font-medium">BETA</span>
+                        <div className="leading-tight">
+                            <div className="text-2xl font-black tracking-tighter text-white uppercase italic group-hover:text-emerald-400 transition-colors">
+                                Orca CLI
+                            </div>
+                            <span className="text-emerald-500 ml-1.5 text-xs bg-emerald-500/10 px-2 py-0.5 rounded-full font-medium">BETA</span>
+                        </div>
                     </Link>
                     <button
                         onClick={handleLogout}
