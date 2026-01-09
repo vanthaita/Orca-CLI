@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useMe } from '@/hook/useMe';
 import PaymentButton from '@/component/PaymentButton';
+import { PLANS, PRICING_CONFIG } from '@/config/plans';
+import { cn } from '@/lib/utils';
 
 export default function UpgradePage() {
     const me = useMe();
@@ -11,21 +13,7 @@ export default function UpgradePage() {
     const [selectedPlan, setSelectedPlan] = useState<'pro' | 'team'>('pro');
     const [selectedDuration, setSelectedDuration] = useState<'1M' | '12M'>('12M');
     const [paymentError, setPaymentError] = useState<string | null>(null);
-
-    const pricing = {
-        pro: {
-            monthly: 170000,
-            yearly: 1700000,
-            monthlyUSD: 7,
-            yearlyUSD: 70
-        },
-        team: {
-            monthly: 480000,
-            yearly: 4800000,
-            monthlyUSD: 20,
-            yearlyUSD: 200
-        },
-    };
+    const pricing = PRICING_CONFIG;
 
     const getPrice = () => {
         const plan = pricing[selectedPlan];
@@ -51,7 +39,6 @@ export default function UpgradePage() {
     return (
         <div className="min-h-screen bg-neutral-950 text-neutral-200 font-sans selection:bg-emerald-500/30">
             <div className="max-w-5xl mx-auto px-6 py-16">
-                {/* Header */}
                 <header className="mb-12 text-center">
                     <Link
                         href="/dashboard"
@@ -71,7 +58,6 @@ export default function UpgradePage() {
                     </p>
                 </header>
 
-                {/* Billing Cycle Toggle */}
                 <div className="flex justify-center mb-12">
                     <div className="bg-neutral-900 p-1 rounded-lg inline-flex items-center relative">
                         <button
@@ -98,20 +84,47 @@ export default function UpgradePage() {
                     </div>
                 </div>
 
-                {/* Pricing Plans */}
-                <div className="grid md:grid-cols-2 gap-8 mb-16 max-w-4xl mx-auto">
-                    {/* Pro Plan */}
+                <div className="grid md:grid-cols-3 gap-6 mb-16 max-w-7xl mx-auto">
+                    <div className="relative rounded-2xl p-6 border-2 border-neutral-800 bg-neutral-900/30 hover:bg-neutral-900 transition-all">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 className="text-xl font-bold text-white">{PLANS.free_byok.name}</h3>
+                                <p className="text-neutral-400 text-sm">Bring your own API Key</p>
+                            </div>
+                        </div>
+                        <div className="mb-6">
+                            <span className="text-3xl font-bold text-white">Free</span>
+                            <span className="text-neutral-500 text-sm font-medium ml-2">/ forever</span>
+                        </div>
+                        <ul className="space-y-4 mb-8">
+                            {PLANS.free_byok.features.map((feature, idx) => (
+                                <li key={idx} className="flex items-start text-neutral-300 text-sm">
+                                    <svg className={cn("w-5 h-5 mr-3 shrink-0", feature.included ? "text-emerald-500" : "text-neutral-600")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span className={feature.included ? "" : "text-neutral-500 line-through"}>{feature.text}</span>
+                                </li>
+                            ))}
+                        </ul>
+                        <Link
+                            href="/dashboard/settings"
+                            className="block w-full text-center bg-neutral-800 hover:bg-neutral-700 text-white rounded-lg py-2.5 text-sm font-semibold transition-colors"
+                        >
+                            Configure API Key
+                        </Link>
+                    </div>
+
                     <div
                         onClick={() => setSelectedPlan('pro')}
-                        className={`relative rounded-2xl p-8 border-2 transition-all cursor-pointer hover:border-emerald-500/50 ${selectedPlan === 'pro'
+                        className={`relative rounded-2xl p-6 border-2 transition-all cursor-pointer hover:border-emerald-500/50 ${selectedPlan === 'pro'
                             ? 'bg-neutral-900 border-emerald-500 shadow-xl shadow-emerald-500/10'
                             : 'bg-neutral-900/50 border-neutral-800 hover:bg-neutral-900'
                             }`}
                     >
                         <div className="flex justify-between items-start mb-4">
                             <div>
-                                <h3 className="text-xl font-bold text-white">Pro Tier</h3>
-                                <p className="text-neutral-400 text-sm">For individual power users</p>
+                                <h3 className="text-xl font-bold text-white">{PLANS.pro.name} Tier</h3>
+                                <p className="text-neutral-400 text-sm">{PLANS.pro.description}</p>
                             </div>
                             {selectedPlan === 'pro' && (
                                 <div className="bg-emerald-500 text-emerald-950 p-1 rounded-full">
@@ -130,35 +143,28 @@ export default function UpgradePage() {
                             </span>
                         </div>
                         <ul className="space-y-4 mb-8">
-                            {[
-                                'Unlimited AI commits',
-                                'Auto-PR Workflow',
-                                'GPT-4o & Claude 3.5 Access',
-                                'AI Conflict Resolution',
-                                'Auto Release Notes'
-                            ].map((feature) => (
-                                <li key={feature} className="flex items-start text-neutral-300 text-sm">
-                                    <svg className="w-5 h-5 text-emerald-500 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {PLANS.pro.features.map((feature, idx) => (
+                                <li key={idx} className="flex items-start text-neutral-300 text-sm">
+                                    <svg className={cn("w-5 h-5 mr-3 shrink-0", feature.included ? "text-emerald-500" : "text-neutral-600")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
-                                    {feature}
+                                    <span className={feature.included ? "" : "text-neutral-500 line-through"}>{feature.text}</span>
                                 </li>
                             ))}
                         </ul>
                     </div>
 
-                    {/* Team Plan */}
                     <div
                         onClick={() => setSelectedPlan('team')}
-                        className={`relative rounded-2xl p-8 border-2 transition-all cursor-pointer hover:border-emerald-500/50 ${selectedPlan === 'team'
+                        className={`relative rounded-2xl p-6 border-2 transition-all cursor-pointer hover:border-emerald-500/50 ${selectedPlan === 'team'
                             ? 'bg-neutral-900 border-emerald-500 shadow-xl shadow-emerald-500/10'
                             : 'bg-neutral-900/50 border-neutral-800 hover:bg-neutral-900'
                             }`}
                     >
                         <div className="flex justify-between items-start mb-4">
                             <div>
-                                <h3 className="text-xl font-bold text-white">Team Tier</h3>
-                                <p className="text-neutral-400 text-sm">For collaborative teams</p>
+                                <h3 className="text-xl font-bold text-white">{PLANS.team.name} Tier</h3>
+                                <p className="text-neutral-400 text-sm">{PLANS.team.description}</p>
                             </div>
                             {selectedPlan === 'team' && (
                                 <div className="bg-emerald-500 text-emerald-950 p-1 rounded-full">
@@ -177,25 +183,18 @@ export default function UpgradePage() {
                             </span>
                         </div>
                         <ul className="space-y-4 mb-8">
-                            {[
-                                'Everything in Pro',
-                                'Shared Team Templates',
-                                'Team Dashboard',
-                                'Team Usage Analytics',
-                                'Priority Support'
-                            ].map((feature) => (
-                                <li key={feature} className="flex items-start text-neutral-300 text-sm">
-                                    <svg className="w-5 h-5 text-emerald-500 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {PLANS.team.features.map((feature, idx) => (
+                                <li key={idx} className="flex items-start text-neutral-300 text-sm">
+                                    <svg className={cn("w-5 h-5 mr-3 shrink-0", feature.included ? "text-emerald-500" : "text-neutral-600")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
-                                    {feature}
+                                    <span className={feature.included ? "" : "text-neutral-500 line-through"}>{feature.text}</span>
                                 </li>
                             ))}
                         </ul>
                     </div>
                 </div>
 
-                {/* Checkout Section */}
                 <div className="max-w-2xl mx-auto bg-neutral-900 rounded-xl p-8 border border-neutral-800">
                     <div className="flex justify-between items-center mb-6 border-b border-neutral-800 pb-6">
                         <div>
