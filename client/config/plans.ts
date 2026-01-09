@@ -22,7 +22,7 @@ export const PLANS: Record<string, PricingTier & { id: string }> = {
         price: "$7",
         description: "For professional developers who want to move fast.",
         highlighted: true,
-        ctaText: "Start 14-Day Free Trial",
+        ctaText: "Get Started",
         ctaLink: "/login?plan=pro",
         features: [
             { text: "Unlimited AI commits", included: true },
@@ -40,7 +40,7 @@ export const PLANS: Record<string, PricingTier & { id: string }> = {
         name: "Team",
         price: "$20",
         description: "For teams that need collaboration and consistency.",
-        ctaText: "Start 14-Day Free Trial",
+        ctaText: "Get Started",
         ctaLink: "/login?plan=team",
         features: [
             { text: "Everything in Pro", included: true },
@@ -55,15 +55,15 @@ export const PLANS: Record<string, PricingTier & { id: string }> = {
 
 export const PRICING_CONFIG = {
     pro: {
-        monthly: 170000,
-        yearly: 1700000,
-        monthlyUSD: 7,
-        yearlyUSD: 70
+        monthly: 179000,
+        yearly: 1790000,
+        monthlyUSD: 6.99,
+        yearlyUSD: 69.90
     },
     team: {
-        monthly: 480000,
-        yearly: 4800000,
-        monthlyUSD: 20,
-        yearlyUSD: 200
+        monthly: 509000,
+        yearly: 5090000,
+        monthlyUSD: 19.99,
+        yearlyUSD: 199.90
     },
 };
