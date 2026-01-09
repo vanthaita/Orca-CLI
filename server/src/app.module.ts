@@ -74,7 +74,7 @@ import { SubscriptionModule } from './modules/subscription/subscription.module';
           configService.get<string>('NODE_ENV') !== 'production',
       }),
     }),
-    TypeOrmModule.forFeature([User]), // For HealthController
+    TypeOrmModule.forFeature([User]),
     AuthModule,
     AiModule,
     ReleaseModule,
@@ -85,4 +85,4 @@ import { SubscriptionModule } from './modules/subscription/subscription.module';
   controllers: [AppController, HealthController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

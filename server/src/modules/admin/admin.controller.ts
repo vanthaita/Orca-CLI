@@ -11,7 +11,7 @@ import { UpdateUserPlanDto } from './dto/update-user-plan.dto';
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Roles(UserRole.ADMIN)
 export class AdminController {
-    constructor(private readonly adminService: AdminService) { }
+    constructor(private readonly adminService: AdminService) {}
 
     @Get('users')
     async findAllUsers() {

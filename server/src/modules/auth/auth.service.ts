@@ -189,7 +189,6 @@ export class AuthService {
       return { status: 'expired' };
     }
 
-    // Rate limiting: check poll interval
     if (device.lastPollAt) {
       const timeSinceLastPoll = Date.now() - device.lastPollAt.getTime();
       if (timeSinceLastPoll < minInterval * 1000) {
@@ -198,11 +197,9 @@ export class AuthService {
       }
     }
 
-    // Update poll tracking
     device.attempts += 1;
     device.lastPollAt = new Date();
 
-    // Check max attempts
     if (device.attempts > maxAttempts) {
       this.logger.warn(`[CLI Login] Poll: Max attempts exceeded`);
       return { status: 'slow_down', interval: interval * 2 };
@@ -236,7 +233,6 @@ export class AuthService {
 
     await this.cliTokensRepo.save(token);
 
-    // Consume device code so it can't mint multiple tokens
     await this.cliDeviceCodesRepo.delete({ id: device.id });
 
     return { status: 'ok', accessToken: rawToken, expiresIn: tokenDays * 24 * 60 * 60 };
