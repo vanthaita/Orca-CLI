@@ -1,4 +1,4 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import { SiteHeader } from "@/component/SiteHeader";
 import { SiteFooter } from "@/component/SiteFooter";
 

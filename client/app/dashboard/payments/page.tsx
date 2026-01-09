@@ -58,7 +58,6 @@ export default function PaymentHistoryPage() {
     return (
         <div className="min-h-screen bg-[#0c0c0c] text-neutral-100">
             <div className="max-w-6xl mx-auto px-6 py-14">
-                {/* Header */}
                 <header className="flex items-center justify-between border-b-2 border-dashed border-white/20 pb-6 mb-10">
                     <h1 className="text-3xl font-black text-white uppercase italic tracking-tighter">
                         Payment History
@@ -72,7 +71,6 @@ export default function PaymentHistoryPage() {
                     </Link>
                 </header>
 
-                {/* Content */}
                 <div className="border-2 border-dashed border-white/20 bg-black/20 backdrop-blur-sm p-8 rounded-xl">
                     {loading ? (
                         <div className="text-center py-12">

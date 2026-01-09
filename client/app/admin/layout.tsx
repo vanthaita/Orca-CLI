@@ -5,9 +5,9 @@ import { useLogout } from '@/hook/useLogout';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { redirectToLogin } from '@/lib/auth-utils';
+import type { ReactNode } from 'react';
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ children }: { children: ReactNode }) {
     const me = useMe();
     const logout = useLogout();
     const pathname = usePathname();
@@ -17,10 +17,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     useEffect(() => {
         if (me.isLoading) return;
 
-        // Redirect if not authenticated or not admin
         if (!user || !isAdmin) {
-            // eslint-disable-next-line no-console
-            console.log('[Admin] Access denied, redirecting');
             window.location.href = '/';
         }
     }, [me.isLoading, user, isAdmin]);
@@ -71,7 +68,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     return (
         <div className="min-h-screen bg-[#0c0c0c] text-neutral-100 flex font-sans">
-            {/* Sidebar */}
             <aside className="w-64 border-r border-dashed border-white/10 p-6 flex flex-col fixed h-full bg-[#0c0c0c]/95 backdrop-blur-sm z-50">
                 <div className="mb-10">
                     <Link href="/" className="text-2xl font-black text-white hover:text-emerald-400 transition-colors uppercase italic tracking-tighter block">
@@ -124,7 +120,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </div>
             </aside>
 
-            {/* Main Content */}
             <main className="flex-1 ml-64 p-8 min-h-screen relative">
                 <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-emerald-500/5 to-transparent pointer-events-none -z-10" />
                 {children}

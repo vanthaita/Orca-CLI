@@ -59,20 +59,15 @@ export default function DashboardPage() {
     useEffect(() => {
         if (me.isLoading) return;
 
-        // If not authenticated, redirect immediately
         if (!user && (me.isError || me.isFetched)) {
-            // eslint-disable-next-line no-console
-            console.log('[Dashboard] User not authenticated, redirecting to login');
             redirectToLogin('/dashboard');
         }
     }, [me.isLoading, me.isError, me.isFetched, user]);
 
     useEffect(() => {
         if (user) {
-            // Check if there is a pending redirect
             const redirect = localStorage.getItem('auth_redirect');
             if (redirect) {
-                console.log('Found pending redirect, redirecting to:', redirect);
                 localStorage.removeItem('auth_redirect');
                 window.location.href = redirect;
             }
@@ -117,7 +112,7 @@ export default function DashboardPage() {
     }
 
     if (!user) {
-        return null; // Will redirect in useEffect
+        return null;
     }
 
     const activeTokens = cliTokens.data?.filter(t => !t.revokedAt) || [];
@@ -125,7 +120,6 @@ export default function DashboardPage() {
     return (
         <div className="min-h-screen bg-neutral-950 text-neutral-200 font-sans selection:bg-emerald-500/30">
             <div className="max-w-7xl mx-auto px-6 py-8">
-                {/* Header */}
                 <header className="flex items-center justify-between mb-8 pb-6 border-b border-neutral-800">
                     <Link href="/" className="text-xl font-bold text-white hover:text-emerald-400 transition-colors tracking-tight">
                         <div className="leading-tight">
@@ -147,9 +141,7 @@ export default function DashboardPage() {
                 </header>
 
                 <div className="grid lg:grid-cols-4 gap-8">
-                    {/* Left Sidebar */}
                     <aside className="lg:col-span-1 space-y-6">
-                        {/* Profile Summary */}
                         <div className="bg-neutral-900 rounded-xl p-6 border border-neutral-800">
                             <div className="flex items-center gap-4 mb-4">
                                 {user.picture ? (
@@ -177,7 +169,6 @@ export default function DashboardPage() {
                             </div>
                         </div>
 
-                        {/* Navigation */}
                         <nav className="flex flex-col gap-2">
                             <Link
                                 href="/dashboard/upgrade"
@@ -206,9 +197,7 @@ export default function DashboardPage() {
                         </nav>
                     </aside>
 
-                    {/* Main Content */}
                     <main className="lg:col-span-3 space-y-6">
-                        {/* Usage Card */}
                         <div className="bg-neutral-900 rounded-xl border border-neutral-800 overflow-hidden">
                             <div className="p-6 border-b border-neutral-800 flex justify-between items-center">
                                 <h2 className="text-lg font-bold text-white">Daily AI Usage</h2>
@@ -245,7 +234,6 @@ export default function DashboardPage() {
                             </div>
                         </div>
 
-                        {/* Plan Features */}
                         <div className="bg-neutral-900 rounded-xl border border-neutral-800 overflow-hidden">
                             <div className="p-6 border-b border-neutral-800 flex justify-between items-center bg-gradient-to-r from-neutral-900 to-neutral-900/50">
                                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
@@ -316,7 +304,6 @@ export default function DashboardPage() {
                             </div>
                         </div>
 
-                        {/* CLI Integration */}
                         <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <div>
                                 <h3 className="font-bold text-white mb-1">Connect New Device</h3>
@@ -328,7 +315,6 @@ export default function DashboardPage() {
                         </div>
 
 
-                        {/* CLI Tokens */}
                         <div className="bg-neutral-900 rounded-xl border border-neutral-800 overflow-hidden">
                             <div className="p-6 border-b border-neutral-800">
                                 <h2 className="text-lg font-bold text-white">Active Sessions</h2>

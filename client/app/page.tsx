@@ -1,13 +1,11 @@
 "use client";
 
-
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth";
 
 import {
   CodeCard,
-  DashedCard,
   FaqSection,
   LinuxIcon,
   MacIcon,
@@ -25,16 +23,13 @@ import {
 } from "@/component";
 
 const Home = () => {
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const repo = "vanthaita/orca-releases"; // Target the public releases repo
-  const repoUrl = useMemo(() => `https://github.com/${repo}`, [repo]);
-  const issuesUrl = useMemo(() => `https://github.com/vanthaita/Orca/issues`, []); // Keep issues on main repo
+  useAuth();
+  const repo = "vanthaita/orca-releases";
 
   const [releases, setReleases] = useState<any[]>([]);
   const [latestRelease, setLatestRelease] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initial Fetch
   useEffect(() => {
     const fetchReleases = async () => {
       try {
@@ -55,7 +50,6 @@ const Home = () => {
     fetchReleases();
   }, [repo]);
 
-  // Derived Links
   const msiUrl = useMemo(() => {
     if (!latestRelease) return "#";
     const asset = latestRelease.assets?.find((a: any) => a.name.endsWith(".msi"));
@@ -68,7 +62,6 @@ const Home = () => {
     return asset ? asset.browser_download_url : latestRelease.html_url;
   }, [latestRelease]);
 
-  // Fallback version string
   const versionString = isLoading ? "..." : (latestRelease?.tag_name || "v0.1.2");
 
   const [isWindows, setIsWindows] = useState(false);
@@ -156,14 +149,14 @@ const Home = () => {
                   comingSoon={isLoading}
                 />
                 <ReleaseButton
-                  href={linuxUrl} // Use dynamic linux url
+                  href={linuxUrl}
                   icon={LinuxIcon}
                   label="Linux"
                   subLabel="x64 tar.gz"
                   comingSoon={isLoading}
                 />
                 <ReleaseButton
-                  href={linuxUrl} // Reusing linux url for now as they are often same logic or use mac specific if available
+                  href={linuxUrl}
                   icon={MacIcon}
                   label="macOS"
                   subLabel="x64 tar.gz"
@@ -171,7 +164,6 @@ const Home = () => {
                 />
               </div>
 
-              {/* Version History List */}
               {releases.length > 0 && (
                 <div className="mt-8">
                   <VersionList releases={releases} />
@@ -283,7 +275,7 @@ const Home = () => {
           <SiteFooter />
         </main>
       </div>
-    </div >
+    </div>
   );
 };
 

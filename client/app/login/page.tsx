@@ -12,7 +12,6 @@ function LoginContent() {
     const [isRedirecting, setIsRedirecting] = useState(false);
 
     useEffect(() => {
-        // If already authenticated, redirect to intended destination
         if (isAuthenticated && !isRedirecting) {
             setIsRedirecting(true);
 
@@ -35,7 +34,6 @@ function LoginContent() {
         const userCode = searchParams.get('userCode');
         const redirect = searchParams.get('redirect');
 
-        // Preserve state through OAuth flow
         let state = '/dashboard';
 
         if (userCode) {
@@ -44,7 +42,6 @@ function LoginContent() {
             state = redirect;
         }
 
-        // Redirect to Google OAuth endpoint with state
         const authUrl = `${ORCA_API_BASE_URL}/${NEXT_PUBLIC_PREFIX_API}/auth/google?state=${encodeURIComponent(state)}`;
         window.location.href = authUrl;
     };
@@ -68,7 +65,6 @@ function LoginContent() {
     return (
         <div className="min-h-screen bg-[#0c0c0c] text-neutral-100 flex items-center justify-center p-6">
             <div className="w-full max-w-md">
-                {/* Header */}
                 <div className="text-center mb-12">
                     <Link href="/" className="inline-block">
                         <h1 className="text-4xl font-black text-white hover:text-emerald-400 transition-colors uppercase italic tracking-tighter mb-3">
@@ -78,7 +74,6 @@ function LoginContent() {
                     <p className="text-neutral-400">Sign in to continue</p>
                 </div>
 
-                {/* Login Card */}
                 <div className="border-2 border-dashed border-white/20 bg-black/40 backdrop-blur-sm rounded-xl p-8">
                     <h2 className="text-2xl font-bold text-white mb-6 text-center">Welcome Back</h2>
 
@@ -113,7 +108,6 @@ function LoginContent() {
                     </div>
                 </div>
 
-                {/* Back Link */}
                 <div className="mt-6 text-center">
                     <Link
                         href="/"

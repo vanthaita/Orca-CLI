@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import type { ReactNode } from "react";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
 import Providers from "./providers";
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-image.png", // Ensure this exists in public/ folder
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "Orca CLI - AI-powered Git Workflow",
@@ -91,7 +92,7 @@ const jsonLd = {
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <html lang="en">

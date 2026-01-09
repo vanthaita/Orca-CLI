@@ -58,7 +58,6 @@ export default function AdminMetricsPage() {
     return (
         <div className="min-h-screen bg-[#0c0c0c] text-neutral-100">
             <div className="max-w-7xl mx-auto px-6 py-14">
-                {/* Header */}
                 <header className="flex items-center justify-between border-b-2 border-dashed border-white/20 pb-6 mb-10">
                     <h1 className="text-3xl font-black text-white uppercase italic tracking-tighter">
                         System Metrics
@@ -79,7 +78,6 @@ export default function AdminMetricsPage() {
                     <div className="text-center py-12 text-red-400">Failed to load metrics</div>
                 ) : (
                     <div className="space-y-8">
-                        {/* Overview Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="border-2 border-dashed border-white/20 bg-black/20 p-6 rounded-xl">
                                 <div className="text-sm text-neutral-500 uppercase tracking-wide mb-2">Total Users</div>
@@ -98,7 +96,6 @@ export default function AdminMetricsPage() {
                             </div>
                         </div>
 
-                        {/* Users by Plan */}
                         <div className="border-2 border-dashed border-white/20 bg-black/20 p-8 rounded-xl">
                             <h2 className="text-xl font-bold text-white mb-6 border-b-2 border-dashed border-white/20 pb-3">
                                 Users by Plan
@@ -124,7 +121,6 @@ export default function AdminMetricsPage() {
                             </div>
                         </div>
 
-                        {/* Users by Role */}
                         <div className="border-2 border-dashed border-white/20 bg-black/20 p-8 rounded-xl">
                             <h2 className="text-xl font-bold text-white mb-6 border-b-2 border-dashed border-white/20 pb-3">
                                 Users by Role
@@ -143,7 +139,6 @@ export default function AdminMetricsPage() {
                             </div>
                         </div>
 
-                        {/* Payment Statistics */}
                         {paymentStats && (
                             <div className="border-2 border-dashed border-purple-500/50 bg-purple-500/10 p-8 rounded-xl">
                                 <h2 className="text-xl font-bold text-white mb-6 border-b-2 border-dashed border-purple-500/20 pb-3">

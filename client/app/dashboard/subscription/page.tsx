@@ -105,7 +105,6 @@ function SubscriptionContent() {
         );
     }
 
-    // Default state (no params)
     return (
         <div className="text-center">
             <h1 className="text-2xl font-bold text-white mb-4">Subscription Status</h1>

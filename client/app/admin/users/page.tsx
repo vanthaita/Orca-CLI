@@ -91,7 +91,6 @@ export default function UsersPage() {
             {users && (
                 <div className="flex justify-between items-center text-sm text-neutral-600 px-2">
                     <div>Showing <strong className="text-white">{users.length}</strong> registered accounts</div>
-                    {/* Add Pagination if needed later */}
                 </div>
             )}
         </div>

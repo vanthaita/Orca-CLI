@@ -16,7 +16,6 @@ function CliVerifyContent() {
     const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
-        // Get userCode from URL params
         const codeFromUrl = searchParams.get('userCode');
         if (codeFromUrl) {
             setUserCode(codeFromUrl.toUpperCase());
@@ -24,7 +23,6 @@ function CliVerifyContent() {
     }, [searchParams]);
 
     useEffect(() => {
-        // Redirect to login if not authenticated
         if (!isAuthLoading && !isAuthenticated) {
             const currentUserCode = searchParams.get('userCode');
             const loginUrl = currentUserCode
@@ -61,11 +59,9 @@ function CliVerifyContent() {
     };
 
     const handleUserCodeChange = (value: string) => {
-        // Auto-format: uppercase and remove spaces
         const formatted = value.toUpperCase().replace(/\s/g, '');
         setUserCode(formatted);
 
-        // Reset error state when user types
         if (verifyStatus === 'error') {
             setVerifyStatus('idle');
             setErrorMessage('');
@@ -87,13 +83,12 @@ function CliVerifyContent() {
     }
 
     if (!isAuthenticated) {
-        return null; // Will redirect in useEffect
+        return null;
     }
 
     return (
         <div className="min-h-screen bg-[#0c0c0c] text-neutral-100 flex items-center justify-center p-6">
             <div className="w-full max-w-md">
-                {/* Header */}
                 <div className="text-center mb-12">
                     <Link href="/" className="inline-block">
                         <h1 className="text-4xl font-black text-white hover:text-emerald-400 transition-colors uppercase italic tracking-tighter mb-3">
@@ -103,7 +98,6 @@ function CliVerifyContent() {
                     <p className="text-neutral-400">Approve CLI Device</p>
                 </div>
 
-                {/* Verification Card */}
                 <div className="border-2 border-dashed border-white/20 bg-black/40 backdrop-blur-sm rounded-xl p-8">
                     {verifyStatus === 'success' ? (
                         <div className="text-center space-y-6">
@@ -213,7 +207,6 @@ function CliVerifyContent() {
                     )}
                 </div>
 
-                {/* Back Link */}
                 {verifyStatus !== 'success' && (
                     <div className="mt-6 text-center">
                         <Link

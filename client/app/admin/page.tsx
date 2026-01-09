@@ -6,13 +6,13 @@ import Link from 'next/link';
 
 export default function AdminDashboardPage() {
     const { data: users, isLoading: usersLoading } = useAdminUsers();
-    const { data: logs, isLoading: logsLoading } = useAdminLogs(10); // Only needed for quick preview
+    const { data: logs, isLoading: logsLoading } = useAdminLogs(10);
 
     const stats = [
         {
             label: 'Total Users',
             value: users?.length || 0,
-            change: '+12%', // Mock data for visual 
+            change: '+12%',
             icon: (
                 <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -53,7 +53,6 @@ export default function AdminDashboardPage() {
                 <p className="text-neutral-500 text-sm">Welcome back, Admin. System is running optimally.</p>
             </header>
 
-            {/* Stats Grid */}
             <div className="grid gap-6 md:grid-cols-3">
                 {stats.map((stat, idx) => (
                     <div key={idx} className={`relative overflow-hidden group p-6 border border-dashed rounded-xl bg-black/20 backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-${stat.color}-500/50 ${stat.color === 'emerald' ? 'border-emerald-500/20' : stat.color === 'blue' ? 'border-blue-500/20' : 'border-purple-500/20'}`}>
@@ -75,7 +74,6 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
-                {/* Recent Activity / Logs Preview */}
                 <div className="border border-dashed border-white/20 bg-black/20 backdrop-blur-sm rounded-xl p-6">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-lg font-bold text-white">Live Activity</h2>
@@ -101,7 +99,6 @@ export default function AdminDashboardPage() {
                     </div>
                 </div>
 
-                {/* Quick Shortcuts */}
                 <div className="border border-dashed border-white/20 bg-black/20 backdrop-blur-sm rounded-xl p-6">
                     <h2 className="text-lg font-bold text-white mb-6">Quick Actions</h2>
                     <div className="grid grid-cols-2 gap-4">
