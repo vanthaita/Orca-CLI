@@ -20,7 +20,7 @@ export const SiteHeader = () => {
             <nav className="hidden items-center gap-6 sm:flex">
                 <Link
                     className="text-sm font-medium text-neutral-400 hover:text-white transition-colors inline-flex items-center gap-2"
-                    href="/guide#basics"
+                    href="/"
                 >
                     <InfoIcon className="h-4 w-4" />
                     Overview
