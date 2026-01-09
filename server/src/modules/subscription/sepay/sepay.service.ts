@@ -98,6 +98,7 @@ export class SepayService {
      */
     async processWebhook(payload: SepayWebhookDto): Promise<{ success: boolean; message: string }> {
         this.logger.log(`Processing SePay webhook for transaction ID: ${payload.id}`);
+        this.logger.debug(`Webhook payload content: ${payload.content}, amount: ${payload.transferAmount}`);
 
         // Only process incoming transfers
         if (payload.transferType !== 'in') {
@@ -111,7 +112,7 @@ export class SepayService {
         });
 
         if (existing) {
-            this.logger.warn(`Duplicate transaction detected: ${payload.id}`);
+            this.logger.warn(`Duplicate transaction detected: ${payload.id}, Status: ${existing.status}`);
             return { success: true, message: 'Transaction already processed' };
         }
 
@@ -132,8 +133,11 @@ export class SepayService {
             // Parse payment content
             const parsed = this.parsePaymentContent(payload.content);
             if (!parsed) {
+                this.logger.error(`Failed to parse payment content: "${payload.content}"`);
                 throw new BadRequestException('Invalid payment content format');
             }
+
+            this.logger.log(`Parsed content: Email=${parsed.email}, Plan=${parsed.plan}, Duration=${parsed.duration}`);
 
             // Find user by email
             const user = await this.userRepo.findOne({
@@ -141,6 +145,7 @@ export class SepayService {
             });
 
             if (!user) {
+                this.logger.error(`User not found with email: ${parsed.email}`);
                 throw new NotFoundException(`User not found: ${parsed.email}`);
             }
 
@@ -157,12 +162,14 @@ export class SepayService {
             // Allow small variance (±1000 VND) for rounding
             const variance = 1000;
             if (Math.abs(payload.transferAmount - expectedAmount) > variance) {
+                this.logger.error(`Payment amount mismatch. Expected: ${expectedAmount}, Received: ${payload.transferAmount}`);
                 throw new BadRequestException(
                     `Payment amount mismatch. Expected: ${expectedAmount}, Received: ${payload.transferAmount}`
                 );
             }
 
             // Upgrade user plan
+            this.logger.log(`Upgrading user ${user.id} (${user.email}) to ${plan} ${duration}`);
             await this.upgradeUserPlan(user, plan, duration);
 
             // Update transaction record
