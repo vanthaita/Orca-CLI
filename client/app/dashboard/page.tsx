@@ -2,6 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import {
+    GitCommit,
+    UploadCloud,
+    GitMerge,
+    FileText,
+    Zap,
+    Clock,
+    Sparkles,
+    LucideIcon
+} from 'lucide-react';
 
 import { useMe } from '@/hook/useMe';
 import { useLogout } from '@/hook/useLogout';
@@ -9,6 +19,29 @@ import { usePlan } from '@/hook/usePlan';
 import { useUsage } from '@/hook/useUsage';
 import { useCliTokens, useRevokeToken, useRenameToken } from '@/hook/useCliTokens';
 import { redirectToLogin } from '@/lib/auth-utils';
+
+const FEATURE_CONFIG: Record<string, { label: string; icon: LucideIcon; description: string }> = {
+    'ai_commit': {
+        label: 'AI Commit Messages',
+        icon: GitCommit,
+        description: 'Generate meaningful commit messages automatically'
+    },
+    'auto_publish': {
+        label: 'Auto Publish',
+        icon: UploadCloud,
+        description: 'Seamlessly publish changes to remote repositories'
+    },
+    'ai_conflict_resolution': {
+        label: 'Smart Conflict Resolve',
+        icon: GitMerge,
+        description: 'AI-assisted merge conflict resolution'
+    },
+    'ai_release_notes': {
+        label: 'AI Release Notes',
+        icon: FileText,
+        description: 'Generate comprehensive release notes instantly'
+    }
+};
 
 export default function DashboardPage() {
     const me = useMe();
@@ -97,9 +130,8 @@ export default function DashboardPage() {
                     <Link href="/" className="text-xl font-bold text-white hover:text-emerald-400 transition-colors tracking-tight">
                         <div className="leading-tight">
                             <div className="text-2xl font-black tracking-tighter text-white uppercase italic group-hover:text-emerald-400 transition-colors">
-                                Orca CLI
+                                Orca CLI <span className="text-emerald-500 ml-1.5 text-xs bg-emerald-500/10 px-2 py-0.5 rounded-full font-medium text-sm">BETA</span>
                             </div>
-                            <span className="text-emerald-500 ml-1.5 text-xs bg-emerald-500/10 px-2 py-0.5 rounded-full font-medium">BETA</span>
                         </div>
                     </Link>
                     <button
@@ -214,37 +246,73 @@ export default function DashboardPage() {
                         </div>
 
                         {/* Plan Features */}
-                        <div className="bg-neutral-900 rounded-xl border border-neutral-800">
-                            <div className="p-6 border-b border-neutral-800">
-                                <h2 className="text-lg font-bold text-white">Current Plan Details</h2>
+                        <div className="bg-neutral-900 rounded-xl border border-neutral-800 overflow-hidden">
+                            <div className="p-6 border-b border-neutral-800 flex justify-between items-center bg-gradient-to-r from-neutral-900 to-neutral-900/50">
+                                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                                    <Sparkles className="w-5 h-5 text-emerald-400" />
+                                    Current Plan Details
+                                </h2>
+                                {plan.data && (
+                                    <div className={`px-3 py-1 rounded-full text-xs font-bold border ${plan.data.isActive
+                                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                        : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                        }`}>
+                                        {plan.data.isActive ? 'Active Plan' : 'Plan Expired'}
+                                    </div>
+                                )}
                             </div>
                             <div className="p-6">
                                 {plan.isLoading ? (
-                                    <div className="animate-pulse h-12 bg-neutral-800 rounded"></div>
-                                ) : plan.data ? (
-                                    <div>
-                                        <div className="flex flex-wrap gap-2 mb-4">
-                                            {plan.data.features?.map((feature) => (
-                                                <div
-                                                    key={feature}
-                                                    className="px-2 py-1 bg-neutral-800 border border-neutral-700 rounded text-xs text-neutral-300 font-medium"
-                                                >
-                                                    {feature}
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="flex items-center justify-between text-sm">
-                                            <div className="text-neutral-400">
-                                                Status: <span className={plan.data.isActive ? 'text-emerald-400' : 'text-red-400'}>{plan.data.isActive ? 'Active' : 'Expired'}</span>
-                                            </div>
-                                            {plan.data.expiresAt && (
-                                                <div className="text-neutral-400">
-                                                    Expires: {new Date(plan.data.expiresAt).toLocaleDateString()}
-                                                </div>
-                                            )}
-                                        </div>
+                                    <div className="space-y-4">
+                                        <div className="animate-pulse h-24 bg-neutral-800 rounded-lg"></div>
+                                        <div className="animate-pulse h-4 bg-neutral-800 rounded w-1/3"></div>
                                     </div>
-                                ) : null}
+                                ) : plan.data ? (
+                                    <div className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            {plan.data.features?.map((featureKey) => {
+                                                const config = FEATURE_CONFIG[featureKey] || {
+                                                    label: featureKey,
+                                                    icon: Zap,
+                                                    description: 'Advanced feature unlocked'
+                                                };
+                                                const Icon = config.icon;
+
+                                                return (
+                                                    <div
+                                                        key={featureKey}
+                                                        className="group p-3 rounded-lg border border-neutral-800 bg-neutral-800/30 hover:bg-neutral-800/50 hover:border-emerald-500/30 transition-all duration-300 flex items-start gap-3"
+                                                    >
+                                                        <div className="p-2 rounded-md bg-neutral-900 group-hover:bg-emerald-500/10 group-hover:text-emerald-400 text-neutral-400 transition-colors">
+                                                            <Icon className="w-4 h-4" />
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-medium text-white text-sm group-hover:text-emerald-400 transition-colors">
+                                                                {config.label}
+                                                            </div>
+                                                            <div className="text-xs text-neutral-500 mt-0.5">
+                                                                {config.description}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {plan.data.expiresAt && (
+                                            <div className="flex items-center gap-2 text-xs text-neutral-500 pt-4 border-t border-neutral-800">
+                                                <Clock className="w-3.5 h-3.5" />
+                                                <span>
+                                                    Plan expires on <span className="text-neutral-300 font-medium">{new Date(plan.data.expiresAt).toLocaleDateString()}</span>
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8 text-neutral-500">
+                                        <p>No plan details available.</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
