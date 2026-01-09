@@ -12,7 +12,6 @@ export const metadata: Metadata = {
 
 const TIERS: PricingTier[] = [
     PLANS.free,
-    PLANS.free_byok,
     PLANS.pro,
     PLANS.team
 ];

@@ -88,8 +88,8 @@ export default function UpgradePage() {
                     <div className="relative rounded-2xl p-6 border-2 border-neutral-800 bg-neutral-900/30 hover:bg-neutral-900 transition-all">
                         <div className="flex justify-between items-start mb-4">
                             <div>
-                                <h3 className="text-xl font-bold text-white">{PLANS.free_byok.name}</h3>
-                                <p className="text-neutral-400 text-sm">Bring your own API Key</p>
+                                <h3 className="text-xl font-bold text-white">{PLANS.free.name}</h3>
+                                <p className="text-neutral-400 text-sm">{PLANS.free.description}</p>
                             </div>
                         </div>
                         <div className="mb-6">
@@ -97,7 +97,7 @@ export default function UpgradePage() {
                             <span className="text-neutral-500 text-sm font-medium ml-2">/ forever</span>
                         </div>
                         <ul className="space-y-4 mb-8">
-                            {PLANS.free_byok.features.map((feature, idx) => (
+                            {PLANS.free.features.map((feature, idx) => (
                                 <li key={idx} className="flex items-start text-neutral-300 text-sm">
                                     <svg className={cn("w-5 h-5 mr-3 shrink-0", feature.included ? "text-emerald-500" : "text-neutral-600")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -106,12 +106,6 @@ export default function UpgradePage() {
                                 </li>
                             ))}
                         </ul>
-                        <Link
-                            href="/dashboard/settings"
-                            className="block w-full text-center bg-neutral-800 hover:bg-neutral-700 text-white rounded-lg py-2.5 text-sm font-semibold transition-colors"
-                        >
-                            Configure API Key
-                        </Link>
                     </div>
 
                     <div

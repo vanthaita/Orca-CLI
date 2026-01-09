@@ -10,29 +10,10 @@ export const PLANS: Record<string, PricingTier & { id: string }> = {
         ctaLink: "/login",
         features: [
             { text: "7 AI commits per day", included: true },
+            { text: "BYOK (Use Your Own AI Keys: Gemini, OpenAI, ZAI, DeepSeek)", included: true },
             { text: "Gemini Flash AI model", included: true },
-            { text: "Core Git wrapper (unlimited)", included: true },
             { text: "Basic commit messages", included: true },
             { text: "Community Support", included: true },
-            { text: "Auto-PR workflow", included: false },
-            { text: "AI Conflict Resolution", included: false },
-        ]
-    },
-    free_byok: {
-        id: 'free_byok',
-        name: "Free (BYOK)",
-        price: "Free",
-        description: "Bring Your Own Key. Use your own API key for unlimited access.",
-        ctaText: "Configure Key",
-        ctaLink: "/dashboard/settings",
-        features: [
-            { text: "Unlimited AI commits", included: true },
-            { text: "Gamini Flash/Pro AI model", included: true },
-            { text: "Core Git wrapper (unlimited)", included: true },
-            { text: "Advanced commit messages", included: true },
-            { text: "Community Support", included: true },
-            { text: "Auto-PR workflow", included: true },
-            { text: "AI Conflict Resolution", included: true },
         ]
     },
     pro: {
@@ -45,6 +26,7 @@ export const PLANS: Record<string, PricingTier & { id: string }> = {
         ctaLink: "/login?plan=pro",
         features: [
             { text: "Unlimited AI commits", included: true },
+            { text: "BYOK (Local AI KEY: Gemini, OpenAI, Zai, Deepseek)", included: true },
             { text: "Auto-PR workflow (orca publish)", included: true },
             { text: "AI Conflict Resolution", included: true },
             { text: "AI Release Notes", included: true },
@@ -62,6 +44,7 @@ export const PLANS: Record<string, PricingTier & { id: string }> = {
         ctaLink: "/login?plan=team",
         features: [
             { text: "Everything in Pro", included: true },
+            { text: "BYOK (Local AI KEY: Gemini, OpenAI, Zai, Deepseek)", included: true },
             { text: "Up to 5 team members", included: true },
             { text: "Shared Team Templates", included: true },
             { text: "Team Analytics Dashboard", included: true },
