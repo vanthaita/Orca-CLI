@@ -10,7 +10,6 @@ export const IntroductionSection = () => {
             <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight mb-6 uppercase inline-flex items-center gap-2">
-                        <InfoIcon className="h-5 w-5 text-emerald-400" />
                         A New Philosophy for Version Control
                     </h2>
                     <div className="space-y-6 text-lg text-neutral-400 leading-relaxed">
