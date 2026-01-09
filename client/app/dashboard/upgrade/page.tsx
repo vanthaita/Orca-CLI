@@ -12,16 +12,23 @@ export default function UpgradePage() {
     const user = me.data?.user;
     const [selectedPlan, setSelectedPlan] = useState<'pro' | 'team'>('pro');
     const [selectedDuration, setSelectedDuration] = useState<'1M' | '12M'>('12M');
+    const [region, setRegion] = useState<'VN' | 'INT'>('VN');
     const [paymentError, setPaymentError] = useState<string | null>(null);
     const pricing = PRICING_CONFIG;
 
     const getPrice = () => {
         const plan = pricing[selectedPlan];
-        return selectedDuration === '1M' ? plan.monthly : plan.yearly;
+        if (region === 'VN') {
+            return selectedDuration === '1M' ? plan.monthly : plan.yearly;
+        }
+        return selectedDuration === '1M' ? plan.monthlyUSD : plan.yearlyUSD;
     };
 
     const formatAmount = (amount: number) => {
-        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+        if (region === 'VN') {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+        }
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     };
 
     if (me.isLoading) {
@@ -58,7 +65,30 @@ export default function UpgradePage() {
                     </p>
                 </header>
 
-                <div className="flex justify-center mb-12">
+                <div className="flex flex-col items-center mb-12 gap-6">
+                    {/* Region Selector */}
+                    <div className="bg-neutral-900 p-1 rounded-lg inline-flex items-center">
+                        <button
+                            onClick={() => setRegion('VN')}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${region === 'VN'
+                                ? 'bg-neutral-800 text-white shadow-sm'
+                                : 'text-neutral-400 hover:text-white'
+                                }`}
+                        >
+                            <span>🇻🇳</span> Vietnam
+                        </button>
+                        <button
+                            onClick={() => setRegion('INT')}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${region === 'INT'
+                                ? 'bg-neutral-800 text-white shadow-sm'
+                                : 'text-neutral-400 hover:text-white'
+                                }`}
+                        >
+                            <span>🌏</span> International
+                        </button>
+                    </div>
+
+                    {/* Duration Selector */}
                     <div className="bg-neutral-900 p-1 rounded-lg inline-flex items-center relative">
                         <button
                             onClick={() => setSelectedDuration('1M')}
@@ -130,7 +160,10 @@ export default function UpgradePage() {
                         </div>
                         <div className="mb-6">
                             <span className="text-3xl font-bold text-white">
-                                {formatAmount(selectedDuration === '1M' ? pricing.pro.monthly : pricing.pro.yearly)}
+                                {formatAmount(selectedDuration === '1M'
+                                    ? (region === 'VN' ? pricing.pro.monthly : pricing.pro.monthlyUSD)
+                                    : (region === 'VN' ? pricing.pro.yearly : pricing.pro.yearlyUSD)
+                                )}
                             </span>
                             <span className="text-neutral-500 text-sm font-medium ml-2">
                                 / {selectedDuration === '1M' ? 'month' : 'year'}
@@ -170,7 +203,10 @@ export default function UpgradePage() {
                         </div>
                         <div className="mb-6">
                             <span className="text-3xl font-bold text-white">
-                                {formatAmount(selectedDuration === '1M' ? pricing.team.monthly : pricing.team.yearly)}
+                                {formatAmount(selectedDuration === '1M'
+                                    ? (region === 'VN' ? pricing.team.monthly : pricing.team.monthlyUSD)
+                                    : (region === 'VN' ? pricing.team.yearly : pricing.team.yearlyUSD)
+                                )}
                             </span>
                             <span className="text-neutral-500 text-sm font-medium ml-2">
                                 / {selectedDuration === '1M' ? 'month' : 'year'}
@@ -218,19 +254,26 @@ export default function UpgradePage() {
                         </div>
                     )}
 
-                    <PaymentButton
-                        plan={selectedPlan}
-                        duration={selectedDuration}
-                        amount={getPrice()}
-                        onError={setPaymentError}
-                    />
-
-                    <div className="mt-6 flex items-center justify-center gap-2 text-neutral-500 text-xs">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                        Secure payment via SePay. Activation is automatic.
-                    </div>
+                    {region === 'VN' ? (
+                        <>
+                            <PaymentButton
+                                plan={selectedPlan}
+                                duration={selectedDuration}
+                                amount={getPrice()}
+                                onError={setPaymentError}
+                            />
+                            <div className="mt-6 flex items-center justify-center gap-2 text-neutral-500 text-xs">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                                Secure payment via SePay. Activation is automatic.
+                            </div>
+                        </>
+                    ) : (
+                        <div className="w-full bg-neutral-800 text-neutral-400 font-bold py-4 px-8 rounded-lg cursor-not-allowed uppercase tracking-wide flex items-center justify-center gap-2">
+                            <span>Payment Coming Soon</span>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
