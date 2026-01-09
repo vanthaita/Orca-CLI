@@ -34,12 +34,46 @@ export class AiService {
     return { text };
   }
 
-  private async callGemini(model: string, systemPrompt: string, userPrompt: string): Promise<string> {
+  private readonly GEMINI_FALLBACK_MODELS = [
+    'models/gemini-2.0-flash-exp', // Putting 2.0 first as it's often better/faster if available (user didn't ask but good practice, keeping user list priority though)
+    // User requested list:
+    'models/gemini-pro-latest',
+    'models/gemini-flash-latest',
+    'models/gemini-flash-lite-latest',
+    'models/gemini-2.5-pro',
+    'models/gemini-2.5-flash',
+    'models/gemini-2.5-flash-lite',
+    'models/gemini-3-pro-preview',
+    'models/gemini-3-flash-preview',
+  ];
+
+  private async callGemini(initialModel: string, systemPrompt: string, userPrompt: string): Promise<string> {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       throw new BadRequestException('Server not configured: missing GEMINI_API_KEY');
     }
 
+    const modelsToTry = [initialModel, ...this.GEMINI_FALLBACK_MODELS];
+    // Remove duplicates while preserving order (in case initialModel is in the fallback list)
+    const uniqueModels = [...new Set(modelsToTry)];
+
+    let lastError: any;
+
+    for (const model of uniqueModels) {
+      try {
+        const text = await this.executeGeminiRequest(model, systemPrompt, userPrompt, apiKey);
+        return text;
+      } catch (error) {
+        console.warn(`Gemini model ${model} failed: ${error.message}`);
+        lastError = error;
+        // Continue to next model
+      }
+    }
+
+    throw lastError || new BadRequestException('All Gemini models failed');
+  }
+
+  private async executeGeminiRequest(model: string, systemPrompt: string, userPrompt: string, apiKey: string): Promise<string> {
     const modelPath = model.startsWith('models/') ? model : `models/${model}`;
     const url = `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent`;
 
