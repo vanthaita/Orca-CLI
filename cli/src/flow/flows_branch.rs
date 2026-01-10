@@ -4,13 +4,13 @@ use crate::git::{
 };
 use anyhow::{Context, Result};
 use console::style;
-use dialoguer::Confirm;
+use super::flows_error;
 
 /// Show current branch with status
 pub(crate) async fn run_branch_current_flow() -> Result<()> {
     ensure_git_repo()?;
-    
-    println!("{}", style("[orca branch current]").bold().cyan());
+
+    flows_error::print_flow_header("[orca branch current]");
     
     let branch = current_branch()?;
     println!("\n{} {}", style("Current branch:").bold(), style(&branch).green().bold());
@@ -80,8 +80,8 @@ pub(crate) async fn run_branch_new_flow(
     base: Option<&str>,
 ) -> Result<()> {
     ensure_git_repo()?;
-    
-    println!("{}", style("[orca branch new]").bold().cyan());
+
+    flows_error::print_flow_header("[orca branch new]");
     
     // Validate branch type
     let valid_types = ["feat", "feature", "fix", "bugfix", "chore", "hotfix", "release"];
@@ -142,8 +142,8 @@ pub(crate) async fn run_branch_publish_flow(yes: bool) -> Result<()> {
     crate::plan_guard::require_feature(crate::plan_types::FeaturePermission::AutoPublish).await?;
 
     ensure_git_repo()?;
-    
-    println!("{}", style("[orca branch publish]").bold().cyan());
+
+    flows_error::print_flow_header("[orca branch publish]");
     
     let branch = current_branch()?;
     let remote = get_remote_name()?;
@@ -167,14 +167,7 @@ pub(crate) async fn run_branch_publish_flow(yes: bool) -> Result<()> {
     
     // Confirm
     if !yes {
-        let proceed = Confirm::new()
-            .with_prompt(format!("Push '{}' to '{}'?", branch, remote))
-            .default(true)
-            .interact()
-            .context("Failed to read confirmation")?;
-        
-        if !proceed {
-            println!("Aborted.");
+        if !flows_error::confirm_or_abort(format!("Push '{}' to '{}'?", branch, remote), true)? {
             return Ok(());
         }
     }

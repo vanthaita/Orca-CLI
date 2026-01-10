@@ -1,7 +1,7 @@
 use crate::git::{current_branch, ensure_git_repo, checkout_branch, run_git, branch_exists};
 use anyhow::{Context, Result};
 use console::style;
-use dialoguer::Confirm;
+use super::flows_error;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -51,8 +51,8 @@ impl StackMetadata {
 /// Create a child branch based on current branch
 pub(crate) async fn run_stack_start_flow(branch_name: &str, yes: bool) -> Result<()> {
     ensure_git_repo()?;
-    
-    println!("{}", style("[orca stack start]").bold().cyan());
+
+    flows_error::print_flow_header("[orca stack start]");
     
     let parent_branch = current_branch()?;
     println!("\n{} {}", style("Parent branch:").bold(), style(&parent_branch).cyan());
@@ -65,17 +65,10 @@ pub(crate) async fn run_stack_start_flow(branch_name: &str, yes: bool) -> Result
     
     // Confirm
     if !yes {
-        let proceed = Confirm::new()
-            .with_prompt(format!(
-                "Create '{}' stacked on '{}'?",
-                branch_name, parent_branch
-            ))
-            .default(true)
-            .interact()
-            .context("Failed to read confirmation")?;
-        
-        if !proceed {
-            println!("Aborted.");
+        if !flows_error::confirm_or_abort(
+            format!("Create '{}' stacked on '{}'?", branch_name, parent_branch),
+            true,
+        )? {
             return Ok(());
         }
     }
@@ -122,8 +115,8 @@ pub(crate) async fn run_stack_start_flow(branch_name: &str, yes: bool) -> Result
 /// Show stack relationships
 pub(crate) async fn run_stack_list_flow() -> Result<()> {
     ensure_git_repo()?;
-    
-    println!("{}", style("[orca stack list]").bold().cyan());
+
+    flows_error::print_flow_header("[orca stack list]");
     
     let metadata = StackMetadata::load()?;
     
@@ -189,8 +182,8 @@ pub(crate) async fn run_stack_list_flow() -> Result<()> {
 /// Rebase stack when base branch moves
 pub(crate) async fn run_stack_rebase_flow(onto: Option<&str>, yes: bool) -> Result<()> {
     ensure_git_repo()?;
-    
-    println!("{}", style("[orca stack rebase]").bold().cyan());
+
+    flows_error::print_flow_header("[orca stack rebase]");
     
     let current = current_branch()?;
     let metadata = StackMetadata::load()?;
@@ -211,14 +204,7 @@ pub(crate) async fn run_stack_rebase_flow(onto: Option<&str>, yes: bool) -> Resu
     
     // Confirm
     if !yes {
-        let proceed = Confirm::new()
-            .with_prompt(format!("Rebase '{}' onto '{}'?", current, rebase_onto))
-            .default(true)
-            .interact()
-            .context("Failed to read confirmation")?;
-        
-        if !proceed {
-            println!("Aborted.");
+        if !flows_error::confirm_or_abort(format!("Rebase '{}' onto '{}'?", current, rebase_onto), true)? {
             return Ok(());
         }
     }
@@ -260,8 +246,8 @@ pub(crate) async fn run_stack_publish_flow(pr: bool, yes: bool, _yes_pr: bool) -
     }
 
     ensure_git_repo()?;
-    
-    println!("{}", style("[orca stack publish]").bold().cyan());
+
+    flows_error::print_flow_header("[orca stack publish]");
     
     let current = current_branch()?;
     let metadata = StackMetadata::load()?;
@@ -292,14 +278,7 @@ pub(crate) async fn run_stack_publish_flow(pr: bool, yes: bool, _yes_pr: bool) -
     
     // Confirm
     if !yes {
-        let proceed = Confirm::new()
-            .with_prompt("Publish stack in this order?")
-            .default(true)
-            .interact()
-            .context("Failed to read confirmation")?;
-        
-        if !proceed {
-            println!("Aborted.");
+        if !flows_error::confirm_or_abort("Publish stack in this order?", true)? {
             return Ok(());
         }
     }

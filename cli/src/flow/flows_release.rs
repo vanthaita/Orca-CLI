@@ -1,7 +1,8 @@
 use crate::git::{ensure_git_repo, run_git};
 use anyhow::{Context, Result};
 use console::style;
-use dialoguer::{Confirm, Editor, Input};
+use dialoguer::{Editor, Input};
+use super::flows_error;
 use std::process::Command;
 
 /// Create a git tag with message
@@ -12,8 +13,8 @@ pub(crate) async fn run_release_tag_flow(
     yes: bool,
 ) -> Result<()> {
     ensure_git_repo()?;
-    
-    println!("{}", style("[orca release tag]").bold().cyan());
+
+    flows_error::print_flow_header("[orca release tag]");
     
     // Validate version format (basic check)
     let tag_name = if version.starts_with('v') {
@@ -52,14 +53,7 @@ pub(crate) async fn run_release_tag_flow(
     
     // Confirm
     if !yes {
-        let proceed = Confirm::new()
-            .with_prompt(format!("Create tag '{}'?", tag_name))
-            .default(true)
-            .interact()
-            .context("Failed to read confirmation")?;
-        
-        if !proceed {
-            println!("Aborted.");
+        if !flows_error::confirm_or_abort(format!("Create tag '{}'?", tag_name), true)? {
             return Ok(());
         }
     }
@@ -77,13 +71,7 @@ pub(crate) async fn run_release_tag_flow(
     // Push if requested
     if push {
         if !yes {
-            let push_confirm = Confirm::new()
-                .with_prompt("Push tag to remote?")
-                .default(true)
-                .interact()
-                .context("Failed to read confirmation")?;
-            
-            if !push_confirm {
+            if !flows_error::confirm_or_abort("Push tag to remote?", true)? {
                 println!(
                     "\n{} {}",
                     style("Note:").yellow().bold(),
@@ -122,8 +110,8 @@ pub(crate) async fn run_release_notes_flow(
     crate::plan_guard::require_feature(crate::plan_types::FeaturePermission::AiReleaseNotes).await?;
 
     ensure_git_repo()?;
-    
-    println!("{}", style("[orca release notes]").bold().cyan());
+
+    flows_error::print_flow_header("[orca release notes]");
     
     // Determine range
     let from_ref = if let Some(f) = from {
@@ -165,7 +153,18 @@ pub(crate) async fn run_release_notes_flow(
         // Use AI to generate release notes
         println!("\n{}", style("Generating AI-powered release notes...").dim());
         
-        let model = "gemini-2.0-flash-exp";
+        let from_tag = run_git(&["tag", "--sort=-creatordate"])
+            .ok()
+            .and_then(|s| s.lines().next().map(|l| l.to_string()));
+        
+        let range = if let Some(ref from) = from_tag {
+            format!("{}..HEAD", from)
+        } else {
+            "HEAD".to_string()
+        };
+        
+        let log = run_git(&["log", &range, "--pretty=format:- %s (%h)"])?;
+        
         let prompt = format!(
             "Generate professional release notes from these commits. \
             Group changes by category (Features, Bug Fixes, Improvements, etc.). \
@@ -174,7 +173,7 @@ pub(crate) async fn run_release_notes_flow(
         );
         
         let provider = crate::ai::create_provider().await?;
-        match provider.generate_content(model, "", &prompt).await {
+        match provider.generate_content("gemini-2.0-flash-exp", "", &prompt).await {
             Ok(notes) => {
                 println!("\n{}", style("Release Notes:").bold().green());
                 println!("{}", style("═".repeat(60)).dim());
@@ -212,8 +211,8 @@ pub(crate) async fn run_release_create_flow(
     crate::plan_guard::require_feature(crate::plan_types::FeaturePermission::AiReleaseNotes).await?;
 
     ensure_git_repo()?;
-    
-    println!("{}", style("[orca release create]").bold().cyan());
+
+    flows_error::print_flow_header("[orca release create]");
     
     // Check if gh is available
     let gh_available = Command::new("gh")
@@ -292,14 +291,7 @@ pub(crate) async fn run_release_create_flow(
     
     // Confirm
     if !yes {
-        let proceed = Confirm::new()
-            .with_prompt(format!("Create GitHub release for '{}'?", tag_name))
-            .default(true)
-            .interact()
-            .context("Failed to read confirmation")?;
-        
-        if !proceed {
-            println!("Aborted.");
+        if !flows_error::confirm_or_abort(format!("Create GitHub release for '{}'?", tag_name), true)? {
             return Ok(());
         }
     }

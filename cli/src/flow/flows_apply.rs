@@ -1,11 +1,10 @@
 use crate::git::{
-    checkout_branch, current_branch, ensure_git_repo, has_git_remote, run_git,
+    checkout_branch, current_branch, ensure_git_repo, run_git,
     upstream_ahead_behind, upstream_ref,
 };
 use crate::plan::{apply_plan, files_from_status_porcelain, normalize_plan_files, print_plan_human, CommitPlan};
 use anyhow::{Context, Result};
 use console::style;
-use dialoguer::Confirm;
 use super::flows_spinner::spinner;
 use super::{flows_error, flows_publish, flows_setup};
 use std::path::PathBuf;
@@ -28,7 +27,7 @@ pub(crate) async fn run_apply_flow(
 
     ensure_git_repo()?;
 
-    println!("{}", style("[orca apply]").bold().cyan());
+    flows_error::print_flow_header("[orca apply]");
 
     let raw = std::fs::read_to_string(file).with_context(|| {
         format!(
@@ -51,13 +50,10 @@ pub(crate) async fn run_apply_flow(
     }
 
     if confirm {
-        let ok = Confirm::new()
-            .with_prompt("Apply this plan? This will run git add/commit commands")
-            .default(false)
-            .interact()
-            .context("Failed to read confirmation")?;
-        if !ok {
-            println!("Aborted.");
+        if !flows_error::confirm_or_abort(
+            "Apply this plan? This will run git add/commit commands",
+            false,
+        )? {
             return Ok(());
         }
     }
@@ -68,8 +64,7 @@ pub(crate) async fn run_apply_flow(
     eprintln!("{} {}", style("[✓]").green().bold(), style("Commits created successfully").green());
 
     if publish {
-        if !has_git_remote()? {
-            flows_error::print_no_remote_guidance();
+        if !flows_error::ensure_has_git_remote()? {
             return Ok(());
         }
 
@@ -126,8 +121,7 @@ pub(crate) async fn run_apply_flow(
 
     if push {
         if prompt_enter_to_push()? {
-            if !has_git_remote()? {
-                flows_error::print_no_remote_guidance();
+            if !flows_error::ensure_has_git_remote()? {
                 return Ok(());
             }
 

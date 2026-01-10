@@ -2,7 +2,6 @@ use crate::git::{ensure_git_repo, run_git};
 use crate::plan::{apply_plan, files_from_status_porcelain, normalize_plan_files, print_plan_human, CommitPlan};
 use anyhow::{Context, Result};
 use console::style;
-use dialoguer::Confirm;
 use std::path::PathBuf;
 
 pub(crate) async fn generate_plan(
@@ -30,7 +29,7 @@ pub(crate) fn print_friendly_error(err: &anyhow::Error) {
 pub(crate) async fn run_commit_flow(confirm: bool, dry_run: bool, model: &str) -> Result<()> {
     ensure_git_repo()?;
 
-    println!("{}", style("[orca commit]").bold().cyan());
+    super::flows_error::print_flow_header("[orca commit]");
 
     let status = run_git(&["status", "--porcelain"])?;
     let diff = run_git(&["diff"])?;
@@ -75,13 +74,10 @@ pub(crate) async fn run_commit_flow(confirm: bool, dry_run: bool, model: &str) -
     }
 
     if confirm {
-        let ok = Confirm::new()
-            .with_prompt("Apply this plan? This will run git add/commit commands")
-            .default(false)
-            .interact()
-            .context("Failed to read confirmation")?;
-        if !ok {
-            println!("Aborted.");
+        if !super::flows_error::confirm_or_abort(
+            "Apply this plan? This will run git add/commit commands",
+            false,
+        )? {
             return Ok(());
         }
     }

@@ -4,13 +4,13 @@ use crate::git::{
 };
 use anyhow::{Context, Result};
 use console::style;
-use dialoguer::Confirm;
+use super::flows_error;
 
 /// Enhanced git status with colored output
 pub(crate) async fn run_git_status_flow() -> Result<()> {
     ensure_git_repo()?;
-    
-    println!("{}", style("[orca git status]").bold().cyan());
+
+    flows_error::print_flow_header("[orca git status]");
     
     // Get current branch
     let branch = current_branch()?;
@@ -129,8 +129,8 @@ pub(crate) async fn run_git_log_flow(
 /// Sync current branch with remote (fetch + merge/rebase)
 pub(crate) async fn run_git_sync_flow(rebase: bool, yes: bool) -> Result<()> {
     ensure_git_repo()?;
-    
-    println!("{}", style("[orca git sync]").bold().cyan());
+
+    flows_error::print_flow_header("[orca git sync]");
     
     let branch = current_branch()?;
     println!("\n{} {}", style("Current branch:").bold(), style(&branch).green());
@@ -144,14 +144,7 @@ pub(crate) async fn run_git_sync_flow(rebase: bool, yes: bool) -> Result<()> {
         );
         
         if !yes {
-            let proceed = Confirm::new()
-                .with_prompt("Continue anyway?")
-                .default(false)
-                .interact()
-                .context("Failed to read confirmation")?;
-            
-            if !proceed {
-                println!("Aborted.");
+            if !flows_error::confirm_or_abort("Continue anyway?", false)? {
                 return Ok(());
             }
         }

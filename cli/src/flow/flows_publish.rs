@@ -1,5 +1,5 @@
 use crate::git::{
-    checkout_branch, ensure_git_repo, github_repo_slug_from_remote, has_git_remote, origin_url,
+    checkout_branch, ensure_git_repo, github_repo_slug_from_remote, origin_url,
     run_git,
 };
 use anyhow::{Context, Result};
@@ -79,10 +79,9 @@ pub(crate) async fn run_publish_current_flow(branch: Option<&str>, base: &str, p
 
     ensure_git_repo()?;
 
-    println!("{}", style("[orca publish-current]").bold().cyan());
+    flows_error::print_flow_header("[orca publish-current]");
 
-    if !has_git_remote()? {
-        flows_error::print_no_remote_guidance();
+    if !flows_error::ensure_has_git_remote()? {
         return Ok(());
     }
 

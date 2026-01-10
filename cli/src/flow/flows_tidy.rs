@@ -1,7 +1,8 @@
 use crate::git::{current_branch, ensure_git_repo, is_working_tree_clean, run_git};
 use anyhow::{Context, Result};
 use console::style;
-use dialoguer::{Confirm, Input};
+use dialoguer::Input;
+use super::flows_error;
 
 /// Interactive rebase with autosquash
 pub(crate) async fn run_tidy_rebase_flow(
@@ -10,8 +11,8 @@ pub(crate) async fn run_tidy_rebase_flow(
     yes: bool,
 ) -> Result<()> {
     ensure_git_repo()?;
-    
-    println!("{}", style("[orca tidy rebase]").bold().cyan());
+
+    flows_error::print_flow_header("[orca tidy rebase]");
     
     // Check working tree
     if !is_working_tree_clean()? {
@@ -41,17 +42,10 @@ pub(crate) async fn run_tidy_rebase_flow(
     
     // Confirm
     if !yes {
-        let proceed = Confirm::new()
-            .with_prompt(format!(
-                "Start interactive rebase of '{}' onto '{}'?",
-                branch, base
-            ))
-            .default(false)
-            .interact()
-            .context("Failed to read confirmation")?;
-        
-        if !proceed {
-            println!("Aborted.");
+        if !flows_error::confirm_or_abort(
+            format!("Start interactive rebase of '{}' onto '{}'?", branch, base),
+            false,
+        )? {
             return Ok(());
         }
     }
@@ -78,8 +72,8 @@ pub(crate) async fn run_tidy_rebase_flow(
 /// Squash all commits on current branch into one
 pub(crate) async fn run_tidy_squash_flow(base: Option<&str>, yes: bool) -> Result<()> {
     ensure_git_repo()?;
-    
-    println!("{}", style("[orca tidy squash]").bold().cyan());
+
+    flows_error::print_flow_header("[orca tidy squash]");
     
     // Check working tree
     if !is_working_tree_clean()? {
@@ -121,17 +115,7 @@ pub(crate) async fn run_tidy_squash_flow(base: Option<&str>, yes: bool) -> Resul
     
     // Confirm
     if !yes {
-        let proceed = Confirm::new()
-            .with_prompt(format!(
-                "Squash {} commits into one?",
-                commit_count
-            ))
-            .default(false)
-            .interact()
-            .context("Failed to read confirmation")?;
-        
-        if !proceed {
-            println!("Aborted.");
+        if !flows_error::confirm_or_abort(format!("Squash {} commits into one?", commit_count), false)? {
             return Ok(());
         }
     }
@@ -159,8 +143,8 @@ pub(crate) async fn run_tidy_squash_flow(base: Option<&str>, yes: bool) -> Resul
 /// Create a fixup commit for a specific commit
 pub(crate) async fn run_tidy_fixup_flow(commit: &str) -> Result<()> {
     ensure_git_repo()?;
-    
-    println!("{}", style("[orca tidy fixup]").bold().cyan());
+
+    flows_error::print_flow_header("[orca tidy fixup]");
     
     // Verify commit exists
     let _ = run_git(&["rev-parse", commit])
@@ -195,8 +179,8 @@ pub(crate) async fn run_tidy_fixup_flow(commit: &str) -> Result<()> {
 /// Amend the last commit safely
 pub(crate) async fn run_tidy_amend_flow(no_edit: bool, yes: bool) -> Result<()> {
     ensure_git_repo()?;
-    
-    println!("{}", style("[orca tidy amend]").bold().cyan());
+
+    flows_error::print_flow_header("[orca tidy amend]");
     
     // Get last commit
     let last_commit = run_git(&["log", "-1", "--pretty=%H %s"])?;
@@ -216,14 +200,10 @@ pub(crate) async fn run_tidy_amend_flow(no_edit: bool, yes: bool) -> Result<()> 
         );
         
         if !yes {
-            let proceed = Confirm::new()
-                .with_prompt("Continue anyway (will just update commit message)?")
-                .default(false)
-                .interact()
-                .context("Failed to read confirmation")?;
-            
-            if !proceed {
-                println!("Aborted.");
+            if !flows_error::confirm_or_abort(
+                "Continue anyway (will just update commit message)?",
+                false,
+            )? {
                 return Ok(());
             }
         }
@@ -236,14 +216,7 @@ pub(crate) async fn run_tidy_amend_flow(no_edit: bool, yes: bool) -> Result<()> 
     
     // Confirm
     if !yes {
-        let proceed = Confirm::new()
-            .with_prompt("Amend last commit?")
-            .default(true)
-            .interact()
-            .context("Failed to read confirmation")?;
-        
-        if !proceed {
-            println!("Aborted.");
+        if !flows_error::confirm_or_abort("Amend last commit?", true)? {
             return Ok(());
         }
     }
