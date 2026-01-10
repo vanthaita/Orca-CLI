@@ -221,6 +221,7 @@ jobs:
         with:
           node-version: '18'
           registry-url: 'https://registry.npmjs.org'
+          always-auth: true
 
       - name: Compute version
         shell: bash
@@ -237,6 +238,12 @@ jobs:
         working-directory: cli
         run: |
           npm version $VERSION --no-git-tag-version --allow-same-version
+
+      - name: Verify npm authentication
+        working-directory: cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm whoami
 
       - name: Check NPM Authentication (Dry Run)
         working-directory: cli
