@@ -1,6 +1,14 @@
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
+fn default_model() -> String {
+    "gemini-2.5-flash".to_string()
+}
+
+fn default_base_branch() -> String {
+    "main".to_string()
+}
+
 #[derive(Parser, Debug)]
 #[command(name = "orca")]
 #[command(about = "AI-powered Git workflow automation and commit management", long_about = None)]
@@ -31,14 +39,14 @@ pub(crate) enum Commands {
         dry_run: bool,
 
         /// Model name (used when no plan file is provided)
-        #[arg(long, default_value = "gemini-2.5-flash")]
+        #[arg(long, default_value_t = default_model())]
         model: String,
     },
 
     /// Generate a commit plan (no git add/commit)
     Plan {
         /// Model name
-        #[arg(long, default_value = "gemini-2.5-flash")]
+        #[arg(long, default_value_t = default_model())]
         model: String,
 
         /// Print JSON only
@@ -77,7 +85,7 @@ pub(crate) enum Commands {
         branch: Option<String>,
 
         /// Base branch for PR when --publish is set (default: main)
-        #[arg(long, default_value = "main")]
+        #[arg(long, default_value_t = default_base_branch())]
         base: String,
 
         /// Create PR via GitHub CLI (gh) when --publish is set (if gh is not available, a URL will be printed)
@@ -92,7 +100,7 @@ pub(crate) enum Commands {
         branch: Option<String>,
 
         /// Base branch for PR (default: main)
-        #[arg(long, default_value = "main")]
+        #[arg(long, default_value_t = default_base_branch())]
         base: String,
 
         /// Create PR via GitHub CLI (gh) (if gh is not available, a URL will be printed)
@@ -118,7 +126,7 @@ pub(crate) enum Commands {
         branch: Option<String>,
 
         /// Base branch for PR (default: main)
-        #[arg(long, default_value = "main")]
+        #[arg(long, default_value_t = default_base_branch())]
         base: String,
 
         /// Create PR via GitHub CLI (gh) (if gh is not available, a URL will be printed)
