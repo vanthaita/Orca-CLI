@@ -1,236 +1,528 @@
-# 🐋 Orca CLI Guide (Tiếng Việt)
+# Orca CLI Guide (Tiếng Việt)
 
-Orca CLI là một công cụ mạnh mẽ kết hợp Git workflow với trí tuệ nhân tạo (AI) giúp tự động hóa và tối ưu hóa quá trình phát triển phần mềm.
+Tài liệu này mô tả **đầy đủ các lệnh/flags** của `orca` dựa trên định nghĩa CLI trong `cli/src/cli.rs` (clap).
 
-## 📦 Cài Đặt (Installation)
+## Cài đặt / chạy từ source (trong repo này)
 
-Chọn phương thức cài đặt phù hợp với bạn:
-
-### npm (Cross-platform)
+Yêu cầu: Rust (stable).
 
 ```bash
-npm install -g @vanthaita/orca
+cargo build
+./target/debug/orca --help
 ```
 
-### Bun (Cross-platform)
+Hoặc cài vào máy:
 
 ```bash
-bun install -g @vanthaita/orca
-```
-
-### Homebrew (macOS/Linux)
-
-```bash
-brew tap vanthaita/orca
-brew install orca
-```
-
-### Winget (Windows)
-
-```bash
-winget install vanthaita.Orca
-```
-
-### Shell Script (Linux/macOS)
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/vanthaita/orca-releases/main/install.sh | sh
-```
-
-### Windows MSI Installer
-
-**Khuyến nghị cho người dùng Windows**
-
-1. Tải xuống file `OrcaSetup-<version>.msi` mới nhất từ [Releases](https://github.com/vanthaita/orca-releases/releases/latest).
-2. Chạy trình cài đặt.
-3. Mở terminal mới và gõ `orca --help`.
-
-### Portable Archive
-
-Tải xuống file nén phù hợp với hệ điều hành của bạn từ [Releases](https://github.com/vanthaita/orca-releases/releases/latest):
-
-- **Windows**: `orca-x86_64-pc-windows-msvc.zip`
-- **macOS**: `orca-x86_64-apple-darwin.tar.gz`
-- **Linux**: `orca-x86_64-unknown-linux-gnu.tar.gz`
-
-Giải nén và thêm vào system PATH.
-
-### Từ Source Code
-
-Yêu cầu: [Rust](https://rustup.rs/) (stable)
-
-```bash
-# Clone repository
-git clone https://github.com/vanthaita/Orca.git
-cd Orca/cli
-
-# Build và install
 cargo install --path .
+orca --help
+```
+
+## Cú pháp chung
+
+```bash
+orca [GLOBAL FLAGS] <COMMAND> [COMMAND FLAGS]
+```
+
+## Global flags
+
+Các flag này dùng được với mọi lệnh.
+
+- `-V`, `--version`
+  - In version (Orca đã tắt version flag mặc định của clap và tự xử lý flag này).
+  - Có thể chạy **mà không cần subcommand**.
+- `-y`, `--yes`
+  - Tự động đồng ý các prompt xác nhận (áp dụng ở các flow có hỏi confirm).
+- `--yes-pr`
+  - Tự động đồng ý prompt liên quan đến PR (được truyền vào một số flow).
+
+## Danh sách command cấp 1
+
+- `commit`
+- `plan`
+- `apply`
+- `publish-current`
+- `publish`
+- `setup`
+- `login`
+- `menu`
+- `doctor`
+- `update`
+- `git` (alias: `g`)
+- `branch` (alias: `br`)
+- `flow` (alias: `fl`)
+- `tidy` (alias: `td`)
+- `conflict` (alias: `cf`)
+- `release` (alias: `rl`)
+- `stack` (alias: `sk`)
+- `safe`
+
+---
+
+# 1) `orca commit`
+
+Phân tích thay đổi trong repo và tạo commit theo nhóm.
+
+```bash
+orca commit [--confirm <bool>] [--dry-run <bool>] [--model <MODEL>]
+```
+
+- `--confirm` (default: `true`)
+  - Hiển thị plan commit và hỏi xác nhận trước khi chạy git commands.
+- `--dry-run` (default: `false`)
+  - Không chạy git commands; chỉ in plan.
+- `--model` (default: `gemini-2.5-flash`)
+
+Ví dụ:
+
+```bash
+orca commit
+orca commit --dry-run
+orca commit --confirm=false
+orca commit --model gemini-2.5-flash
 ```
 
 ---
 
-## 💰 Các Gói Dịch Vụ (Pricing Plans)
+# 2) `orca plan`
 
-Orca CLI cung cấp các gói linh hoạt phù hợp với nhu cầu của bạn.
+Tạo “commit plan” (JSON), không chạy `git add/commit`.
 
-| Tính Năng | **Free Tier** (Miễn phí) | **Pro Tier** ($7/tháng) | **Team Tier** ($20/tháng - 5 users) |
-| :--- | :--- | :--- | :--- |
-| **Commit Limit** | **7 AI commits/ngày** | ✅ **Không giới hạn** | ✅ **Không giới hạn** |
-| **Auto-PR Workflow** | ❌ (Thủ công) | ✅ `orca publish` | ✅ `orca publish` |
-| **AI Model** | Gemini Flash | GPT-4o, Claude 3.5 Sonnet | GPT-4o, Claude 3.5 Sonnet |
-| **Conflict Resolution** | ❌ (Tự sửa) | ✅ AI hướng dẫn sửa | ✅ AI hướng dẫn + Team share |
-| **Release Notes** | ❌ | ✅ Tạo tự động | ✅ Tạo tự động |
-| **Templates** | Cơ bản | Custom Instructions | Shared Team Templates |
-| **Analytics** | ❌ | ❌ | ✅ Team Dashboard |
-| **Support** | Cộng đồng | Email | Priority Support |
+```bash
+orca plan [--model <MODEL>] [--json-only] [--out <PATH>]
+```
 
----
+- `--model` (default: `gemini-2.5-flash`)
+- `--json-only` (default: `false`)
+  - Chỉ in JSON (phù hợp script/pipeline).
+- `--out <PATH>`
+  - Ghi JSON plan ra file.
 
-## 🌟 Tính Năng Cốt Lõi (Core AI Features)
+Ví dụ:
 
-Các tính năng có biểu tượng ✨ sử dụng AI và sẽ tính vào giới hạn request của gói (Quota).
-
-### `orca commit` ✨
-*(Tính vào AI Quota)*
-Tự động phân tích các thay đổi (staged & unstaged), tạo commit message có ý nghĩa và nhóm các thay đổi một cách logic.
-- **Tùy chọn:**
-  - `--confirm`: Xem trước và xác nhận các commit (mặc định: `true`).
-  - `--dry-run`: Chỉ in ra kế hoạch, không thực hiện commit.
-  - `--model`: Chọn model AI (mặc định: `gemini-2.5-flash`).
-
-### `orca plan` ✨
-*(Tính vào AI Quota)*
-Chỉ tạo một kế hoạch commit (file JSON) mà không thực hiện lệnh git nào. Hữu ích khi bạn muốn xem AI sẽ làm gì hoặc chỉnh sửa kế hoạch trước khi áp dụng.
-- **Tùy chọn:**
-  - `--out <file>`: Xuất kế hoạch ra file JSON.
-  - `--json-only`: Chỉ in output JSON (dùng cho scripts).
-
-### `orca apply`
-Thực thi một kế hoạch commit đã được tạo từ trước (bằng `orca plan`).
-- **Lưu ý**: Lệnh này **không trừ AI Quota** vì nó chỉ chạy kế hoạch đã có.
-- **Tùy chọn:**
-  - `--file <path>`: Đường dẫn đến file plan JSON.
-  - `--push`: Tự động push sau khi commit.
-  - `--publish`: Tạo branch mới, push và tạo Pull Request (PR).
-
-### `orca publish` ✨
-*(Yêu cầu gói **Pro** hoặc **Team**)*
-Kết hợp `apply` và quy trình tạo PR chuyên nghiệp.
-1. Commit theo plan.
-2. Tạo/chuyển sang branch tính năng.
-3. Push lên remote.
-4. Tạo PR trên GitHub (sử dụng `gh` CLI).
-
-### `orca publish-current`
-Dùng cho trường hợp bạn đã có các commit và chỉ muốn đẩy code lên & tạo PR nhanh chóng.
+```bash
+orca plan
+orca plan --out plan.json
+orca plan --json-only
+```
 
 ---
 
-## 🛠 Git Wrapper (`orca g` / `orca git`)
-*(Miễn phí hoàn toàn - Không giới hạn)*
+# 3) `orca apply`
 
-Các lệnh Git cơ bản được nâng cấp với giao diện đẹp hơn và thông tin hữu ích hơn.
+Áp dụng plan JSON đã có.
 
-- `orca g status` (hoặc `st`): Xem trạng thái working tree với format dễ đọc.
-- `orca g log` (hoặc `lg`): Xem lịch sử commit.
-  - `-n <number>`: Số lượng commit.
-  - `--oneline`: Chế độ xem gọn.
-  - `--graph`: Xem biểu đồ nhánh.
-- `orca g sync`: Đồng bộ với remote (fetch + pull).
-  - `--rebase`: Sử dụng rebase thay vì merge.
+```bash
+orca apply --file <PLAN.json> [--confirm <bool>] [--dry-run <bool>] [--push] [--publish] [--branch <NAME>] [--base <BRANCH>] [--pr <bool>]
+```
 
----
+- `--file <PATH>`
+  - Bắt buộc: đường dẫn tới plan JSON.
+- `--confirm` (default: `true`)
+- `--dry-run` (default: `false`)
+- `--push` (default: `false`)
+  - Sau khi commit xong, prompt để push.
+- `--publish` (default: `false`)
+  - Flow publish chuyên nghiệp: tạo/chuyển branch, push `-u`, và đề xuất tạo PR.
+- `--branch <NAME>`
+  - Tên branch khi `--publish` (ví dụ `feat/my-change`).
+- `--base <BRANCH>` (default: `main`)
+  - Base branch cho PR khi `--publish`.
+- `--pr` (default: `true`)
+  - Khi `--publish`, tạo PR qua `gh` nếu có (không có thì in URL).
 
-## 🌿 Quản Lý Branch (`orca br` / `orca branch`)
-*(Miễn phí hoàn toàn - Không giới hạn)*
+Ví dụ:
 
-Quản lý nhánh thông minh theo chuẩn convention.
-
-- `orca br current`: Xem nhánh hiện tại.
-- `orca br list`: Liệt kê các branch.
-  - `-r`: Bao gồm remote branch.
-- `orca br new <type> <name>`: Tạo nhánh mới chuẩn format `<type>/<name>`.
-  - Ví dụ: `orca br new feat user-auth` -> tạo branch `feat/user-auth`.
-- `orca br publish`: Đẩy branch hiện tại lên remote và set tracking.
-
----
-
-## 🌊 Flow Orchestration (`orca fl` / `orca flow`)
-*(Miễn phí hoàn toàn - Không giới hạn)*
-
-Quản lý vòng đời của một tính năng từ lúc bắt đầu đến khi kết thúc.
-
-- `orca fl start`: Bắt đầu một flow mới (tạo branch chuẩn).
-  - `--type`: Loại (feat, fix, chore...).
-  - `--name`: Tên tính năng.
-- `orca fl finish`: Kết thúc flow.
-  - `--push`: Push code lên.
-  - `--pr`: Tự động tạo PR.
+```bash
+orca apply --file plan.json
+orca apply --file plan.json --dry-run
+orca apply --file plan.json --push
+orca apply --file plan.json --publish --branch feat/user-auth --base main --pr=true
+```
 
 ---
 
-## 🧹 Dọn Dẹp Lịch Sử (`orca td` / `orca tidy`)
-*(Miễn phí hoàn toàn - Không giới hạn)*
+# 4) `orca publish-current`
 
-Các công cụ giúp giữ lịch sử commit sạch đẹp (Clean Git History).
+Publish các commit hiện tại: tạo/chuyển branch, push `-u`, và tạo PR.
 
-- `orca td rebase`: Interactive rebase thông minh (có auto-squash).
-- `orca td squash`: Gộp tất cả commit trong nhánh hiện tại thành 1 commit duy nhất.
-- `orca td fixup <commit-hash>`: Tạo fixup commit cho một commit cụ thể (để sau này autosquash).
-- `orca td amend`: Sửa commit mới nhất (giữ nguyên message hoặc sửa đổi).
+```bash
+orca publish-current [--branch <NAME>] [--base <BRANCH>] [--pr <bool>]
+```
 
----
+- `--branch <NAME>`
+  - Nếu bỏ trống: derived từ commit message gần nhất.
+- `--base <BRANCH>` (default: `main`)
+- `--pr` (default: `true`)
 
-## ⚔️ Xử Lý Xung Đột (`orca cf` / `orca conflict`)
+Ví dụ:
 
-Hỗ trợ giải quyết merge/rebase conflict.
-
-- `orca cf status`: Xem danh sách file đang bị conflict.
-- `orca cf guide` ✨: Hướng dẫn giải quyết conflict từng bước.
-  - `--ai`: Dùng AI để giải thích code conflict và đề xuất cách sửa (*Chỉ gói **Pro/Team***).
-- `orca cf continue`: Tiếp tục rebase/merge sau khi đã sửa conflict.
-- `orca cf abort`: Hủy bỏ quá trình rebase/merge.
-
----
-
-## 📦 Phát Hành (`orca rl` / `orca release`)
-
-Hỗ trợ quy trình release và đánh version.
-
-- `orca rl tag <version>`: Tạo git tag.
-  - `--push`: Push tag lên remote.
-- `orca rl notes` ✨: Tạo release notes tự động từ lịch sử commit.
-  - *(Chỉ gói **Pro/Team**)*
-- `orca rl create <version>`: Tạo GitHub Release hoàn chỉnh (tag + notes).
+```bash
+orca publish-current
+orca publish-current --branch feat/user-auth --base main
+orca publish-current --pr=false
+```
 
 ---
 
-## 📚 Stacked Branches (`orca sk` / `orca stack`)
-*(Miễn phí hoàn toàn - Không giới hạn)*
+# 5) `orca publish`
 
-Hỗ trợ quy trình làm việc "Stacked Diffs" (nhiều nhánh phụ thuộc nhau).
+Áp dụng plan và publish lên GitHub (tạo/chuyển branch, push `-u`, tạo PR).
 
-- `orca sk start <name>`: Tạo nhánh con (stacked) trên nhánh hiện tại.
-- `orca sk list`: Xem danh sách các branch trong stack.
-- `orca sk rebase`: Rebase lại toàn bộ stack khi nhánh gốc thay đổi.
-- `orca sk publish`: Publish và tạo chuỗi PR phụ thuộc nhau (Stacked PRs).
+```bash
+orca publish <PLAN.json> [--confirm <bool>] [--dry-run <bool>] [--branch <NAME>] [--base <BRANCH>] [--pr <bool>]
+```
+
+- `file: <PLAN.json>`
+  - Positional argument (bắt buộc).
+- `--confirm` (default: `true`)
+- `--dry-run` (default: `false`)
+- `--branch <NAME>`
+  - Nếu bỏ trống: derived từ commit message đầu tiên trong plan.
+- `--base <BRANCH>` (default: `main`)
+- `--pr` (default: `true`)
+
+Ví dụ:
+
+```bash
+orca publish plan.json
+orca publish plan.json --dry-run
+orca publish plan.json --branch feat/user-auth --base main
+```
 
 ---
 
-## 🛡 An Toàn & Bảo Mật (`orca safe`)
+# 6) `orca setup`
 
-Các tính năng kiểm tra an toàn trước khi đẩy code.
+Setup git identity và check tool cần thiết.
 
-- `orca safe scan`: Quét các file (staged) để tìm thông tin nhạy cảm (secrets, keys...).
-- `orca safe preflight`: Kiểm tra tổng thể trước khi push (check branch protection, trạng thái CI/CD...).
+```bash
+orca setup [--provider <NAME>] [--api-key <KEY>] [--name <GIT_NAME>] [--email <GIT_EMAIL>] [--local]
+```
+
+- `--provider <NAME>`
+  - Provider để cấu hình/switch (trong help: `gemini, openai, zai, deepseek`).
+- `--api-key <KEY>`
+- `--name <GIT_NAME>`
+- `--email <GIT_EMAIL>`
+- `--local` (default: `false`)
+  - Ghi config cho repo hiện tại thay vì global.
+
+Ví dụ:
+
+```bash
+orca setup --provider gemini --api-key "..."
+orca setup --name "Your Name" --email "you@example.com"
+orca setup --local
+```
 
 ---
 
-## ⚙️ Thiết Lập & Tiện Ích
+# 7) `orca login`
 
-- `orca setup`: Cấu hình tài khoản Git.
-- `orca login`: Đăng nhập để kích hoạt gói **Pro/Team** và đồng bộ license.
-- `orca doctor`: Kiểm tra môi trường (Git version, API status...).
-- `orca update`: Kiểm tra và cập nhật phiên bản Orca CLI mới nhất.
-- `orca menu`: Menu tương tác để quản lý cài đặt.
+Login qua browser để lấy CLI token (remote Orca server mode).
+
+```bash
+orca login
+```
+
+---
+
+# 8) `orca menu`
+
+Menu tương tác quản lý tài khoản và settings.
+
+```bash
+orca menu
+```
+
+---
+
+# 9) `orca doctor`
+
+Kiểm tra môi trường (git repo, working tree, API key).
+
+```bash
+orca doctor
+```
+
+---
+
+# 10) `orca update`
+
+Check update và auto-upgrade.
+
+```bash
+orca update
+```
+
+---
+
+# 11) `orca git` (alias: `g`)
+
+```bash
+orca git <SUBCOMMAND>
+orca g <SUBCOMMAND>
+```
+
+## `orca git status` (alias: `st`)
+
+```bash
+orca git status
+orca g st
+```
+
+## `orca git log` (alias: `lg`)
+
+```bash
+orca git log [--n <NUM>] [--oneline] [--graph] [--since <DATE>]
+orca g lg -n 20 --oneline --graph
+```
+
+- `-n`, `--n <NUM>`
+- `--oneline`
+- `--graph`
+- `--since <DATE>` (ví dụ: `"2024-01-01"`, `"1 week ago"`)
+
+## `orca git sync`
+
+```bash
+orca git sync [--rebase]
+orca g sync --rebase
+```
+
+- `--rebase` (default: `false`)
+
+---
+
+# 12) `orca branch` (alias: `br`)
+
+```bash
+orca branch <SUBCOMMAND>
+orca br <SUBCOMMAND>
+```
+
+## `orca branch current`
+
+```bash
+orca br current
+```
+
+## `orca branch list`
+
+```bash
+orca br list [--remote]
+orca br list -r
+```
+
+- `-r`, `--remote` (default: `false`)
+
+## `orca branch new <TYPE> <NAME>`
+
+```bash
+orca br new <TYPE> <NAME> [--base <BRANCH>]
+```
+
+- `TYPE`: `feat`, `feature`, `fix`, `bugfix`, `chore`, `hotfix`, `release`
+- `NAME`: ví dụ `user-authentication`
+- `--base <BRANCH>`
+
+Ví dụ:
+
+```bash
+orca br new feat user-authentication
+orca br new fix login-bug --base main
+```
+
+## `orca branch publish`
+
+```bash
+orca br publish
+orca br publish -y
+```
+
+---
+
+# 13) `orca flow` (alias: `fl`)
+
+## `orca flow start`
+
+```bash
+orca fl start [--type <TYPE>] [--name <NAME>] [--base <BRANCH>]
+```
+
+- `--type <TYPE>`
+- `--name <NAME>`
+- `--base <BRANCH>` (default: current branch)
+
+## `orca flow finish`
+
+```bash
+orca fl finish [--push] [--pr <bool>]
+```
+
+- `--push` (default: `false`)
+- `--pr` (default: `true`) (requires `--push`)
+
+---
+
+# 14) `orca tidy` (alias: `td`)
+
+## `orca tidy rebase`
+
+```bash
+orca td rebase [--onto <BRANCH>] [--autosquash <bool>]
+```
+
+- `--onto <BRANCH>`
+- `--autosquash` (default: `true`)
+
+## `orca tidy squash`
+
+```bash
+orca td squash [--base <BRANCH>]
+```
+
+- `--base <BRANCH>`
+
+## `orca tidy fixup <COMMIT>`
+
+```bash
+orca td fixup <COMMIT>
+```
+
+## `orca tidy amend`
+
+```bash
+orca td amend [--no-edit]
+```
+
+- `--no-edit` (default: `false`)
+
+---
+
+# 15) `orca conflict` (alias: `cf`)
+
+## `orca conflict status`
+
+```bash
+orca cf status
+```
+
+## `orca conflict guide`
+
+```bash
+orca cf guide [--ai]
+```
+
+- `--ai` (default: `false`)
+
+## `orca conflict continue`
+
+```bash
+orca cf continue
+```
+
+## `orca conflict abort`
+
+```bash
+orca cf abort
+```
+
+---
+
+# 16) `orca release` (alias: `rl`)
+
+## `orca release tag <VERSION>`
+
+```bash
+orca rl tag <VERSION> [--message <TEXT>] [--push]
+```
+
+- `<VERSION>`: ví dụ `1.0.0` hoặc `v1.0.0`
+- `--message <TEXT>`
+- `--push` (default: `false`)
+
+## `orca release notes`
+
+```bash
+orca rl notes [--from <REF>] [--to <REF>] [--ai <bool>]
+```
+
+- `--from <REF>`
+- `--to <REF>`
+- `--ai` (default: `true`)
+
+## `orca release create <VERSION>`
+
+```bash
+orca rl create <VERSION> [--notes <PATH>] [--ai <bool>]
+```
+
+- `--notes <PATH>`
+- `--ai` (default: `true`)
+
+---
+
+# 17) `orca stack` (alias: `sk`)
+
+## `orca stack start <BRANCH>`
+
+```bash
+orca sk start <BRANCH>
+```
+
+## `orca stack list`
+
+```bash
+orca sk list
+```
+
+## `orca stack rebase`
+
+```bash
+orca sk rebase [--onto <BRANCH>]
+```
+
+- `--onto <BRANCH>`
+
+## `orca stack publish`
+
+```bash
+orca sk publish [--pr <bool>]
+```
+
+- `--pr` (default: `true`)
+
+---
+
+# 18) `orca safe`
+
+## `orca safe scan`
+
+```bash
+orca safe scan [--all]
+```
+
+- `--all` (default: `false`)
+
+## `orca safe preflight`
+
+```bash
+orca safe preflight [--operation <NAME>] [--protection <BRANCH>]
+```
+
+- `--operation <NAME>` (default: `push`)
+- `--protection <BRANCH>`
+
+---
+
+# Troubleshooting nhanh
+
+- Nếu `orca` báo không phải git repo:
+  - Chạy trong thư mục có `.git` hoặc init repo.
+- Nếu tạo PR không được:
+  - Cài GitHub CLI `gh`, đăng nhập `gh auth login`, hoặc chạy với `--pr=false`.
+- Xem help chi tiết:
+  - `orca --help`
+  - `orca <command> --help`
