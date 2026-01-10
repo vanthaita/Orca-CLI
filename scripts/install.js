@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Post-install script for @vanthaita/orca npm package
+ * Post-install script for orca npm package
  * Downloads and installs the appropriate binary for the user's platform
  */
 

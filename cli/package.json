@@ -1,5 +1,5 @@
 {
-    "name": "@vanthaita/orca",
+    "name": "orca",
     "version": "0.1.14",
     "description": "AI-powered Git Workflow automation for modern developers",
     "bin": {

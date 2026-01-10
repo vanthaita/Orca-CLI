@@ -40,13 +40,13 @@ Choose your preferred installation method:
 ### npm (Cross-platform)
 
 ```bash
-npm install -g @vanthaita/orca
+npm install -g orca
 ```
 
 ### Bun (Cross-platform)
 
 ```bash
-bun install -g @vanthaita/orca
+bun install -g orca
 ```
 
 ### Homebrew (macOS/Linux)
