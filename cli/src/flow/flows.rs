@@ -1,6 +1,6 @@
 use crate::git::{ensure_git_repo, run_git};
 use crate::plan::{apply_plan, files_from_status_porcelain, normalize_plan_files, print_plan_human, CommitPlan};
-use anyhow::{Context, Result};
+use anyhow::Result;
 use console::style;
 use std::path::PathBuf;
 

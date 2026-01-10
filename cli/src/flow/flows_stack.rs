@@ -1,5 +1,5 @@
 use crate::git::{current_branch, ensure_git_repo, checkout_branch, run_git, branch_exists};
-use anyhow::{Context, Result};
+use anyhow::Result;
 use console::style;
 use super::flows_error;
 use serde::{Deserialize, Serialize};

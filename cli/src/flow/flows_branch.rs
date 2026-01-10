@@ -2,7 +2,7 @@ use crate::git::{
     branch_exists, checkout_branch, current_branch, ensure_git_repo, get_remote_name,
     list_branches, list_remote_branches, run_git, upstream_ref,
 };
-use anyhow::{Context, Result};
+use anyhow::Result;
 use console::style;
 use super::flows_error;
 
