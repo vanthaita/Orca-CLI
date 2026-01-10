@@ -122,12 +122,12 @@ fn env_var_name_for_provider(provider: &str) -> &'static str {
     }
 }
 
-fn config_key_for_provider(config: OrcaConfig, provider: &str) -> Option<String> {
+fn config_key_for_provider(config: &OrcaConfig, provider: &str) -> Option<String> {
     match provider {
-        "rest" | "openai" => config.api.openai_api_key,
-        "zai" => config.api.zai_api_key,
-        "deepseek" => config.api.deepseek_api_key,
-        "gemini" | _ => config.api.gemini_api_key,
+        "rest" | "openai" => config.api.openai_api_key.clone(),
+        "zai" => config.api.zai_api_key.clone(),
+        "deepseek" => config.api.deepseek_api_key.clone(),
+        "gemini" | _ => config.api.gemini_api_key.clone(),
     }
 }
 
@@ -144,7 +144,7 @@ pub(crate) fn get_api_key(provider: &str) -> Result<String> {
 
     // 2. Check config file
     let config = load_config()?;
-    let key = config_key_for_provider(config, provider);
+    let key = config_key_for_provider(&config, provider);
 
     if let Some(k) = key {
         if !k.trim().is_empty() {
