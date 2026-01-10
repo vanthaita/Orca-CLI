@@ -238,6 +238,12 @@ jobs:
         run: |
           npm version $VERSION --no-git-tag-version --allow-same-version
 
+      - name: Check NPM Authentication (Dry Run)
+        working-directory: cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --dry-run
+
       - name: Publish to npm
         working-directory: cli
         env:
