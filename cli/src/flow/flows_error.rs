@@ -1,4 +1,6 @@
 use console::style;
+use anyhow::{Context, Result};
+use dialoguer::Confirm;
 
 pub(crate) fn print_no_remote_guidance() {
     eprintln!(
@@ -117,4 +119,31 @@ pub(crate) fn print_friendly_error(err: &anyhow::Error) {
             style("Hint:").cyan()
         );
     }
+}
+
+pub(crate) fn print_flow_header(text: &str) {
+    println!("{}", style(text).bold().cyan());
+}
+
+pub(crate) fn ensure_has_git_remote() -> Result<bool> {
+    if !crate::git::has_git_remote()? {
+        print_no_remote_guidance();
+        return Ok(false);
+    }
+
+    Ok(true)
+}
+
+pub(crate) fn confirm_or_abort(prompt: impl Into<String>, default: bool) -> Result<bool> {
+    let proceed = Confirm::new()
+        .with_prompt(prompt.into())
+        .default(default)
+        .interact()
+        .context("Failed to read confirmation")?;
+
+    if !proceed {
+        println!("Aborted.");
+    }
+
+    Ok(proceed)
 }
