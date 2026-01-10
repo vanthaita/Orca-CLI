@@ -1,6 +1,6 @@
 {
     "name": "orca",
-    "version": "0.1.16",
+    "version": "0.1.17",
     "description": "AI-powered Git Workflow automation for modern developers",
     "bin": {
         "orca": "./bin/orca"
