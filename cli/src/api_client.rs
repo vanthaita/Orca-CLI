@@ -6,13 +6,19 @@ use crate::plan_types::{UserFeaturesResponse, UserPlanInfo};
 pub struct OrcaApiClient {
     base_url: String,
     token: String,
+    client: reqwest::Client,
 }
 
 impl OrcaApiClient {
     pub fn new() -> Result<Self> {
         let base_url = crate::config::get_orca_base_url()?;
         let token = crate::config::get_orca_token()?;
-        Ok(Self { base_url, token })
+        let client = reqwest::Client::new();
+        Ok(Self {
+            base_url,
+            token,
+            client,
+        })
     }
 
     #[allow(dead_code)]
@@ -38,8 +44,8 @@ impl OrcaApiClient {
     }
 
     async fn get_json<T: DeserializeOwned>(&self, url: &str) -> Result<T> {
-        let client = reqwest::Client::new();
-        let resp = client
+        let resp = self
+            .client
             .get(url)
             .header("authorization", format!("Bearer {}", self.token))
             .send()
