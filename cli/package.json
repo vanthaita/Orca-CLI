@@ -1,6 +1,6 @@
 {
-    "name": "orca",
-    "version": "0.1.20",
+    "name": "@vanthaita/orca",
+    "version": "0.1.21",
     "description": "AI-powered Git Workflow automation for modern developers",
     "bin": {
         "orca": "./bin/orca"
@@ -19,14 +19,13 @@
     ],
     "author": "vanthaita",
     "license": "MIT",
-    "homepage": "https://orcacli.codes",
     "repository": {
         "type": "git",
-        "url": "https://github.com/vanthaita/Orca.git",
-        "directory": "cli"
+        "url": "https://github.com/vanthaita/orca-releases.git"
     },
+    "homepage": "https://orcacli.codes",
     "bugs": {
-        "url": "https://github.com/vanthaita/Orca/issues"
+        "url": "https://github.com/vanthaita/orca-releases/issues"
     },
     "engines": {
         "node": ">=14.0.0"
