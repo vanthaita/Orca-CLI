@@ -250,10 +250,8 @@ jobs:
           # Copy install script
           cp ../scripts/install.js .
           
-          # Fix BIN_DIR in install.js for package structure
-          # Original: const BIN_DIR = path.join(__dirname, '..', 'cli', 'bin');
-          # New:      const BIN_DIR = path.join(__dirname, 'bin');
-          sed -i "s|path.join(__dirname, '..', 'cli', 'bin')|path.join(__dirname, 'bin')|" install.js
+          # Fix BIN_DIR in install.js is now handled dynamically in the script itself.
+          # We no longer need to use sed to patch the path.
           
           # Create bin directory and wrapper
           mkdir -p bin
