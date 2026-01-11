@@ -34,12 +34,13 @@ function getPlatformInfo() {
         target = 'x86_64-apple-darwin';
         archive = 'tar.gz';
     } else if (platform === 'darwin' && arch === 'arm64') {
-        // Fallback to x64 binary with Rosetta
-        console.warn('Warning: Native arm64 build not available, using x64 (requires Rosetta)');
-        target = 'x86_64-apple-darwin';
+        target = 'aarch64-apple-darwin';
         archive = 'tar.gz';
     } else if (platform === 'linux' && arch === 'x64') {
         target = 'x86_64-unknown-linux-gnu';
+        archive = 'tar.gz';
+    } else if (platform === 'linux' && arch === 'arm64') {
+        target = 'aarch64-unknown-linux-gnu';
         archive = 'tar.gz';
     } else {
         throw new Error(`Unsupported platform: ${platform} ${arch}`);

@@ -2,11 +2,14 @@
     "name": "@vanthaita/orca",
     "version": "0.1.25",
     "description": "AI-powered Git Workflow automation for modern developers",
+    "scripts": {
+        "postinstall": "node install.js"
+    },
     "bin": {
         "orca": "./bin/orca.js"
     },
-    "scripts": {
-        "postinstall": "node install.js"
+    "dependencies": {
+        "adm-zip": "^0.5.10"
     },
     "files": [
         "bin/",
