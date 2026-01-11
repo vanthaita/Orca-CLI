@@ -10,6 +10,11 @@ on:
         description: 'Version to build (without v prefix, e.g. 1.0.0-dev)'
         required: false
         default: '0.0.0-dev'
+      publish_npm:
+        description: 'Publish to NPM'
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: write
@@ -211,7 +216,7 @@ jobs:
   publish-npm:
     name: Publish to npm
     needs: build-and-upload
-    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.publish_npm == true)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -239,11 +244,60 @@ jobs:
         run: |
           npm version $VERSION --no-git-tag-version --allow-same-version
 
+      - name: Prepare npm package
+        working-directory: cli
+        run: |
+          # Copy install script
+          cp ../scripts/install.js .
+          
+          # Fix BIN_DIR in install.js for package structure
+          # Original: const BIN_DIR = path.join(__dirname, '..', 'cli', 'bin');
+          # New:      const BIN_DIR = path.join(__dirname, 'bin');
+          sed -i "s|path.join(__dirname, '..', 'cli', 'bin')|path.join(__dirname, 'bin')|" install.js
+          
+          # Create bin directory and wrapper
+          mkdir -p bin
+          cat > bin/orca.js << 'EOF'
+          #!/usr/bin/env node
+          const { spawn } = require('child_process');
+          const path = require('path');
+          const binPath = path.join(__dirname, process.platform === 'win32' ? 'orca.exe' : 'orca');
+          
+          const child = spawn(binPath, process.argv.slice(2), { stdio: 'inherit' });
+          
+          child.on('close', (code) => {
+            process.exit(code);
+          });
+          
+          child.on('error', (err) => {
+            console.error('Failed to start Orca CLI:', err);
+            console.error('This might be because the binary was not installed correctly.');
+            console.error('Try running: npm rebuild @vanthaita/orca');
+            process.exit(1);
+          });
+          EOF
+          chmod +x bin/orca.js
+          
+          # Update package.json to point to new files
+          npm pkg set scripts.postinstall="node install.js"
+          npm pkg set bin.orca="./bin/orca.js"
+
       - name: Verify npm authentication
         working-directory: cli
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm whoami
+
+      - name: verify package integrity
+        working-directory: cli
+        run: |
+          npm pack
+          PACKAGE_FILE=$(find . -name "*.tgz" | head -n 1)
+          npm install --no-save "$PACKAGE_FILE"
+          
+          echo "Testing binary execution..."
+          ./node_modules/.bin/orca --version || { echo "Binary failed to run"; exit 1; }
+          echo "Binary verified successfully"
 
       - name: Check NPM Authentication (Dry Run)
         working-directory: cli
