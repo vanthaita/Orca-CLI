@@ -83,29 +83,42 @@ async function download(url, dest) {
 // Extract tar.gz archive
 async function extractTarGz(archivePath, dest) {
     return new Promise((resolve, reject) => {
-        const readStream = fs.createReadStream(archivePath);
-        const gunzip = zlib.createGunzip();
+        try {
+            execSync(`tar -xzf "${archivePath}" -C "${path.dirname(dest)}"`, {
+                stdio: 'inherit'
+            });
 
-        // Simple tar extraction (only works for simple archives)
-        const chunks = [];
+            if (fs.existsSync(dest)) {
+                resolve();
+                return;
+            }
 
-        streamPipeline(readStream, gunzip)
-            .then((stream) => {
-                stream.on('data', (chunk) => chunks.push(chunk));
-                stream.on('end', () => {
-                    // For simplicity, use tar command if available
-                    try {
-                        execSync(`tar -xzf "${archivePath}" -C "${path.dirname(dest)}"`, {
-                            stdio: 'inherit'
-                        });
-                        resolve();
-                    } catch (err) {
-                        reject(new Error('tar extraction failed. Please install tar or manually extract the archive.'));
+            // If the archive contains a nested path, search for the binary and move it to dest.
+            const dir = path.dirname(dest);
+            const expectedName = path.basename(dest);
+
+            const stack = [dir];
+            while (stack.length > 0) {
+                const current = stack.pop();
+                const entries = fs.readdirSync(current, { withFileTypes: true });
+                for (const entry of entries) {
+                    const fullPath = path.join(current, entry.name);
+                    if (entry.isDirectory()) {
+                        stack.push(fullPath);
+                        continue;
                     }
-                });
-                stream.on('error', reject);
-            })
-            .catch(reject);
+                    if (entry.isFile() && entry.name === expectedName) {
+                        fs.renameSync(fullPath, dest);
+                        resolve();
+                        return;
+                    }
+                }
+            }
+
+            reject(new Error(`Binary ${expectedName} not found after extracting ${path.basename(archivePath)}`));
+        } catch (err) {
+            reject(new Error('tar extraction failed. Please install tar or manually extract the archive.'));
+        }
     });
 }
 
