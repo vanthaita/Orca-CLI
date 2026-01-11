@@ -3,11 +3,18 @@
     "version": "0.1.22",
     "description": "AI-powered Git Workflow automation for modern developers",
     "bin": {
-        "orca": "./bin/orca"
+        "orca": "./bin/orca.js"
     },
     "scripts": {
-        "postinstall": "node ../scripts/install.js"
+        "postinstall": "node install.js"
     },
+    "files": [
+        "bin/",
+        "install.js",
+        "package.json",
+        "README.md",
+        "LICENSE"
+    ],
     "keywords": [
         "git",
         "cli",
