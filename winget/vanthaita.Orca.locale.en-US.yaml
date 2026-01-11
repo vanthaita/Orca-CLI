@@ -2,7 +2,7 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
 
 PackageIdentifier: vanthaita.Orca
-PackageVersion: 0.1.22
+PackageVersion: 0.1.24
 PackageLocale: en-US
 Publisher: vanthaita
 PublisherUrl: https://github.com/vanthaita
@@ -32,7 +32,7 @@ Tags:
 - rust
 - workflow
 ReleaseNotes: |-
-  See release notes at: https://github.com/vanthaita/orca-releases/releases/tag/v0.1.14
-ReleaseNotesUrl: https://github.com/vanthaita/orca-releases/releases/tag/v0.1.14
+  See release notes at: https://github.com/vanthaita/orca-releases/releases/tag/v0.1.24
+ReleaseNotesUrl: https://github.com/vanthaita/orca-releases/releases/tag/v0.1.24
 ManifestType: defaultLocale
 ManifestVersion: 1.6.0
