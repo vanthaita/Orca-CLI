@@ -17,6 +17,7 @@ import { ReleaseModule } from './modules/release/release.module';
 import { UserModule } from './modules/user/user.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { SubscriptionModule } from './modules/subscription/subscription.module';
+import { TeamModule } from './modules/team/team.module';
 
 @Module({
   imports: [
@@ -27,7 +28,8 @@ import { SubscriptionModule } from './modules/subscription/subscription.module';
     LoggerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const isProduction = configService.get<string>('NODE_ENV') === 'production';
+        const isProduction =
+          configService.get<string>('NODE_ENV') === 'production';
         return {
           pinoHttp: {
             customProps: (req, res) => ({
@@ -38,13 +40,13 @@ import { SubscriptionModule } from './modules/subscription/subscription.module';
                 ...(isProduction
                   ? []
                   : [
-                    {
-                      target: 'pino-pretty',
-                      options: {
-                        singleLine: true,
+                      {
+                        target: 'pino-pretty',
+                        options: {
+                          singleLine: true,
+                        },
                       },
-                    },
-                  ]),
+                    ]),
                 {
                   target: 'pino/file',
                   options: {
@@ -68,7 +70,13 @@ import { SubscriptionModule } from './modules/subscription/subscription.module';
         username: configService.get<string>('DB_USER'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
-        entities: [User, CliDeviceCode, CliToken, AiUsageDaily, SepayTransaction],
+        entities: [
+          User,
+          CliDeviceCode,
+          CliToken,
+          AiUsageDaily,
+          SepayTransaction,
+        ],
         synchronize:
           configService.get<string>('TYPEORM_SYNC') === 'true' ||
           configService.get<string>('NODE_ENV') !== 'production',
@@ -81,6 +89,7 @@ import { SubscriptionModule } from './modules/subscription/subscription.module';
     UserModule,
     AdminModule,
     SubscriptionModule,
+    TeamModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],
