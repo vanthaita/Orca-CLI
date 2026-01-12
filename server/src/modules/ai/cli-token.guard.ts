@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { AuthService } from '../auth/auth.service';
 
@@ -10,7 +15,10 @@ export class CliTokenGuard implements CanActivate {
     const req = context.switchToHttp().getRequest<Request>();
 
     const authHeader = req.headers['authorization'];
-    if (typeof authHeader !== 'string' || !authHeader.toLowerCase().startsWith('bearer ')) {
+    if (
+      typeof authHeader !== 'string' ||
+      !authHeader.toLowerCase().startsWith('bearer ')
+    ) {
       throw new UnauthorizedException('Missing bearer token');
     }
 

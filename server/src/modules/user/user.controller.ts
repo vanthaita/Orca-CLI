@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Req, UnauthorizedException, UseGuards, Patch } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Req,
+  UnauthorizedException,
+  UseGuards,
+  Patch,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { CliTokenGuard } from '../ai/cli-token.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -14,86 +22,91 @@ import { AiUsageDaily } from '../ai/entities/ai-usage-daily.entity';
 
 @Controller('user')
 export class UserController {
-    constructor(
-        private readonly planService: PlanService,
-        private readonly authService: AuthService,
-        @InjectRepository(AiUsageDaily)
-        private readonly usageRepo: Repository<AiUsageDaily>,
-        @InjectRepository(User)
-        private readonly userRepo: Repository<User>,
-    ) {}
+  constructor(
+    private readonly planService: PlanService,
+    private readonly authService: AuthService,
+    @InjectRepository(AiUsageDaily)
+    private readonly usageRepo: Repository<AiUsageDaily>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+  ) {}
 
-    private async getUserFromRequest(req: Request): Promise<User> {
-        let user = (req as any).user as User | undefined;
+  private async getUserFromRequest(req: Request): Promise<User> {
+    const user = (req as any).user as User | undefined;
 
-        if (!user || !user.id) {
-            throw new UnauthorizedException('User not found');
-        }
-
-        return user;
+    if (!user || !user.id) {
+      throw new UnauthorizedException('User not found');
     }
 
-    @Get('me')
-    @UseGuards(UnifiedAuthGuard)
-    async getMe(@Req() req: Request) {
-        const user = await this.getUserFromRequest(req);
-        return { user: new UserResponseDto(user) };
+    return user;
+  }
+
+  @Get('me')
+  @UseGuards(UnifiedAuthGuard)
+  async getMe(@Req() req: Request) {
+    const user = await this.getUserFromRequest(req);
+    return { user: new UserResponseDto(user) };
+  }
+
+  @Patch('profile')
+  @UseGuards(UnifiedAuthGuard)
+  async updateProfile(@Req() req: Request, @Body() dto: UpdateProfileDto) {
+    const user = await this.getUserFromRequest(req);
+
+    if (dto.name !== undefined) {
+      user.name = dto.name;
+      await this.userRepo.save(user);
     }
 
-    @Patch('profile')
-    @UseGuards(UnifiedAuthGuard)
-    async updateProfile(@Req() req: Request, @Body() dto: UpdateProfileDto) {
-        const user = await this.getUserFromRequest(req);
+    return {
+      ok: true,
+      message: 'Profile updated successfully',
+      user: new UserResponseDto(user),
+    };
+  }
 
-        if (dto.name !== undefined) {
-            user.name = dto.name;
-            await this.userRepo.save(user);
-        }
+  @Get('plan')
+  @UseGuards(UnifiedAuthGuard)
+  async getPlan(@Req() req: Request) {
+    const user = await this.getUserFromRequest(req);
+    return this.planService.getPlanConfig(user);
+  }
 
-        return {
-            ok: true,
-            message: 'Profile updated successfully',
-            user: new UserResponseDto(user)
-        };
-    }
+  @Get('features')
+  @UseGuards(UnifiedAuthGuard)
+  async getFeatures(@Req() req: Request) {
+    const user = await this.getUserFromRequest(req);
+    return {
+      features: this.planService.getAvailableFeatures(user),
+    };
+  }
 
-    @Get('plan')
-    @UseGuards(UnifiedAuthGuard)
-    async getPlan(@Req() req: Request) {
-        const user = await this.getUserFromRequest(req);
-        return this.planService.getPlanConfig(user);
-    }
+  @Get('usage')
+  @UseGuards(UnifiedAuthGuard)
+  async getUsage(@Req() req: Request) {
+    const user = await this.getUserFromRequest(req);
 
-    @Get('features')
-    @UseGuards(UnifiedAuthGuard)
-    async getFeatures(@Req() req: Request) {
-        const user = await this.getUserFromRequest(req);
-        return {
-            features: this.planService.getAvailableFeatures(user),
-        };
-    }
+    const day = this.dayKeyUtc(new Date());
+    const usage = await this.usageRepo.findOne({
+      where: { userId: user.id, day },
+    });
+    const dailyLimit = this.planService.getDailyLimit(user);
 
-    @Get('usage')
-    @UseGuards(UnifiedAuthGuard)
-    async getUsage(@Req() req: Request) {
-        const user = await this.getUserFromRequest(req);
+    return {
+      day,
+      requestCount: usage?.requestCount || 0,
+      dailyLimit,
+      remaining:
+        dailyLimit === null
+          ? null
+          : Math.max(0, dailyLimit - (usage?.requestCount || 0)),
+    };
+  }
 
-        const day = this.dayKeyUtc(new Date());
-        const usage = await this.usageRepo.findOne({ where: { userId: user.id, day } });
-        const dailyLimit = this.planService.getDailyLimit(user);
-
-        return {
-            day,
-            requestCount: usage?.requestCount || 0,
-            dailyLimit,
-            remaining: dailyLimit === null ? null : Math.max(0, dailyLimit - (usage?.requestCount || 0)),
-        };
-    }
-
-    private dayKeyUtc(d: Date): string {
-        const yyyy = d.getUTCFullYear();
-        const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-        const dd = String(d.getUTCDate()).padStart(2, '0');
-        return `${yyyy}-${mm}-${dd}`;
-    }
+  private dayKeyUtc(d: Date): string {
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
 }

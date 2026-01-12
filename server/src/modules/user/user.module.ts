@@ -8,9 +8,9 @@ import { AuthModule } from '../auth/auth.module';
 
 @Global()
 @Module({
-    imports: [TypeOrmModule.forFeature([User, AiUsageDaily]), AuthModule],
-    controllers: [UserController],
-    providers: [PlanService],
-    exports: [PlanService],
+  imports: [TypeOrmModule.forFeature([User, AiUsageDaily]), AuthModule],
+  controllers: [UserController],
+  providers: [PlanService],
+  exports: [PlanService],
 })
-export class UserModule { }
+export class UserModule {}

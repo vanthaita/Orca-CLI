@@ -28,9 +28,9 @@ async function bootstrap() {
   const corsOrigins = [
     ...(corsOriginsEnv
       ? corsOriginsEnv
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean)
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
       : ['http://localhost:3000', 'http://127.0.0.1:3000']),
     ...(frontendUrlEnv ? [frontendUrlEnv.trim()] : []),
   ]
@@ -42,18 +42,20 @@ async function bootstrap() {
   const corsMethodsEnv = configService.get<string>('CORS_METHODS');
   const corsMethods = corsMethodsEnv
     ? corsMethodsEnv
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .join(',')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .join(',')
     : undefined;
 
-  const corsExposedHeadersEnv = configService.get<string>('CORS_EXPOSED_HEADERS');
+  const corsExposedHeadersEnv = configService.get<string>(
+    'CORS_EXPOSED_HEADERS',
+  );
   const corsExposedHeaders = corsExposedHeadersEnv
     ? corsExposedHeadersEnv
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
     : undefined;
 
   const corsMaxAge = configService.get<number>('CORS_MAX_AGE');

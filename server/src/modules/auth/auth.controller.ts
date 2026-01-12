@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Post, Req, Res, UnauthorizedException, UseGuards, Logger } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+  UseGuards,
+  Logger,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import type { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -9,7 +20,9 @@ import { CliTokenGuard } from '../ai/cli-token.guard';
 import { UserResponseDto } from './dto/user-response.dto';
 
 type RequestWithUser = Request & { user: GoogleUserPayload };
-type RequestWithCookies = Request & { cookies?: Record<string, string | undefined> };
+type RequestWithCookies = Request & {
+  cookies?: Record<string, string | undefined>;
+};
 
 type RefreshBody = { refreshToken?: string };
 type CliStartResponse = {
@@ -20,7 +33,11 @@ type CliStartResponse = {
   interval: number;
 };
 
-type CliPollBody = { deviceCode?: string; deviceName?: string; deviceFingerprint?: string };
+type CliPollBody = {
+  deviceCode?: string;
+  deviceName?: string;
+  deviceFingerprint?: string;
+};
 type CliPollResponse =
   | { status: 'authorization_pending'; interval: number }
   | { status: 'slow_down'; interval: number }
@@ -42,7 +59,10 @@ export class AuthController {
   }
 
   @Post('cli/poll')
-  async cliPoll(@Req() req: Request, @Body() body: CliPollBody): Promise<CliPollResponse> {
+  async cliPoll(
+    @Req() req: Request,
+    @Body() body: CliPollBody,
+  ): Promise<CliPollResponse> {
     const deviceCode = body.deviceCode?.trim();
     if (!deviceCode) {
       throw new UnauthorizedException('Missing deviceCode');
@@ -51,7 +71,13 @@ export class AuthController {
     const deviceFingerprint = body.deviceFingerprint?.trim();
     const ipAddress = this.extractIpAddress(req);
     const userAgent = req.headers['user-agent'];
-    return this.authService.pollCliLogin(deviceCode, deviceName, deviceFingerprint, ipAddress, userAgent);
+    return this.authService.pollCliLogin(
+      deviceCode,
+      deviceName,
+      deviceFingerprint,
+      ipAddress,
+      userAgent,
+    );
   }
 
   @Get('cli/me')
@@ -122,7 +148,11 @@ export class AuthController {
 
   @Post('cli/tokens/:id/rename')
   @UseGuards(JwtAuthGuard)
-  async cliRename(@Req() req: Request, @Param('id') id: string, @Body() body: RenameTokenBody) {
+  async cliRename(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() body: RenameTokenBody,
+  ) {
     const userId = (req as any).user?.id as string | undefined;
     if (!userId) {
       throw new UnauthorizedException('Missing user');
@@ -150,7 +180,10 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
-  async googleCallback(@Req() req: RequestWithUser, @Res({ passthrough: false }) res: Response) {
+  async googleCallback(
+    @Req() req: RequestWithUser,
+    @Res({ passthrough: false }) res: Response,
+  ) {
     const payload = req.user;
     const user = await this.authService.findOrCreateFromGoogle(payload);
     const projectAccessToken = this.authService.issueProjectAccessToken(user);
@@ -178,7 +211,9 @@ export class AuthController {
       maxAge: Number(process.env.JWT_REFRESH_DAYS ?? 30) * 24 * 60 * 60 * 1000,
     });
 
-    const frontendUrl = (process.env.ORCA_FRONTEND_URL ?? 'http://localhost:3000').replace(/\/+$/, '');
+    const frontendUrl = (
+      process.env.ORCA_FRONTEND_URL ?? 'http://localhost:3000'
+    ).replace(/\/+$/, '');
 
     const rawState = (req as any).query?.state as string | undefined;
     const state = rawState ? String(rawState) : undefined;
@@ -192,7 +227,9 @@ export class AuthController {
       }
     }
 
-    this.logger.log(`[Google Callback] rawState: ${rawState}, safePath: ${safePath}`);
+    this.logger.log(
+      `[Google Callback] rawState: ${rawState}, safePath: ${safePath}`,
+    );
 
     res.redirect(`${frontendUrl}${safePath}`);
   }

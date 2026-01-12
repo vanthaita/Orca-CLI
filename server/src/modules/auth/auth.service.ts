@@ -20,11 +20,14 @@ export class AuthService {
     @InjectRepository(CliToken)
     private readonly cliTokensRepo: Repository<CliToken>,
     private readonly jwtService: JwtService,
-  ) { }
+  ) {}
 
   async findOrCreateFromGoogle(payload: GoogleUserPayload): Promise<User> {
     const existing = await this.usersRepo.findOne({
-      where: [{ googleId: payload.googleId }, ...(payload.email ? [{ email: payload.email }] : [])],
+      where: [
+        { googleId: payload.googleId },
+        ...(payload.email ? [{ email: payload.email }] : []),
+      ],
     });
 
     if (existing) {
@@ -81,7 +84,9 @@ export class AuthService {
     });
 
     if (count >= maxCodesPerIP) {
-      throw new UnauthorizedException(`Rate limit exceeded. Maximum ${maxCodesPerIP} device codes per hour.`);
+      throw new UnauthorizedException(
+        `Rate limit exceeded. Maximum ${maxCodesPerIP} device codes per hour.`,
+      );
     }
   }
 
@@ -92,7 +97,9 @@ export class AuthService {
     expiresIn: number;
     interval: number;
   }> {
-    this.logger.log(`[CLI Login] Starting login flow from IP: ${ipAddress ?? 'unknown'}`);
+    this.logger.log(
+      `[CLI Login] Starting login flow from IP: ${ipAddress ?? 'unknown'}`,
+    );
 
     if (ipAddress) {
       await this.checkDeviceCodeRateLimit(ipAddress);
@@ -118,9 +125,12 @@ export class AuthService {
     });
 
     await this.cliDeviceCodesRepo.save(record);
-    this.logger.log(`[CLI Login] Generated device code and user code: ${userCode}`);
+    this.logger.log(
+      `[CLI Login] Generated device code and user code: ${userCode}`,
+    );
 
-    const frontendUrl = process.env.ORCA_FRONTEND_URL ?? 'http://localhost:3000';
+    const frontendUrl =
+      process.env.ORCA_FRONTEND_URL ?? 'http://localhost:3000';
     const verificationUrl = `${frontendUrl.replace(/\/+$/, '')}/cli/verify?userCode=${encodeURIComponent(userCode)}`;
     const interval = Number(process.env.CLI_DEVICE_POLL_INTERVAL_SEC ?? 2);
 
@@ -133,10 +143,17 @@ export class AuthService {
     };
   }
 
-  async approveCliLogin(userId: string, userCode: string): Promise<{ ok: true }> {
+  async approveCliLogin(
+    userId: string,
+    userCode: string,
+  ): Promise<{ ok: true }> {
     const code = userCode.trim().toUpperCase();
-    this.logger.log(`[CLI Login] approving login for user ${userId} with code ${code}`);
-    const device = await this.cliDeviceCodesRepo.findOne({ where: { userCode: code } });
+    this.logger.log(
+      `[CLI Login] approving login for user ${userId} with code ${code}`,
+    );
+    const device = await this.cliDeviceCodesRepo.findOne({
+      where: { userCode: code },
+    });
 
     if (!device) {
       this.logger.warn(`[CLI Login] Invalid user code: ${code}`);
@@ -177,7 +194,9 @@ export class AuthService {
     const maxAttempts = Number(process.env.CLI_POLL_MAX_ATTEMPTS ?? 300);
 
     const deviceCodeHash = this.hashToken(deviceCode);
-    const device = await this.cliDeviceCodesRepo.findOne({ where: { deviceCodeHash } });
+    const device = await this.cliDeviceCodesRepo.findOne({
+      where: { deviceCodeHash },
+    });
 
     if (!device) {
       return { status: 'expired' };
@@ -211,7 +230,9 @@ export class AuthService {
       return { status: 'authorization_pending', interval };
     }
 
-    this.logger.log(`[CLI Login] Poll: Approved! Issuing token for user ${device.userId}`);
+    this.logger.log(
+      `[CLI Login] Poll: Approved! Issuing token for user ${device.userId}`,
+    );
     const rawToken = randomBytes(48).toString('base64url');
     const tokenHash = this.hashToken(rawToken);
 
@@ -235,7 +256,11 @@ export class AuthService {
 
     await this.cliDeviceCodesRepo.delete({ id: device.id });
 
-    return { status: 'ok', accessToken: rawToken, expiresIn: tokenDays * 24 * 60 * 60 };
+    return {
+      status: 'ok',
+      accessToken: rawToken,
+      expiresIn: tokenDays * 24 * 60 * 60,
+    };
   }
 
   async listCliTokens(userId: string): Promise<CliToken[]> {
@@ -246,7 +271,9 @@ export class AuthService {
   }
 
   async revokeCliToken(userId: string, tokenId: string): Promise<{ ok: true }> {
-    const token = await this.cliTokensRepo.findOne({ where: { id: tokenId, userId } });
+    const token = await this.cliTokensRepo.findOne({
+      where: { id: tokenId, userId },
+    });
     if (!token) {
       throw new UnauthorizedException('Token not found');
     }
@@ -257,8 +284,14 @@ export class AuthService {
     return { ok: true };
   }
 
-  async renameCliToken(userId: string, tokenId: string, newName: string): Promise<{ ok: true }> {
-    const token = await this.cliTokensRepo.findOne({ where: { id: tokenId, userId } });
+  async renameCliToken(
+    userId: string,
+    tokenId: string,
+    newName: string,
+  ): Promise<{ ok: true }> {
+    const token = await this.cliTokensRepo.findOne({
+      where: { id: tokenId, userId },
+    });
     if (!token) {
       throw new UnauthorizedException('Token not found');
     }
@@ -277,7 +310,9 @@ export class AuthService {
     return { userId: token.userId };
   }
 
-  async issueAndStoreProjectRefreshToken(user: User): Promise<{ refreshToken: string }> {
+  async issueAndStoreProjectRefreshToken(
+    user: User,
+  ): Promise<{ refreshToken: string }> {
     const refreshToken = randomBytes(48).toString('base64url');
     const refreshDays = Number(process.env.JWT_REFRESH_DAYS ?? 30);
     const expiresAt = new Date(Date.now() + refreshDays * 24 * 60 * 60 * 1000);
@@ -298,9 +333,13 @@ export class AuthService {
     }
   }
 
-  async rotateRefreshToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
+  async rotateRefreshToken(
+    refreshToken: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const hashed = this.hashToken(refreshToken);
-    const user = await this.usersRepo.findOne({ where: { projectRefreshTokenHash: hashed } });
+    const user = await this.usersRepo.findOne({
+      where: { projectRefreshTokenHash: hashed },
+    });
 
     if (!user || !user.projectRefreshTokenExpiresAt) {
       throw new UnauthorizedException('Invalid refresh token');

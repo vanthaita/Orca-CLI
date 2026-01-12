@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
@@ -20,19 +25,31 @@ export class AiService {
 
   async chat(userId: string, req: AiChatRequest): Promise<AiChatResponse> {
     if (!req || !req.model || !req.systemPrompt || !req.userPrompt) {
-      throw new BadRequestException('Missing required fields: model, systemPrompt, userPrompt');
+      throw new BadRequestException(
+        'Missing required fields: model, systemPrompt, userPrompt',
+      );
     }
 
     await this.enforceAndTrackQuota(userId);
 
-    const provider: AiProvider = (req.provider ?? (process.env.AI_PROVIDER as AiProvider) ?? 'gemini') as AiProvider;
+    const provider: AiProvider =
+      req.provider ?? (process.env.AI_PROVIDER as AiProvider) ?? 'gemini';
 
     if (provider === 'gemini') {
-      const text = await this.callGemini(req.model, req.systemPrompt, req.userPrompt);
+      const text = await this.callGemini(
+        req.model,
+        req.systemPrompt,
+        req.userPrompt,
+      );
       return { text };
     }
 
-    const text = await this.callOpenAiCompatible(provider, req.model, req.systemPrompt, req.userPrompt);
+    const text = await this.callOpenAiCompatible(
+      provider,
+      req.model,
+      req.systemPrompt,
+      req.userPrompt,
+    );
     return { text };
   }
 
@@ -48,10 +65,16 @@ export class AiService {
     'models/gemini-3-flash-preview',
   ];
 
-  private async callGemini(initialModel: string, systemPrompt: string, userPrompt: string): Promise<string> {
+  private async callGemini(
+    initialModel: string,
+    systemPrompt: string,
+    userPrompt: string,
+  ): Promise<string> {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      throw new BadRequestException('Server not configured: missing GEMINI_API_KEY');
+      throw new BadRequestException(
+        'Server not configured: missing GEMINI_API_KEY',
+      );
     }
 
     const modelsToTry = [initialModel, ...this.GEMINI_FALLBACK_MODELS];
@@ -61,10 +84,17 @@ export class AiService {
 
     for (const model of uniqueModels) {
       try {
-        const text = await this.executeGeminiRequest(model, systemPrompt, userPrompt, apiKey);
+        const text = await this.executeGeminiRequest(
+          model,
+          systemPrompt,
+          userPrompt,
+          apiKey,
+        );
         return text;
       } catch (error) {
-        this.logger.warn(`Gemini model ${model} failed: ${(error as Error)?.message ?? String(error)}`);
+        this.logger.warn(
+          `Gemini model ${model} failed: ${(error as Error)?.message ?? String(error)}`,
+        );
         lastError = error;
       }
     }
@@ -72,7 +102,12 @@ export class AiService {
     throw lastError || new BadRequestException('All Gemini models failed');
   }
 
-  private async executeGeminiRequest(model: string, systemPrompt: string, userPrompt: string, apiKey: string): Promise<string> {
+  private async executeGeminiRequest(
+    model: string,
+    systemPrompt: string,
+    userPrompt: string,
+    apiKey: string,
+  ): Promise<string> {
     const modelPath = model.startsWith('models/') ? model : `models/${model}`;
     const url = `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent`;
 
@@ -92,11 +127,14 @@ export class AiService {
 
     const text = await resp.text();
     if (!resp.ok) {
-      throw new BadRequestException(`Gemini API returned ${resp.status}: ${text}`);
+      throw new BadRequestException(
+        `Gemini API returned ${resp.status}: ${text}`,
+      );
     }
 
-    const parsed = JSON.parse(text) as any;
-    const out: string | undefined = parsed?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const parsed = JSON.parse(text);
+    const out: string | undefined =
+      parsed?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     const trimmed = (out ?? '').trim();
     if (!trimmed) {
@@ -135,10 +173,12 @@ export class AiService {
 
     const text = await resp.text();
     if (!resp.ok) {
-      throw new BadRequestException(`Provider API returned ${resp.status}: ${text}`);
+      throw new BadRequestException(
+        `Provider API returned ${resp.status}: ${text}`,
+      );
     }
 
-    const parsed = JSON.parse(text) as any;
+    const parsed = JSON.parse(text);
     const out: string | undefined = parsed?.choices?.[0]?.message?.content;
 
     const trimmed = (out ?? '').trim();
@@ -149,11 +189,16 @@ export class AiService {
     return trimmed;
   }
 
-  private resolveOpenAiCompatibleConfig(provider: AiProvider): { baseUrl: string; apiKey: string } {
+  private resolveOpenAiCompatibleConfig(provider: AiProvider): {
+    baseUrl: string;
+    apiKey: string;
+  } {
     if (provider === 'openai') {
       const apiKey = process.env.OPENAI_API_KEY;
       if (!apiKey) {
-        throw new BadRequestException('Server not configured: missing OPENAI_API_KEY');
+        throw new BadRequestException(
+          'Server not configured: missing OPENAI_API_KEY',
+        );
       }
       return { baseUrl: 'https://api.openai.com/v1', apiKey };
     }
@@ -161,7 +206,9 @@ export class AiService {
     if (provider === 'deepseek') {
       const apiKey = process.env.DEEPSEEK_API_KEY;
       if (!apiKey) {
-        throw new BadRequestException('Server not configured: missing DEEPSEEK_API_KEY');
+        throw new BadRequestException(
+          'Server not configured: missing DEEPSEEK_API_KEY',
+        );
       }
       return { baseUrl: 'https://api.deepseek.com', apiKey };
     }
@@ -169,7 +216,9 @@ export class AiService {
     if (provider === 'zai') {
       const apiKey = process.env.ZAI_API_KEY;
       if (!apiKey) {
-        throw new BadRequestException('Server not configured: missing ZAI_API_KEY');
+        throw new BadRequestException(
+          'Server not configured: missing ZAI_API_KEY',
+        );
       }
       return { baseUrl: 'https://api.z.ai/api/paas/v4', apiKey };
     }
@@ -178,10 +227,14 @@ export class AiService {
     const baseUrl = process.env.AI_API_BASE_URL;
 
     if (!apiKey) {
-      throw new BadRequestException('Server not configured: missing OPENAI_API_KEY');
+      throw new BadRequestException(
+        'Server not configured: missing OPENAI_API_KEY',
+      );
     }
     if (!baseUrl) {
-      throw new BadRequestException('Server not configured: missing AI_API_BASE_URL');
+      throw new BadRequestException(
+        'Server not configured: missing AI_API_BASE_URL',
+      );
     }
 
     return { baseUrl, apiKey };

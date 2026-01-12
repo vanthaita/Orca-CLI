@@ -11,152 +11,158 @@ import * as path from 'path';
 
 @Injectable()
 export class AdminService {
-    private readonly logger = new Logger(AdminService.name);
+  private readonly logger = new Logger(AdminService.name);
 
-    constructor(
-        @InjectRepository(User)
-        private usersRepository: Repository<User>,
-        @InjectRepository(AiUsageDaily)
-        private aiUsageRepository: Repository<AiUsageDaily>,
-    ) {}
+  constructor(
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
+    @InjectRepository(AiUsageDaily)
+    private aiUsageRepository: Repository<AiUsageDaily>,
+  ) {}
 
-    async findAllUsers() {
-        const users = await this.usersRepository.find({
-            order: {
-                createdAt: 'DESC',
-            },
-        });
-        return { users: UserResponseDto.fromArray(users) };
+  async findAllUsers() {
+    const users = await this.usersRepository.find({
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+    return { users: UserResponseDto.fromArray(users) };
+  }
+
+  async findOneUser(id: string) {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    return { user: new UserResponseDto(user) };
+  }
+
+  async updateUserRole(id: string, role: UserRole) {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    async findOneUser(id: string) {
-        const user = await this.usersRepository.findOne({ where: { id } });
-        if (!user) {
-            throw new NotFoundException(`User with ID ${id} not found`);
-        }
-        return { user: new UserResponseDto(user) };
+    user.role = role;
+    await this.usersRepository.save(user);
+
+    return {
+      ok: true,
+      message: `User role updated to ${role}`,
+      user: new UserResponseDto(user),
+    };
+  }
+
+  async updateUserPlan(
+    id: string,
+    plan: UserPlan,
+    planExpiresAt?: string | null,
+  ) {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    async updateUserRole(id: string, role: UserRole) {
-        const user = await this.usersRepository.findOne({ where: { id } });
-        if (!user) {
-            throw new NotFoundException(`User with ID ${id} not found`);
-        }
+    user.plan = plan;
 
-        user.role = role;
-        await this.usersRepository.save(user);
-
-        return {
-            ok: true,
-            message: `User role updated to ${role}`,
-            user: new UserResponseDto(user)
-        };
+    if (planExpiresAt !== undefined) {
+      user.planExpiresAt = planExpiresAt ? new Date(planExpiresAt) : null;
     }
 
-    async updateUserPlan(id: string, plan: UserPlan, planExpiresAt?: string | null) {
-        const user = await this.usersRepository.findOne({ where: { id } });
-        if (!user) {
-            throw new NotFoundException(`User with ID ${id} not found`);
-        }
+    await this.usersRepository.save(user);
 
-        user.plan = plan;
+    return {
+      ok: true,
+      message: `User plan updated to ${plan}`,
+      user: new UserResponseDto(user),
+    };
+  }
 
-        if (planExpiresAt !== undefined) {
-            user.planExpiresAt = planExpiresAt ? new Date(planExpiresAt) : null;
-        }
+  async getSystemLogs(lines: number = 100) {
+    const logPath = path.join(process.cwd(), 'logs', 'app.log');
 
-        await this.usersRepository.save(user);
-
-        return {
-            ok: true,
-            message: `User plan updated to ${plan}`,
-            user: new UserResponseDto(user)
-        };
+    if (!fs.existsSync(logPath)) {
+      return { logs: [], message: 'Log file not found' };
     }
 
-    async getSystemLogs(lines: number = 100) {
-        const logPath = path.join(process.cwd(), 'logs', 'app.log');
+    try {
+      const content = await fs.promises.readFile(logPath, 'utf8');
+      const allLines = content.split('\n').filter((line) => line.trim() !== '');
+      const recentLines = allLines.slice(-lines);
 
-        if (!fs.existsSync(logPath)) {
-            return { logs: [], message: 'Log file not found' };
-        }
-
+      const parsedLogs = recentLines.map((line) => {
         try {
-            const content = await fs.promises.readFile(logPath, 'utf8');
-            const allLines = content.split('\n').filter((line) => line.trim() !== '');
-            const recentLines = allLines.slice(-lines);
-
-            const parsedLogs = recentLines.map((line) => {
-                try {
-                    return JSON.parse(line);
-                } catch (e) {
-                    return { msg: line };
-                }
-            });
-
-            return parsedLogs.reverse();
-        } catch (error) {
-            this.logger.error('Error reading log file', error as Error);
-            return { logs: [], message: 'Error reading log file' };
+          return JSON.parse(line);
+        } catch (e) {
+          return { msg: line };
         }
+      });
+
+      return parsedLogs.reverse();
+    } catch (error) {
+      this.logger.error('Error reading log file', error as Error);
+      return { logs: [], message: 'Error reading log file' };
     }
+  }
 
-    async getSystemMetrics() {
-        const totalUsers = await this.usersRepository.count();
+  async getSystemMetrics() {
+    const totalUsers = await this.usersRepository.count();
 
-        const usersByPlan = await this.usersRepository
-            .createQueryBuilder('user')
-            .select('user.plan', 'plan')
-            .addSelect('COUNT(*)', 'count')
-            .groupBy('user.plan')
-            .getRawMany();
+    const usersByPlan = await this.usersRepository
+      .createQueryBuilder('user')
+      .select('user.plan', 'plan')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('user.plan')
+      .getRawMany();
 
-        const usersByRole = await this.usersRepository
-            .createQueryBuilder('user')
-            .select('user.role', 'role')
-            .addSelect('COUNT(*)', 'count')
-            .groupBy('user.role')
-            .getRawMany();
+    const usersByRole = await this.usersRepository
+      .createQueryBuilder('user')
+      .select('user.role', 'role')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('user.role')
+      .getRawMany();
 
-        const today = this.dayKeyUtc(new Date());
-        const todayUsage = await this.aiUsageRepository
-            .createQueryBuilder('usage')
-            .select('SUM(usage.requestCount)', 'totalRequests')
-            .where('usage.day = :day', { day: today })
-            .getRawOne();
+    const today = this.dayKeyUtc(new Date());
+    const todayUsage = await this.aiUsageRepository
+      .createQueryBuilder('usage')
+      .select('SUM(usage.requestCount)', 'totalRequests')
+      .where('usage.day = :day', { day: today })
+      .getRawOne();
 
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        const recentSignups = await this.usersRepository.count({
-            where: {
-                createdAt: MoreThanOrEqual(sevenDaysAgo)
-            }
-        });
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const recentSignups = await this.usersRepository.count({
+      where: {
+        createdAt: MoreThanOrEqual(sevenDaysAgo),
+      },
+    });
 
-        return {
-            totalUsers,
-            usersByPlan: usersByPlan.map(item => ({
-                plan: item.plan,
-                count: parseInt(item.count)
-            })),
-            usersByRole: usersByRole.map(item => ({
-                role: item.role,
-                count: parseInt(item.count)
-            })),
-            aiUsage: {
-                today: today,
-                totalRequests: todayUsage?.totalRequests ? parseInt(todayUsage.totalRequests) : 0
-            },
-            recentSignups: {
-                last7Days: recentSignups
-            }
-        };
-    }
+    return {
+      totalUsers,
+      usersByPlan: usersByPlan.map((item) => ({
+        plan: item.plan,
+        count: parseInt(item.count),
+      })),
+      usersByRole: usersByRole.map((item) => ({
+        role: item.role,
+        count: parseInt(item.count),
+      })),
+      aiUsage: {
+        today: today,
+        totalRequests: todayUsage?.totalRequests
+          ? parseInt(todayUsage.totalRequests)
+          : 0,
+      },
+      recentSignups: {
+        last7Days: recentSignups,
+      },
+    };
+  }
 
-    private dayKeyUtc(d: Date): string {
-        const yyyy = d.getUTCFullYear();
-        const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-        const dd = String(d.getUTCDate()).padStart(2, '0');
-        return `${yyyy}-${mm}-${dd}`;
-    }
+  private dayKeyUtc(d: Date): string {
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
 }

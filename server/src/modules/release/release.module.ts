@@ -3,7 +3,7 @@ import { ReleaseController } from './release.controller';
 import { ReleaseService } from './release.service';
 
 @Module({
-    controllers: [ReleaseController],
-    providers: [ReleaseService],
+  controllers: [ReleaseController],
+  providers: [ReleaseService],
 })
-export class ReleaseModule { }
+export class ReleaseModule {}

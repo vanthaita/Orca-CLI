@@ -6,8 +6,8 @@ import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([User, AiUsageDaily])],
-    controllers: [AdminController],
-    providers: [AdminService],
+  imports: [TypeOrmModule.forFeature([User, AiUsageDaily])],
+  controllers: [AdminController],
+  providers: [AdminService],
 })
-export class AdminModule { }
+export class AdminModule {}

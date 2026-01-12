@@ -5,59 +5,59 @@ import { User } from './modules/auth/entities/user.entity';
 
 @Controller('health')
 export class HealthController {
-    private readonly logger = new Logger(HealthController.name);
+  private readonly logger = new Logger(HealthController.name);
 
-    constructor(
-        @InjectRepository(User)
-        private readonly userRepo: Repository<User>,
-    ) {}
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+  ) {}
 
-    @Get()
-    async getHealth() {
-        const dbHealthy = await this.checkDatabase();
-        const uptime = process.uptime();
+  @Get()
+  async getHealth() {
+    const dbHealthy = await this.checkDatabase();
+    const uptime = process.uptime();
 
-        return {
-            status: dbHealthy ? 'healthy' : 'degraded',
-            timestamp: new Date().toISOString(),
-            uptime: Math.floor(uptime),
-            database: dbHealthy ? 'connected' : 'disconnected',
-            version: process.env.npm_package_version || '1.0.0',
-        };
+    return {
+      status: dbHealthy ? 'healthy' : 'degraded',
+      timestamp: new Date().toISOString(),
+      uptime: Math.floor(uptime),
+      database: dbHealthy ? 'connected' : 'disconnected',
+      version: process.env.npm_package_version || '1.0.0',
+    };
+  }
+
+  @Get('ready')
+  async getReadiness() {
+    const dbHealthy = await this.checkDatabase();
+
+    if (!dbHealthy) {
+      return {
+        status: 'not ready',
+        timestamp: new Date().toISOString(),
+      };
     }
 
-    @Get('ready')
-    async getReadiness() {
-        const dbHealthy = await this.checkDatabase();
+    return {
+      status: 'ready',
+      timestamp: new Date().toISOString(),
+    };
+  }
 
-        if (!dbHealthy) {
-            return {
-                status: 'not ready',
-                timestamp: new Date().toISOString(),
-            };
-        }
+  @Get('live')
+  async getLiveness() {
+    return {
+      status: 'alive',
+      timestamp: new Date().toISOString(),
+    };
+  }
 
-        return {
-            status: 'ready',
-            timestamp: new Date().toISOString(),
-        };
+  private async checkDatabase(): Promise<boolean> {
+    try {
+      await this.userRepo.query('SELECT 1');
+      return true;
+    } catch (error) {
+      this.logger.error('Database health check failed', error as Error);
+      return false;
     }
-
-    @Get('live')
-    async getLiveness() {
-        return {
-            status: 'alive',
-            timestamp: new Date().toISOString(),
-        };
-    }
-
-    private async checkDatabase(): Promise<boolean> {
-        try {
-            await this.userRepo.query('SELECT 1');
-            return true;
-        } catch (error) {
-            this.logger.error('Database health check failed', error as Error);
-            return false;
-        }
-    }
+  }
 }

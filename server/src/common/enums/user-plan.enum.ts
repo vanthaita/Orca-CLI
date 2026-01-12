@@ -1,5 +1,5 @@
 export enum UserPlan {
-    FREE = 'free',
-    PRO = 'pro',
-    TEAM = 'team',
+  FREE = 'free',
+  PRO = 'pro',
+  TEAM = 'team',
 }

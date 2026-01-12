@@ -1,57 +1,63 @@
-import { IsNotEmpty, IsNumber, IsString, IsEnum, IsOptional } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  IsEnum,
+  IsOptional,
+} from 'class-validator';
 
 export class SepayWebhookDto {
-    @IsNotEmpty()
-    @IsNumber()
-    id!: number;
+  @IsNotEmpty()
+  @IsNumber()
+  id!: number;
 
-    @IsNotEmpty()
-    @IsString()
-    gateway!: string;
+  @IsNotEmpty()
+  @IsString()
+  gateway!: string;
 
-    @IsNotEmpty()
-    @IsString()
-    transactionDate!: string;
+  @IsNotEmpty()
+  @IsString()
+  transactionDate!: string;
 
-    @IsNotEmpty()
-    @IsString()
-    accountNumber!: string;
+  @IsNotEmpty()
+  @IsString()
+  accountNumber!: string;
 
-    @IsOptional()
-    @IsString()
-    code?: string | null;
+  @IsOptional()
+  @IsString()
+  code?: string | null;
 
-    @IsNotEmpty()
-    @IsString()
-    content!: string;
+  @IsNotEmpty()
+  @IsString()
+  content!: string;
 
-    @IsNotEmpty()
-    @IsEnum(['in', 'out'])
-    transferType!: 'in' | 'out';
+  @IsNotEmpty()
+  @IsEnum(['in', 'out'])
+  transferType!: 'in' | 'out';
 
-    @IsNotEmpty()
-    @IsNumber()
-    transferAmount!: number;
+  @IsNotEmpty()
+  @IsNumber()
+  transferAmount!: number;
 
-    @IsOptional()
-    @IsNumber()
-    accumulated?: number | null;
+  @IsOptional()
+  @IsNumber()
+  accumulated?: number | null;
 
-    @IsOptional()
-    @IsString()
-    subAccount?: string | null;
+  @IsOptional()
+  @IsString()
+  subAccount?: string | null;
 
-    @IsOptional()
-    @IsString()
-    referenceCode?: string | null;
+  @IsOptional()
+  @IsString()
+  referenceCode?: string | null;
 
-    @IsOptional()
-    @IsString()
-    description?: string | null;
+  @IsOptional()
+  @IsString()
+  description?: string | null;
 }
 
 export interface ParsedPaymentContent {
-    email: string;
-    plan: string;
-    duration: string;
+  email: string;
+  plan: string;
+  duration: string;
 }
