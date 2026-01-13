@@ -16,6 +16,7 @@ import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './google-auth.guard';
 import { GoogleUserPayload } from './google.strategy';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { UnifiedAuthGuard } from './unified-auth.guard';
 import { CliTokenGuard } from '../ai/cli-token.guard';
 import { UserResponseDto } from './dto/user-response.dto';
 
@@ -50,7 +51,7 @@ type RenameTokenBody = { name?: string };
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Get('cli/start')
   async cliStart(@Req() req: Request): Promise<CliStartResponse> {
@@ -306,7 +307,7 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UnifiedAuthGuard)
   async me(@Req() req: Request) {
     const userId = (req as any).user?.id as string | undefined;
     if (!userId) {
