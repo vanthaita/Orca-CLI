@@ -1,6 +1,7 @@
 use crate::git::{ensure_git_repo, run_git};
-use anyhow::Result;
+use anyhow::{Context, Result};
 use console::style;
+use dialoguer::Confirm;
 use std::process::Command;
 
 pub(crate) async fn run_setup_flow(
@@ -119,6 +120,37 @@ pub(crate) async fn run_setup_flow(
             style("[!]").yellow().bold(),
             style("GitHub CLI (gh) not found - install for PR creation").yellow()
         );
+
+        let install = Confirm::new()
+            .with_prompt("Do you want to install GitHub CLI (gh) now?")
+            .default(true)
+            .interact()
+            .context("Failed to read confirmation")?;
+
+        if install {
+            println!("\n{}", style("Installing GitHub CLI...").cyan());
+            let ok = try_install_gh()?;
+            if ok && gh_available() {
+                println!(
+                    "  {} {}",
+                    style("[✓]").green().bold(),
+                    style("GitHub CLI (gh) installed successfully").green()
+                );
+            } else {
+                println!(
+                    "  {} {}",
+                    style("[!]").yellow().bold(),
+                    style("Failed to install GitHub CLI automatically").yellow()
+                );
+                print_gh_install_guidance();
+            }
+        } else {
+            println!(
+                "  {} {}",
+                style("[i]").cyan().bold(),
+                style("Skipped GitHub CLI installation").cyan()
+            );
+        }
     }
 
     Ok(())
@@ -132,4 +164,74 @@ pub(crate) fn gh_available() -> bool {
         .status()
         .map(|s| s.success())
         .unwrap_or(false)
+}
+
+fn command_available(cmd: &str, args: &[&str]) -> bool {
+    Command::new(cmd)
+        .args(args)
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false)
+}
+
+fn try_install_gh() -> Result<bool> {
+    #[cfg(target_os = "windows")]
+    {
+        if command_available("winget", &["--version"]) {
+            let status = Command::new("winget")
+                .args([
+                    "install",
+                    "--id",
+                    "GitHub.cli",
+                    "-e",
+                    "--source",
+                    "winget",
+                ])
+                .status()
+                .context("Failed to run winget (required to install gh)")?;
+            return Ok(status.success());
+        }
+
+        return Ok(false);
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        if command_available("brew", &["--version"]) {
+            let status = Command::new("brew")
+                .args(["install", "gh"])
+                .status()
+                .context("Failed to run brew (required to install gh)")?;
+            return Ok(status.success());
+        }
+
+        return Ok(false);
+    }
+
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        if command_available("apt-get", &["--version"]) {
+            let status = Command::new("sh")
+                .args([
+                    "-c",
+                    "sudo apt-get update && sudo apt-get install -y gh",
+                ])
+                .status()
+                .context("Failed to run apt-get (required to install gh)")?;
+            return Ok(status.success());
+        }
+
+        return Ok(false);
+    }
+}
+
+fn print_gh_install_guidance() {
+    println!(
+        "\n{}\n  {}\n  {}",
+        style("Install GitHub CLI manually:").cyan().bold(),
+        style("https://cli.github.com/").cyan(),
+        style("After installation, restart your terminal and run: gh --version").dim()
+    );
 }
