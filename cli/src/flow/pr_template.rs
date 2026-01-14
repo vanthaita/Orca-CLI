@@ -2,6 +2,8 @@ use anyhow::{Context, Result};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use dialoguer::MultiSelect;
+use console::style;
 
 /// Find PR template in common locations
 pub fn find_pr_template() -> Result<Option<PathBuf>> {
@@ -212,6 +214,85 @@ pub fn get_commits_since_base(base: &str) -> Result<Vec<String>> {
         .collect();
 
     Ok(commits)
+}
+
+/// Get commit hashes and messages between base and current branch
+/// Returns Vec<(hash, message)> in chronological order (newest first)
+pub fn get_commits_with_hashes_since_base(base: &str) -> Result<Vec<(String, String)>> {
+    let output = crate::git::run_git(&[
+        "log",
+        &format!("{}..HEAD", base),
+        "--pretty=format:%H@@@@%s",
+    ])?;
+
+    let commits: Vec<(String, String)> = output
+        .lines()
+        .filter_map(|line| {
+            let trimmed = line.trim();
+            if trimmed.is_empty() {
+                return None;
+            }
+            
+            // Split by custom delimiter
+            if let Some((hash, message)) = trimmed.split_once("@@@@") {
+                Some((hash.trim().to_string(), message.trim().to_string()))
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    Ok(commits)
+}
+
+/// Prompt user to interactively select commits
+/// Returns selected commits as Vec<(hash, message)>
+pub fn prompt_select_commits(commits: &[(String, String)]) -> Result<Vec<(String, String)>> {
+    if commits.is_empty() {
+        anyhow::bail!("No commits available to select");
+    }
+
+    // Create display items with short hash and message
+    let display_items: Vec<String> = commits
+        .iter()
+        .map(|(hash, message)| {
+            let short_hash = &hash[..7.min(hash.len())];
+            format!("[{}] {}", style(short_hash).cyan(), message)
+        })
+        .collect();
+
+    eprintln!();
+    eprintln!(
+        "{} {}",
+        style("📝 Select commits to publish:").cyan().bold(),
+        style(format!("({} available)", commits.len())).dim()
+    );
+    eprintln!("   {}", style("Use Space to select, Enter to confirm").dim());
+    eprintln!();
+
+    let selections = MultiSelect::new()
+        .with_prompt("Commits")
+        .items(&display_items)
+        .interact()?;
+
+    if selections.is_empty() {
+        anyhow::bail!("No commits selected. Aborting.");
+    }
+
+    // Return selected commits in the same order
+    let selected: Vec<(String, String)> = selections
+        .iter()
+        .map(|&idx| commits[idx].clone())
+        .collect();
+
+    eprintln!();
+    eprintln!(
+        "{} {}",
+        style("[✓]").green().bold(),
+        style(format!("Selected {} commit(s)", selected.len())).green()
+    );
+
+    Ok(selected)
 }
 
 /// Generate PR description from template or default

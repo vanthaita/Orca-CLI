@@ -79,6 +79,7 @@ pub(crate) async fn run_publish_current_flow(
     base: &str,
     pr: bool,
     mode: Option<&str>,
+    select_commits: bool,
 ) -> Result<()> {
     // Check if user has Pro/Team plan for auto-publish feature
     crate::plan_guard::require_feature(crate::plan_types::FeaturePermission::AutoPublish).await?;
@@ -94,41 +95,47 @@ pub(crate) async fn run_publish_current_flow(
     // Get commits to publish
     let commits = pr_template::get_commits_since_base(base)?;
 
-    // If no new commits, check if we just want to create PR for current branch
+    // If no new commits, we can't create a PR
     if commits.is_empty() {
-        // Check if current branch is different from base
         let current = crate::git::current_branch()?;
+        
         if current == base {
             eprintln!(
                 "{} {}",
                 style("[ℹ]").blue().bold(),
-                style(format!("Already on base branch '{}'. No PR needed.", base)).blue()
+                style(format!("Already on base branch '{}'. Nothing to publish.", base)).blue()
             );
-            return Ok(());
-        }
-        
-        // Branch exists but no new commits - still allow PR creation
-        eprintln!(
-            "{} {}",
-            style("[ℹ]").yellow().bold(),
-            style("No new commits since base, but will create PR for current branch state").yellow()
-        );
-        
-        // If PR flag is false, just push and exit
-        if !pr {
+        } else {
             eprintln!(
                 "{} {}",
                 style("[ℹ]").blue().bold(),
-                style("Use with --pr to create pull request").blue()
+                style(format!(
+                    "Branch '{}' has no new commits compared to '{}'. Cannot create PR.",
+                    current, base
+                ))
+                .blue()
             );
-            return Ok(());
+            eprintln!(
+                "   {}",
+                style("Tip: Make some changes and commit them first!").dim()
+            );
         }
         
-        // Create PR for current branch even without new commits
-        let current_branch = crate::git::current_branch()?;
-        create_single_pr(&current_branch, base, &[current_branch.clone()]).await?;
         return Ok(());
     }
+
+    // Handle selective commit selection if requested
+    let (selected_commits, selected_hashes) = if select_commits {
+        let commits_with_hashes = pr_template::get_commits_with_hashes_since_base(base)?;
+        let selected = pr_template::prompt_select_commits(&commits_with_hashes)?;
+        
+        let commit_messages: Vec<String> = selected.iter().map(|(_, msg)| msg.clone()).collect();
+        let commit_hashes: Vec<String> = selected.iter().map(|(hash, _)| hash.clone()).collect();
+        
+        (commit_messages, Some(commit_hashes))
+    } else {
+        (commits, None)
+    };
 
     // Determine workflow mode
     let workflow_mode = if let Some(mode_str) = mode {
@@ -139,20 +146,37 @@ pub(crate) async fn run_publish_current_flow(
         let config = crate::config::load_config()?;
         if let Some(default_mode) = &config.pr_workflow.default_mode {
             pr_workflow::PrWorkflowMode::from_str(default_mode)
-                .unwrap_or_else(|| pr_workflow::prompt_workflow_mode(commits.len()).unwrap())
+                .unwrap_or_else(|| pr_workflow::prompt_workflow_mode(selected_commits.len()).unwrap())
         } else {
+            // Show info about commits
+            eprintln!();
+            eprintln!(
+                "{} {}",
+                style("ℹ️  Info:").cyan().bold(),
+                style(format!(
+                    "Your branch has {} commit(s) since '{}'",
+                    selected_commits.len(),
+                    base
+                ))
+                .cyan()
+            );
+            eprintln!(
+                "   {}",
+                style("(GitHub PR will show commits not yet on remote)").dim()
+            );
+            
             // Interactive prompt
-            pr_workflow::prompt_workflow_mode(commits.len())?
+            pr_workflow::prompt_workflow_mode(selected_commits.len())?
         }
     };
 
     // Execute workflow based on mode
     match workflow_mode {
         pr_workflow::PrWorkflowMode::Single => {
-            run_single_pr_workflow(branch, base, pr, &commits).await
+            run_single_pr_workflow(branch, base, pr, &selected_commits, selected_hashes.as_deref()).await
         }
         pr_workflow::PrWorkflowMode::Stack => {
-            run_stack_pr_workflow(base, pr, &commits).await
+            run_stack_pr_workflow(base, pr, &selected_commits, selected_hashes.as_deref()).await
         }
     }
 }
@@ -163,6 +187,7 @@ async fn run_single_pr_workflow(
     base: &str,
     pr: bool,
     commits: &[String],
+    selected_hashes: Option<&[String]>,
 ) -> Result<()> {
     let head_msg = commits.first().map(|s| s.as_str()).unwrap_or("work");
 
@@ -176,9 +201,52 @@ async fn run_single_pr_workflow(
         anyhow::bail!("Refusing to publish to base branch: {base}");
     }
 
-    let pb = spinner("Switching to publish branch...");
-    checkout_branch(&target_branch, true)?;
-    pb.finish_and_clear();
+    // If we have selected hashes, we need to cherry-pick them onto a new branch
+    if let Some(hashes) = selected_hashes {
+        let pb = spinner(&format!("Creating branch '{}' from base '{}'...", target_branch, base));
+        
+        // Start from base branch
+        checkout_branch(base, false)?;
+        
+        // Create and checkout new branch from base
+        checkout_branch(&target_branch, true)?;
+        pb.finish_and_clear();
+        
+        // Cherry-pick selected commits in order
+        eprintln!(
+            "{} {}",
+            style("[ℹ]").blue().bold(),
+            style(format!("Cherry-picking {} selected commit(s)...", hashes.len())).blue()
+        );
+        
+        for (idx, hash) in hashes.iter().enumerate() {
+            let pb = spinner(&format!("  [{}/{}] Cherry-picking {}...", idx + 1, hashes.len(), &hash[..7.min(hash.len())]));
+            
+            if let Err(e) = run_git(&["cherry-pick", hash]) {
+                pb.finish_and_clear();
+                eprintln!(
+                    "{} {}",
+                    style("[×]").red().bold(),
+                    style(format!("Failed to cherry-pick {}: {}", hash, e)).red()
+                );
+                eprintln!("   {}", style("You may need to resolve conflicts manually").dim());
+                return Err(e);
+            }
+            
+            pb.finish_and_clear();
+        }
+        
+        eprintln!(
+            "{} {}",
+            style("[✓]").green().bold(),
+            style("All commits cherry-picked successfully").green()
+        );
+    } else {
+        // Normal flow: just switch to target branch (existing behavior)
+        let pb = spinner("Switching to publish branch...");
+        checkout_branch(&target_branch, true)?;
+        pb.finish_and_clear();
+    }
 
     let pb = spinner(&format!("Pushing branch '{}' to origin...", target_branch));
     run_git(&["push", "-u", "origin", &target_branch])?;
@@ -217,13 +285,25 @@ async fn create_single_pr(branch: &str, base: &str, commits: &[String]) -> Resul
 
     // Generate PR description from template
     let description = match pr_template::generate_pr_description(base) {
-        Ok(desc) => desc,
+        Ok(desc) => {
+            pb.finish_and_clear();
+            eprintln!(
+                "{} {}",
+                style("[✓]").green().bold(),
+                style("PR description generated from template").green()
+            );
+            desc
+        }
         Err(e) => {
             pb.finish_and_clear();
             eprintln!(
                 "{} {}",
                 style("Warning:").yellow().bold(),
                 style(format!("Failed to generate PR description: {}", e)).yellow()
+            );
+            eprintln!(
+                "   {}",
+                style("Using default description instead").dim()
             );
             // Fall back to simple --fill
             let status = Command::new("gh")
@@ -248,8 +328,6 @@ async fn create_single_pr(branch: &str, base: &str, commits: &[String]) -> Resul
             return Ok(());
         }
     };
-
-    pb.finish_and_clear();
 
     // Generate smart title
     let title = pr_template::generate_pr_title(commits);
@@ -299,7 +377,7 @@ async fn create_single_pr(branch: &str, base: &str, commits: &[String]) -> Resul
 }
 
 /// Run stack PR workflow (one PR per commit, chained)
-async fn run_stack_pr_workflow(base: &str, pr: bool, commits: &[String]) -> Result<()> {
+async fn run_stack_pr_workflow(base: &str, pr: bool, commits: &[String], selected_hashes: Option<&[String]>) -> Result<()> {
     if !pr {
         eprintln!(
             "{} {}",
@@ -321,6 +399,28 @@ async fn run_stack_pr_workflow(base: &str, pr: bool, commits: &[String]) -> Resu
     // Create stack plan
     let stack = pr_workflow::create_stack_plan(commits.to_vec(), base)?;
 
+    // Warn if too many PRs
+    if stack.len() > 10 {
+        eprintln!();
+        eprintln!(
+            "{} {}",
+            style("⚠️  Warning:").yellow().bold(),
+            style(format!(
+                "You're about to create {} PRs. This might be too many!",
+                stack.len()
+            ))
+            .yellow()
+        );
+        eprintln!(
+            "   {}",
+            style("Consider using Single PR mode (--mode single) instead.").dim()
+        );
+        
+        if !flows_error::confirm_or_abort("Continue with stack workflow?", false)? {
+            return Ok(());
+        }
+    }
+
     eprintln!();
     eprintln!(
         "{} {}",
@@ -328,6 +428,39 @@ async fn run_stack_pr_workflow(base: &str, pr: bool, commits: &[String]) -> Resu
         style(format!("{} PRs will be created (chained)", stack.len())).cyan()
     );
     eprintln!();
+
+    // Get all commit hashes first (in reverse order - oldest first)
+    let all_commits_output = run_git(&[
+        "log",
+        &format!("{}..HEAD", base),
+        "--pretty=format:%H",
+        "--reverse",
+    ])?;
+    
+    let all_commit_hashes: Vec<String> = all_commits_output
+        .lines()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect();
+
+    // Filter hashes if selective mode is enabled
+    let commit_hashes: Vec<String> = if let Some(selected) = selected_hashes {
+        // Only include selected hashes in the order they appear
+        all_commit_hashes
+            .into_iter()
+            .filter(|hash| selected.iter().any(|sel| hash.starts_with(sel)))
+            .collect()
+    } else {
+        all_commit_hashes
+    };
+
+    if commit_hashes.len() != stack.len() {
+        anyhow::bail!(
+            "Mismatch: found {} commit hashes but {} stack items",
+            commit_hashes.len(),
+            stack.len()
+        );
+    }
 
     let mut created_prs: Vec<(String, String)> = Vec::new(); // (branch, url)
 
@@ -342,31 +475,44 @@ async fn run_stack_pr_workflow(base: &str, pr: bool, commits: &[String]) -> Resu
             stack_pr.total_parts
         );
 
-        // Create branch for this commit
+        // Checkout base branch for this PR
         let pb = spinner(&format!("Creating branch '{}'...", stack_pr.branch_name));
-        
-        // Cherry-pick this specific commit onto the base branch
         checkout_branch(&stack_pr.base_branch, false)?;
+        
+        // Create new branch
         checkout_branch(&stack_pr.branch_name, true)?;
         
-        // Cherry-pick the commit (find the actual commit hash)
-        let commit_hash = run_git(&[
-            "log",
-            &format!("{}..HEAD", base),
-            "--pretty=format:%H",
-            &format!("--skip={}", idx),
-            "-1",
-        ])?;
+        // Cherry-pick this specific commit
+        let commit_hash = &commit_hashes[idx];
+        let cherry_result = run_git(&["cherry-pick", commit_hash]);
         
-        if !commit_hash.is_empty() {
-            run_git(&["cherry-pick", commit_hash.trim()])?;
+        if let Err(e) = cherry_result {
+            pb.finish_and_clear();
+            eprintln!(
+                "{} {}",
+                style("  [×]").red().bold(),
+                style(format!("Failed to cherry-pick commit: {}", e)).red()
+            );
+            eprintln!(
+                "   {}",
+                style("Aborting stack creation. Clean up may be needed.").dim()
+            );
+            return Err(e);
         }
         
         pb.finish_and_clear();
 
         // Push branch
         let pb = spinner(&format!("Pushing '{}'...", stack_pr.branch_name));
-        run_git(&["push", "-u", "origin", &stack_pr.branch_name])?;
+        if let Err(e) = run_git(&["push", "-u", "origin", &stack_pr.branch_name]) {
+            pb.finish_and_clear();
+            eprintln!(
+                "{} {}",
+                style("  [×]").red().bold(),
+                style(format!("Failed to push: {}", e)).red()
+            );
+            continue; // Skip PR creation for this one
+        }
         pb.finish_and_clear();
 
         // Generate PR description
@@ -384,13 +530,21 @@ async fn run_stack_pr_workflow(base: &str, pr: bool, commits: &[String]) -> Resu
             &base_description,
             stack_pr,
             prev_url,
-            None, // Next URL will be added by updating previous PR
+            None,
         );
 
         // Write to temp file
         let temp_file = std::env::temp_dir()
             .join(format!("orca-stack-pr-{}.md", stack_pr.part_number));
-        fs::write(&temp_file, &description)?;
+        
+        if let Err(e) = fs::write(&temp_file, &description) {
+            eprintln!(
+                "{} {}",
+                style("  [×]").red().bold(),
+                style(format!("Failed to write description: {}", e)).red()
+            );
+            continue;
+        }
 
         // Create PR
         let pb = spinner("Creating PR...");
@@ -407,31 +561,37 @@ async fn run_stack_pr_workflow(base: &str, pr: bool, commits: &[String]) -> Resu
                 "--title",
                 &stack_pr.title,
             ])
-            .output()
-            .context("Failed to run gh pr create")?;
+            .output();
+        
         pb.finish_and_clear();
-
         let _ = fs::remove_file(temp_file);
 
-        if output.status.success() {
-            let pr_url = String::from_utf8_lossy(&output.stdout).trim().to_string();
-            eprintln!(
-                "{} {}",
-                style("  [✓]").green().bold(),
-                style(&pr_url).green()
-            );
-            created_prs.push((stack_pr.branch_name.clone(), pr_url.clone()));
-
-            // Update previous PR to add "Next" link
-            if idx > 0 && created_prs.len() >= 2 {
-                update_pr_with_next_link(idx - 1, &created_prs, &stack)?;
+        match output {
+            Ok(output) if output.status.success() => {
+                let pr_url = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                eprintln!(
+                    "{} {}",
+                    style("  [✓]").green().bold(),
+                    style(&pr_url).green()
+                );
+                created_prs.push((stack_pr.branch_name.clone(), pr_url));
             }
-        } else {
-            eprintln!(
-                "{} {}",
-                style("  [×]").red().bold(),
-                style("Failed to create PR").red()
-            );
+            Ok(output) => {
+                let error = String::from_utf8_lossy(&output.stderr);
+                eprintln!(
+                    "{} {}",
+                    style("  [×]").red().bold(),
+                    style("Failed to create PR").red()
+                );
+                eprintln!("   {}", style(error.trim()).dim());
+            }
+            Err(e) => {
+                eprintln!(
+                    "{} {}",
+                    style("  [×]").red().bold(),
+                    style(format!("Failed to run gh: {}", e)).red()
+                );
+            }
         }
 
         eprintln!();
@@ -439,9 +599,73 @@ async fn run_stack_pr_workflow(base: &str, pr: bool, commits: &[String]) -> Resu
 
     eprintln!(
         "{} {}",
-        style("🎉 Stack created:").green().bold(),
-        style(format!("{} PRs", created_prs.len())).green()
+        style("🎉 Stack completed:").green().bold(),
+        style(format!("{} PRs created", created_prs.len())).green()
     );
+
+    // Cleanup failed branches if needed
+    if created_prs.len() < stack.len() {
+        eprintln!();
+        eprintln!(
+            "{} {}",
+            style("⚠️  Note:").yellow().bold(),
+            style(format!(
+                "{} PR(s) failed to create. {} leftover branches.",
+                stack.len() - created_prs.len(),
+                stack.len() - created_prs.len()
+            ))
+            .yellow()
+        );
+
+        // Find branches that were created but have no PR
+        let created_pr_branches: std::collections::HashSet<_> = created_prs
+            .iter()
+            .map(|(branch, _)| branch.as_str())
+            .collect();
+
+        let failed_branches: Vec<_> = stack
+            .iter()
+            .filter(|pr| !created_pr_branches.contains(pr.branch_name.as_str()))
+            .map(|pr| pr.branch_name.as_str())
+            .collect();
+
+        if !failed_branches.is_empty() {
+            eprintln!();
+            eprintln!("   Failed branches:");
+            for branch in &failed_branches {
+                eprintln!("     - {}", style(branch).dim());
+            }
+
+            eprintln!();
+            if flows_error::confirm_or_abort(
+                "Delete these leftover branches?",
+                false,
+            )? {
+                for branch in &failed_branches {
+                    eprintln!("   Deleting '{}'...", branch);
+                    // Delete local branch
+                    let _ = run_git(&["branch", "-D", branch]);
+                    // Try to delete remote branch if it was pushed
+                    let _ = run_git(&["push", "origin", "--delete", branch]);
+                }
+                eprintln!(
+                    "{} {}",
+                    style("[✓]").green().bold(),
+                    style("Cleanup completed").green()
+                );
+            } else {
+                eprintln!();
+                eprintln!(
+                    "   {}",
+                    style("You can manually delete them later with:").dim()
+                );
+                for branch in &failed_branches {
+                    eprintln!("     git branch -D {}", branch);
+                    eprintln!("     git push origin --delete {}", branch);
+                }
+            }
+        }
+    }
 
     Ok(())
 }
