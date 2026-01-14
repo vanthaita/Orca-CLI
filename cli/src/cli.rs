@@ -96,16 +96,20 @@ pub(crate) enum Commands {
     /// Publish current commits: create/switch branch, push -u, and create PR
     PublishCurrent {
         /// Branch name to use (e.g. feat/my-change). If omitted, derived from the latest commit message.
-        #[arg(long)]
+        #[arg(short, long)]
         branch: Option<String>,
 
         /// Base branch for PR (default: main)
-        #[arg(long, default_value_t = default_base_branch())]
+        #[arg(short = 'b', long, default_value_t = default_base_branch())]
         base: String,
 
-        /// Create PR via GitHub CLI (gh) (if gh is not available, a URL will be printed)
-        #[arg(long, default_value_t = true)]
-        pr: bool,
+        /// Skip creating PR (only push branch)
+        #[arg(long = "no-pr")]
+        no_pr: bool,
+
+        /// Workflow mode: "single" (all commits in one PR) or "stack" (one PR per commit)
+        #[arg(short, long)]
+        mode: Option<String>,
     },
 
     /// Apply a plan and publish to GitHub (create/switch branch, push -u, create PR)
