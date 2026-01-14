@@ -109,7 +109,7 @@ pub(crate) async fn run_flow_finish(push: bool, pr: bool, yes: bool, _yes_pr: bo
     
     if push {
         // Use the existing publish flow
-        crate::flow::flows::run_publish_current_flow(None, "main", pr).await?;
+        crate::flow::flows::run_publish_current_flow(None, "main", pr, None).await?;
     } else if pr {
         println!(
             "\n{} {}",

@@ -16,6 +16,8 @@ pub(crate) mod flows_conflict;
 pub(crate) mod flows_release;
 pub(crate) mod flows_stack;
 pub(crate) mod flows_safe;
+pub(crate) mod pr_template;
+pub(crate) mod pr_workflow;
 pub(crate) mod update;
 
 

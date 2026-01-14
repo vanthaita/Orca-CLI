@@ -326,6 +326,7 @@ pub(crate) async fn run_stack_publish_flow(pr: bool, yes: bool, _yes_pr: bool) -
                 Some(branch_name),
                 base,
                 true,
+                None,  // No mode specified for stack publish
             ).await?;
         }
     }

@@ -93,8 +93,8 @@ pub(crate) async fn run_commit_flow(confirm: bool, dry_run: bool, model: &str) -
     Ok(())
 }
 
-pub(crate) async fn run_publish_current_flow(branch: Option<&str>, base: &str, pr: bool) -> Result<()> {
-    super::flows_publish::run_publish_current_flow(branch, base, pr).await
+pub(crate) async fn run_publish_current_flow(branch: Option<&str>, base: &str, pr: bool, mode: Option<&str>) -> Result<()> {
+    super::flows_publish::run_publish_current_flow(branch, base, pr, mode).await
 }
 
 pub(crate) async fn run_setup_flow(
