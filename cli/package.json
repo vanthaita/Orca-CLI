@@ -1,6 +1,6 @@
 {
     "name": "@vanthaita/orca",
-    "version": "0.1.26",
+    "version": "0.1.27",
     "description": "AI-powered Git Workflow automation for modern developers",
     "scripts": {
         "postinstall": "node install.js"
