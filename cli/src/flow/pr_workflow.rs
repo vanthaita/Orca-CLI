@@ -9,6 +9,7 @@ pub enum PrWorkflowMode {
 }
 
 impl PrWorkflowMode {
+    #[allow(dead_code)]
     pub fn as_str(&self) -> &str {
         match self {
             PrWorkflowMode::Single => "single",
@@ -62,6 +63,7 @@ pub fn prompt_workflow_mode(num_commits: usize) -> Result<PrWorkflowMode> {
 pub struct StackPr {
     pub branch_name: String,
     pub title: String,
+    #[allow(dead_code)]
     pub commit_message: String,
     pub base_branch: String,
     pub part_number: usize,
@@ -115,7 +117,7 @@ fn sanitize_branch_name(commit: &str) -> String {
 /// Create a plan for stack workflow
 pub fn create_stack_plan(commits: Vec<String>, base: &str) -> Result<Vec<StackPr>> {
     let total = commits.len();
-    let mut stack = Vec::new();
+    let mut stack: Vec<StackPr> = Vec::new();
 
     for (idx, commit) in commits.iter().enumerate() {
         let part_num = idx + 1;
