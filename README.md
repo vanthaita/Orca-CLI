@@ -28,7 +28,11 @@ It's not just a wrapper; it's a workflow engine designed for the era of AI-assis
 ## ✨ Features
 
 - **🧠 Intelligent Commits**: Analyzes your diffs and generates conventional commit messages automatically.
-- **🗺️ Strategic Planning**: Generates a `plan.json` for complex tasks, allowing you to review and edit the strategy before execution.
+- **🌊 Workflow Orchestration**: Manage feature branches and lifecycles with `orca flow`.
+- **📚 Stacked Branches**: handle complex dependencies with `orca stack`.
+- **🧹 History Tidying**: Clean up your commit history with interactive rebase and autosquash using `orca tidy`.
+- **🛡️ Safety Checks**: Prevent secret leaks and run preflight checks with `orca safe`.
+- **🗺️ Strategic Planning**: Generates a `plan.json` for complex tasks.
 - **🚀 Zero-Friction Releases**: Handles the entire publish flow—commits, pushes, and creates a PR with a generated summary in one command.
 - **🔒 Local-First Privacy**: Your code stays on your machine. Orca interacts with AI providers securely using your own API keys.
 - **⚡ Blazing Fast**: Built with Rust for instant startup times and high performance.
@@ -76,16 +80,6 @@ curl -fsSL https://raw.githubusercontent.com/vanthaita/orca-releases/main/instal
 2. Run the installer.
 3. Open a new terminal and type `orca --help`.
 
-### Portable Archive
-
-Download the appropriate archive for your platform from [Releases](https://github.com/vanthaita/orca-releases/releases/latest):
-
-- **Windows**: `orca-x86_64-pc-windows-msvc.zip`
-- **macOS**: `orca-x86_64-apple-darwin.tar.gz`
-- **Linux**: `orca-x86_64-unknown-linux-gnu.tar.gz`
-
-Extract and add to your system PATH.
-
 ### From Source
 
 Requirements: [Rust](https://rustup.rs/) (stable)
@@ -102,9 +96,13 @@ cargo install --path .
 ## 🛠️ Usage
 
 ### 1. Setup
-Configure your preferred AI provider and API keys.
+Configure your preferred AI provider (Gemini, OpenAI, etc.) and API keys.
 
 ```bash
+# Setup with Gemini (default)
+orca setup --provider gemini --api-key YOUR_API_KEY
+
+# Setup with OpenAI
 orca setup --provider openai --api-key sk-...
 ```
 
@@ -116,20 +114,42 @@ Stage changes and generate a commit message in one go.
 orca commit
 ```
 
-### 3. Advanced Planning
+### 3. Workflow Management
+Start and finish features with ease.
+
+```bash
+# Start a new feature
+orca flow start --type feat --name user-auth
+
+# ... do work ...
+
+# Finish the feature (push and create PR)
+orca flow finish --push --pr
+```
+
+### 4. Stacked Branches
+Manage dependent branches without the headache.
+
+```bash
+# Create a child branch
+orca stack start my-child-branch
+
+# Rebase the stack if the parent moves
+orca stack rebase
+```
+
+### 5. Advanced Planning
 For complex features, generate a plan first.
 
 ```bash
-# Generate a plan based on current changes or a prompt
+# Generate a plan
 orca plan --out plan.json
-
-# ... Edit plan.json manually if needed ...
 
 # Execute the plan
 orca apply --file plan.json
 ```
 
-### 4. Publishing
+### 6. Publishing
 Ship your changes to GitHub without leaving the terminal.
 
 ```bash
@@ -139,16 +159,23 @@ orca publish --branch feat/my-new-feature
 
 ## ⌨️ Commands
 
-| Command | Description |
-|---------|-------------|
-| `orca commit` | Analyze changes and create a commit. |
-| `orca plan` | Generate a detailed execution plan. |
-| `orca apply` | Execute a plan file. |
-| `orca publish` | Commit, push, and create a PR. |
-| `orca setup` | Configure AI providers and settings. |
-| `orca login` | Authenticate with Orca Cloud. |
-| `orca doctor` | Check environment health. |
-| `orca update` | Update to the latest version. |
+| Command | Alias | Description |
+|---------|-------|-------------|
+| `orca commit` | | Analyze changes and create a commit. |
+| `orca flow` | `fl` | Manage feature/fix workflows (`start`, `finish`). |
+| `orca stack` | `sk` | Manage stacked branches (`start`, `list`, `rebase`, `publish`). |
+| `orca tidy` | `td` | Clean up history (`rebase`, `squash`, `fixup`, `amend`). |
+| `orca conflict` | `cf` | Resolve conflicts (`status`, `guide`, `continue`, `abort`). |
+| `orca release` | `rl` | Manage releases (`tag`, `notes`, `create`). |
+| `orca safe` | | Safety checks (`scan`, `preflight`). |
+| `orca git` | `g` | Enhanced git wrappers (`status`, `log`, `sync`). |
+| `orca branch` | `br` | Branch management (`current`, `list`, `new`, `publish`). |
+| `orca plan` | | Generate a detailed execution plan. |
+| `orca apply` | | Execute a plan file. |
+| `orca publish` | | Commit, push, and create a PR. |
+| `orca setup` | | Configure AI providers and settings. |
+| `orca update` | | Update to the latest version. |
+| `orca doctor` | | Check environment health. |
 
 ## 🤝 Contributing
 
