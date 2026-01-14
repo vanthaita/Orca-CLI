@@ -18,6 +18,7 @@ import { UserModule } from './modules/user/user.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { SubscriptionModule } from './modules/subscription/subscription.module';
 import { TeamModule } from './modules/team/team.module';
+import { Team } from './modules/team/entities/team.entity';
 
 @Module({
   imports: [
@@ -40,13 +41,13 @@ import { TeamModule } from './modules/team/team.module';
                 ...(isProduction
                   ? []
                   : [
-                      {
-                        target: 'pino-pretty',
-                        options: {
-                          singleLine: true,
-                        },
+                    {
+                      target: 'pino-pretty',
+                      options: {
+                        singleLine: true,
                       },
-                    ]),
+                    },
+                  ]),
                 {
                   target: 'pino/file',
                   options: {
@@ -76,6 +77,7 @@ import { TeamModule } from './modules/team/team.module';
           CliToken,
           AiUsageDaily,
           SepayTransaction,
+          Team,
         ],
         synchronize:
           configService.get<string>('TYPEORM_SYNC') === 'true' ||
@@ -94,4 +96,4 @@ import { TeamModule } from './modules/team/team.module';
   controllers: [AppController, HealthController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
