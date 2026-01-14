@@ -18,6 +18,8 @@ pub(crate) struct OrcaConfig {
     pub(crate) api: ApiConfig,
     #[serde(default)]
     pub(crate) git: GitConfig,
+    #[serde(default)]
+    pub(crate) pr_workflow: PrWorkflowConfig,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -63,6 +65,32 @@ fn default_provider() -> String {
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub(crate) struct GitConfig {
     pub(crate) default_model: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct PrWorkflowConfig {
+    /// Default workflow mode: "single" or "stack"
+    pub(crate) default_mode: Option<String>,
+    /// Auto-number PRs in stack mode
+    #[serde(default = "default_true")]
+    pub(crate) auto_number: bool,
+    /// Add cross-links between PRs in stack mode
+    #[serde(default = "default_true")]
+    pub(crate) link_prs: bool,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+impl Default for PrWorkflowConfig {
+    fn default() -> Self {
+        Self {
+            default_mode: None,
+            auto_number: true,
+            link_prs: true,
+        }
+    }
 }
 
 /// Get the path to the Orca config file
