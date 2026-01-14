@@ -110,6 +110,10 @@ pub(crate) enum Commands {
         /// Workflow mode: "single" (all commits in one PR) or "stack" (one PR per commit)
         #[arg(short, long)]
         mode: Option<String>,
+
+        /// Interactively select specific commits to publish (default: all commits)
+        #[arg(short = 's', long)]
+        select: bool,
     },
 
     /// Apply a plan and publish to GitHub (create/switch branch, push -u, create PR)

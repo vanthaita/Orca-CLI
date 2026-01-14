@@ -55,8 +55,8 @@ async fn dispatch_command(
             json_only,
             out,
         } => flows::run_plan_flow(&model, json_only, out).await?,
-        crate::cli::Commands::PublishCurrent { branch, base, no_pr, mode } => {
-            flows::run_publish_current_flow(branch.as_deref(), &base, !no_pr, mode.as_deref()).await?
+        crate::cli::Commands::PublishCurrent { branch, base, no_pr, mode, select } => {
+            flows::run_publish_current_flow(branch.as_deref(), &base, !no_pr, mode.as_deref(), select).await?
         }
         crate::cli::Commands::Apply {
             file,
