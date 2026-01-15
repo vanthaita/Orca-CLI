@@ -19,6 +19,7 @@ import { usePlan } from '@/hook/usePlan';
 import { useUsage } from '@/hook/useUsage';
 import { useCliTokens, useRevokeToken, useRenameToken } from '@/hook/useCliTokens';
 import { redirectToLogin } from '@/lib/auth-utils';
+import TeamManagement from '@/component/TeamManagement';
 
 const FEATURE_CONFIG: Record<string, { label: string; icon: LucideIcon; description: string }> = {
     'ai_commit': {
@@ -303,6 +304,11 @@ export default function DashboardPage() {
                                 )}
                             </div>
                         </div>
+
+                        {/* Team Management Section - Only for Team Plan */}
+                        {user.plan === 'team' && (
+                            <TeamManagement user={user} />
+                        )}
 
                         <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <div>
