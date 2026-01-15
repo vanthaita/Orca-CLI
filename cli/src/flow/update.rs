@@ -8,16 +8,17 @@ use std::io::Write;
 use std::process::Command;
 
 #[derive(Deserialize, Debug)]
-struct ReleaseInfo {
-    version: String,
-    url: String,
-    #[allow(dead_code)]
-    notes: String,
+struct GithubAsset {
+    name: String,
+    browser_download_url: String,
 }
 
 #[derive(Deserialize, Debug)]
-struct OrcaApiResponse<T> {
-    data: T,
+struct GithubRelease {
+    tag_name: String,
+    html_url: String,
+    body: String,
+    assets: Vec<GithubAsset>,
 }
 
 pub async fn run_update_flow() -> Result<()> {
@@ -26,61 +27,41 @@ pub async fn run_update_flow() -> Result<()> {
     // 1. Fetch current version
     let current_version = env!("CARGO_PKG_VERSION");
     
-    // 2. Fetch latest version from server
-    let server_url = crate::config::get_orca_base_url()?;
-    let api_prefix = crate::config::ORCA_API_PREFIX;
-    let server_url = server_url.trim_end_matches('/');
-    let api_prefix = api_prefix.trim_matches('/');
+    // 2. Fetch latest version from GitHub
+    let releases_url = "https://api.github.com/repos/vanthaita/orca-releases/releases/latest";
 
-    let releases_url = if server_url.ends_with(&format!("/{api_prefix}")) {
-        format!("{server_url}/releases/latest")
-    } else {
-        format!("{server_url}/{api_prefix}/releases/latest")
-    };
-
-    println!("Checking: {}", style(&releases_url).dim());
+    println!("Checking: {}", style(releases_url).dim());
     let client = reqwest::Client::new();
     let resp = client
-        .get(&releases_url)
+        .get(releases_url)
+        .header("User-Agent", "orca-cli") // GitHub API requires User-Agent
         .send()
         .await
-        .context("Failed to check for updates (server unreachable)")?;
+        .context("Failed to check for updates (GitHub API unreachable)")?;
 
     if !resp.status().is_success() {
-        if resp.status() == reqwest::StatusCode::NOT_FOUND {
-            anyhow::bail!(
-                "Update endpoint not found (404). Tried: {}\n\nIf you configured a custom Orca server URL, ensure it points to the Orca API host (e.g. https://api.orcacli.codes) and that the server supports '{}/releases/latest'.",
-                releases_url,
-                api_prefix
-            );
-        }
-
         let status = resp.status();
         let text = resp.text().await.unwrap_or_default();
-        return Err(crate::api_client::handle_api_error(status, &text));
+        anyhow::bail!("Failed to fetch release info. Status: {}. Response: {}", status, text);
     }
 
     let body = resp.text().await.context("Failed to read update response body")?;
 
-    let release_info: ReleaseInfo = match serde_json::from_str::<OrcaApiResponse<ReleaseInfo>>(&body) {
-        Ok(v) => v.data,
-        Err(_) => serde_json::from_str::<ReleaseInfo>(&body).with_context(|| {
-            let snippet = body.chars().take(400).collect::<String>();
-            format!(
-                "Failed to parse release info (unexpected response schema). URL: {releases_url}\nResponse (first 400 chars): {snippet}"
-            )
-        })?,
-    };
+    let release_info: GithubRelease = serde_json::from_str(&body)
+        .context("Failed to parse GitHub release info")?;
+
+    // Parse version from tag_name (e.g., "v0.1.27" -> "0.1.27")
+    let latest_version = release_info.tag_name.trim_start_matches('v');
 
     println!("Current version: {}", style(current_version).yellow());
-    println!("Latest version:  {}", style(&release_info.version).green());
+    println!("Latest version:  {}", style(latest_version).green());
 
-    if release_info.version == current_version {
+    if latest_version == current_version {
         println!("{}", style("You are already on the latest version.").green());
         return Ok(());
     }
 
-    println!("\nRelease notes:\n{}", release_info.notes);
+    println!("\nRelease notes:\n{}", release_info.body);
 
     if !cfg!(target_os = "windows") {
         println!(
@@ -115,6 +96,12 @@ pub async fn run_update_flow() -> Result<()> {
         anyhow::bail!("Installer script failed with status: {}", status);
     }
     
+    // Windows Logic
+    // Find MSI asset
+    let msi_asset = release_info.assets.iter()
+        .find(|a| a.name.ends_with(".msi"))
+        .context("No .msi installer found in the latest release assets")?;
+
     if !dialoguer::Confirm::new()
         .with_prompt("Do you want to update now?")
         .default(true)
@@ -126,11 +113,11 @@ pub async fn run_update_flow() -> Result<()> {
 
     // 3. Download the MSI installer
     let temp_dir = env::temp_dir();
-    let installer_path = temp_dir.join("Orca.msi");
+    let installer_path = temp_dir.join(&msi_asset.name);
     
-    println!("Downloading update from {}...", release_info.url);
+    println!("Downloading update from {}...", msi_asset.browser_download_url);
     
-    let mut response = reqwest::get(&release_info.url).await?;
+    let mut response = reqwest::get(&msi_asset.browser_download_url).await?;
     let total_size = response.content_length().unwrap_or(0);
     
     let pb = ProgressBar::new(total_size);
