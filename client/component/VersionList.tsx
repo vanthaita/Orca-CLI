@@ -66,28 +66,32 @@ export const VersionList = ({ releases, className = "" }: VersionListProps) => {
                     </button>
                     {/* Other buttons remain similar or can be refactored if needed, skipping for brevity but good practice to apply all */}
                     <button
-                        type="button"
-                        disabled
-                        className="px-4 py-3 text-sm font-medium text-neutral-500 cursor-not-allowed opacity-70"
-                        title="Coming soon"
+                        onClick={() => setViewMode("npm")}
+                        className={cn(
+                            "px-4 py-3 text-sm font-medium transition-colors",
+                            viewMode === "npm"
+                                ? "text-emerald-400 border-b-2 border-emerald-400"
+                                : "text-neutral-400 hover:text-neutral-200"
+                        )}
                     >
                         <span className="inline-flex items-center gap-2">
                             <PackageIcon className="h-4 w-4" />
                             npm
                         </span>
-                        <span className="ml-2 text-[10px] uppercase tracking-wider">Coming soon</span>
                     </button>
                     <button
-                        type="button"
-                        disabled
-                        className="px-4 py-3 text-sm font-medium text-neutral-500 cursor-not-allowed opacity-70"
-                        title="Coming soon"
+                        onClick={() => setViewMode("bun")}
+                        className={cn(
+                            "px-4 py-3 text-sm font-medium transition-colors",
+                            viewMode === "bun"
+                                ? "text-emerald-400 border-b-2 border-emerald-400"
+                                : "text-neutral-400 hover:text-neutral-200"
+                        )}
                     >
                         <span className="inline-flex items-center gap-2">
                             <PackageIcon className="h-4 w-4" />
                             bun
                         </span>
-                        <span className="ml-2 text-[10px] uppercase tracking-wider">Coming soon</span>
                     </button>
                     <button
                         type="button"
@@ -102,16 +106,18 @@ export const VersionList = ({ releases, className = "" }: VersionListProps) => {
                         <span className="ml-2 text-[10px] uppercase tracking-wider">Coming soon</span>
                     </button>
                     <button
-                        type="button"
-                        disabled
-                        className="px-4 py-3 text-sm font-medium text-neutral-500 cursor-not-allowed opacity-70"
-                        title="Coming soon"
+                        onClick={() => setViewMode("winget")}
+                        className={cn(
+                            "px-4 py-3 text-sm font-medium transition-colors",
+                            viewMode === "winget"
+                                ? "text-emerald-400 border-b-2 border-emerald-400"
+                                : "text-neutral-400 hover:text-neutral-200"
+                        )}
                     >
                         <span className="inline-flex items-center gap-2">
                             <PackageIcon className="h-4 w-4" />
                             winget
                         </span>
-                        <span className="ml-2 text-[10px] uppercase tracking-wider">Coming soon</span>
                     </button>
                 </div>
             </div>
@@ -211,6 +217,87 @@ export const VersionList = ({ releases, className = "" }: VersionListProps) => {
                         </div>
                         <p className="mt-2 text-[10px] text-neutral-500">
                             Detects OS/Arch automatically. Installs to <code className="bg-white/5 px-1 rounded">/usr/local/bin</code>.
+                        </p>
+                    </div>
+                </div>
+            ) : viewMode === "npm" ? (
+                <div className="p-6">
+                    <div className="mb-4">
+                        <h4 className="text-sm font-medium text-neutral-300 mb-2">NPM Global Install</h4>
+                        <div className="relative group">
+                            <div className="absolute inset-0 rounded-lg blur-sm transition-all" />
+                            <div className="relative bg-black/40 border-2 border-dashed border-white/20 rounded-lg p-3 font-mono text-xs text-neutral-300 overflow-x-auto flex items-center justify-between gap-4">
+                                <code className="whitespace-pre">npm install -g @vanthaita/orca</code>
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText("npm install -g @vanthaita/orca");
+                                    }}
+                                    className="p-1.5 hover:bg-white/10 rounded-md transition-colors text-neutral-400 hover:text-white"
+                                    title="Copy command"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                                        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <p className="mt-2 text-[10px] text-neutral-500">
+                            Requires Node.js. Install globally (-g) for system-wide access.
+                        </p>
+                    </div>
+                </div>
+            ) : viewMode === "bun" ? (
+                <div className="p-6">
+                    <div className="mb-4">
+                        <h4 className="text-sm font-medium text-neutral-300 mb-2">Bun Global Install</h4>
+                        <div className="relative group">
+                            <div className="absolute inset-0 rounded-lg blur-sm transition-all" />
+                            <div className="relative bg-black/40 border-2 border-dashed border-white/20 rounded-lg p-3 font-mono text-xs text-neutral-300 overflow-x-auto flex items-center justify-between gap-4">
+                                <code className="whitespace-pre">bun install -g @vanthaita/orca</code>
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText("bun install -g @vanthaita/orca");
+                                    }}
+                                    className="p-1.5 hover:bg-white/10 rounded-md transition-colors text-neutral-400 hover:text-white"
+                                    title="Copy command"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                                        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <p className="mt-2 text-[10px] text-neutral-500">
+                            Fast installation with Bun.
+                        </p>
+                    </div>
+                </div>
+            ) : viewMode === "winget" ? (
+                <div className="p-6">
+                    <div className="mb-4">
+                        <h4 className="text-sm font-medium text-neutral-300 mb-2">Winget Install (Windows)</h4>
+                        <div className="relative group">
+                            <div className="absolute inset-0 rounded-lg blur-sm transition-all" />
+                            <div className="relative bg-black/40 border-2 border-dashed border-white/20 rounded-lg p-3 font-mono text-xs text-neutral-300 overflow-x-auto flex items-center justify-between gap-4">
+                                <code className="whitespace-pre">winget install vanthaita.Orca</code>
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText("winget install vanthaita.Orca");
+                                    }}
+                                    className="p-1.5 hover:bg-white/10 rounded-md transition-colors text-neutral-400 hover:text-white"
+                                    title="Copy command"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                                        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <p className="mt-2 text-[10px] text-neutral-500">
+                            Install via Windows Package Manager.
                         </p>
                     </div>
                 </div>

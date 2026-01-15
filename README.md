@@ -43,14 +43,19 @@ Choose your preferred installation method:
 
 ### npm (Cross-platform)
 
+**Recommended for global installation:**
+
 ```bash
-npm install -g orca
+npm install -g @vanthaita/orca
 ```
+
+> [!NOTE]
+> Installing globally (`-g` flag) makes the `orca` command available system-wide. If you've previously installed via MSI or other methods, see the [Installation Notes](#-installation-notes) section below.
 
 ### Bun (Cross-platform)
 
 ```bash
-bun install -g orca
+bun install -g @vanthaita/orca
 ```
 
 ### Homebrew (macOS/Linux)
@@ -92,6 +97,57 @@ cd Orca/cli
 # Build and install
 cargo install --path .
 ```
+
+## 📝 Installation Notes
+
+### Choosing the Right Installation Method
+
+- **Windows users**: Use the [MSI Installer](#windows-msi-installer) for the best experience. It handles PATH configuration automatically.
+- **npm/bun users**: Use the `-g` (global) flag to install system-wide. This makes `orca` available in any directory.
+- **Homebrew/winget users**: These package managers handle global installation automatically.
+
+### NPM Installation Tips
+
+> [!IMPORTANT]
+> **If you've installed via MSI or another method**, installing via npm may cause conflicts. Choose one installation method and stick with it.
+
+**Prevent automatic updates:**
+
+By default, npm may update packages automatically depending on your configuration. To lock to a specific version:
+
+```bash
+# Install a specific version
+npm install -g @vanthaita/orca@0.1.27
+
+# Check your installed version
+orca --version
+```
+
+**Troubleshooting npm installation:**
+
+```bash
+# If the command is not found after installation:
+which orca  # macOS/Linux
+where orca  # Windows
+
+# Reinstall if needed:
+npm uninstall -g @vanthaita/orca
+npm install -g @vanthaita/orca
+```
+
+### MSI and NPM Conflicts
+
+> [!WARNING]
+> If you installed Orca using the **Windows MSI installer**, do not install it again via npm. The MSI installer places the binary in your system PATH, and npm cannot update or manage it.
+
+**If you need to switch from MSI to npm:**
+
+1. Uninstall Orca via Windows Settings → Apps → Orca
+2. Then install via npm: `npm install -g @vanthaita/orca`
+
+**To update an MSI installation:**
+
+Download and run the latest MSI installer from [Releases](https://github.com/vanthaita/orca-releases/releases/latest).
 
 ## 🛠️ Usage
 

@@ -1,7 +1,8 @@
 {
     "name": "@vanthaita/orca",
     "version": "0.1.27",
-    "description": "AI-powered Git Workflow automation for modern developers",
+    "description": "AI-powered Git workflow CLI for modern developers. Intelligent commits, workflow orchestration, and zero-friction releases.",
+    "preferGlobal": true,
     "scripts": {
         "postinstall": "node install.js"
     },
