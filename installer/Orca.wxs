@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Package
     Name="Orca"
     Manufacturer="vanthaita"
@@ -31,9 +31,10 @@
       <ComponentGroupRef Id="OrcaShortcuts" />
     </Feature>
 
-    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLDIR" />
+    <UIRef Id="WixUI_InstallDir" />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
     <WixVariable Id="WixUILicenseRtf" Value="installer/License.rtf" />
-    <WixVariable Id="WixUIIcon" Value="client\app\favicon.ico" />
+    <WixVariable Id="WixUIBannerBmp" Value="client\app\favicon.ico" />
 
     <ComponentGroup Id="OrcaComponents" Directory="INSTALLFOLDER">
       <Component Id="OrcaExeComponent" Guid="*">

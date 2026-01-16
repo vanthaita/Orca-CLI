@@ -55,7 +55,7 @@ jobs:
         shell: pwsh
         run: |
           $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
-          wix build installer\Orca.wxs -d Version=$env:VERSION -o OrcaSetup.msi
+          wix build installer\Orca.wxs -ext WixToolset.UI.wixext -d Version=$env:VERSION -o OrcaSetup.msi
 
       - name: Upload MSI Artifact
         uses: actions/upload-artifact@v4
