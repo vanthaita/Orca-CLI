@@ -20,6 +20,7 @@ import {
   SiteHeader,
   SiteFooter,
   WorkflowSection,
+  PackageIcon,
 } from "@/component";
 
 const Home = () => {
@@ -115,20 +116,41 @@ const Home = () => {
                 </p>
 
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText("npm install -g @vanthaita/orca");
+                      const btn = document.getElementById("npm-install-btn-text");
+                      if (btn) {
+                        const original = btn.innerText;
+                        btn.innerText = "Copied!";
+                        setTimeout(() => {
+                          btn.innerText = original;
+                        }, 2000);
+                      }
+                    }}
+                    className={`relative inline-flex items-center justify-center gap-3 bg-white px-8 py-4 text-sm font-bold text-black transition hover:bg-emerald-300 group overflow-hidden cursor-pointer ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
+                    style={{ clipPath: "polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)" }}
+                  >
+                    <PackageIcon className="h-5 w-5" />
+                    <span id="npm-install-btn-text">Install using NPM</span>
+                  </button>
+
                   <Link
-                    className={`relative inline-flex items-center justify-center gap-3 bg-white px-8 py-4 text-sm font-bold text-black transition hover:bg-emerald-300 group overflow-hidden ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}
+                    className="relative inline-flex items-center justify-center gap-3 bg-neutral-900 border border-neutral-800 px-8 py-4 text-sm font-bold text-neutral-300 transition hover:text-white hover:border-neutral-700 hover:bg-neutral-800 group overflow-hidden"
                     href={msiUrl}
                     target="_blank"
                     rel="noreferrer"
                     style={{ clipPath: "polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)" }}
                   >
-                    <WindowsIcon className="h-5 w-5" />
-                    <span>Download for Windows</span>
+                    <WindowsIcon className="h-5 w-5 text-neutral-500 group-hover:text-white transition-colors" />
+                    <span>Download Installer</span>
                   </Link>
                 </div>
                 {isWindows && (
-                  <div className="text-xs font-mono text-emerald-500/80 uppercase tracking-wider">
-                    ★ Recommmended for your system
+                  <div className="text-xs font-mono text-emerald-500/80 uppercase tracking-wider flex items-center gap-2">
+                    <span>★ Recommmended for your system</span>
+                    <span className="text-neutral-600">|</span>
+                    <span className="text-neutral-500">v0.1.2</span>
                   </div>
                 )}
               </div>
