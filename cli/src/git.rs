@@ -286,8 +286,32 @@ pub(crate) fn resolve_base_ref(base: &str) -> String {
     
     // Check if remote ref exists
     if run_git(&["rev-parse", "--verify", &remote_ref]).is_ok() {
-        remote_ref
-    } else {
-        base.to_string()
+        return remote_ref;
     }
+    
+    // Check if local branch exists
+    if run_git(&["rev-parse", "--verify", base]).is_ok() {
+        return base.to_string();
+    }
+    
+    // If "main" doesn't exist, try "master"
+    if base == "main" {
+        let master_remote_ref = format!("{}/master", remote);
+        if run_git(&["rev-parse", "--verify", &master_remote_ref]).is_ok() {
+            return master_remote_ref;
+        }
+        if run_git(&["rev-parse", "--verify", "master"]).is_ok() {
+            return "master".to_string();
+        }
+    }
+    
+    // Fall back to detecting the default branch from remote HEAD
+    if let Ok(symbolic_ref) = run_git(&["symbolic-ref", &format!("refs/remotes/{}/HEAD", remote)]) {
+        if let Some(branch_name) = symbolic_ref.trim().strip_prefix(&format!("refs/remotes/{}/", remote)) {
+            return format!("{}/{}", remote, branch_name);
+        }
+    }
+    
+    // Last resort: return the original input
+    base.to_string()
 }
