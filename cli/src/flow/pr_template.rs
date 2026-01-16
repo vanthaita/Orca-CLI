@@ -196,6 +196,8 @@ pub fn check_existing_pr(branch: &str, base: &str) -> Result<Option<String>> {
             // gh command not available or failed to execute
             Ok(None)
         }
+    }
+}
 /// Get commit messages between base and current branch
 pub fn get_commits_since_base(base: &str) -> Result<Vec<String>> {
     let effective_base = crate::git::resolve_base_ref(base);
