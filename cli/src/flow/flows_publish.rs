@@ -430,9 +430,10 @@ async fn run_stack_pr_workflow(base: &str, pr: bool, commits: &[String], selecte
     eprintln!();
 
     // Get all commit hashes first (in reverse order - oldest first)
+    let effective_base = crate::git::resolve_base_ref(base);
     let all_commits_output = run_git(&[
         "log",
-        &format!("{}..HEAD", base),
+        &format!("{}..HEAD", effective_base),
         "--pretty=format:%H",
         "--reverse",
     ])?;

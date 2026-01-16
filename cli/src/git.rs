@@ -279,3 +279,15 @@ pub(crate) fn rebase_upstream() -> Result<()> {
     run_git(&["rebase", &upstream])?;
     Ok(())
 }
+
+pub(crate) fn resolve_base_ref(base: &str) -> String {
+    let remote = get_remote_name().unwrap_or_else(|_| "origin".to_string());
+    let remote_ref = format!("{}/{}", remote, base);
+    
+    // Check if remote ref exists
+    if run_git(&["rev-parse", "--verify", &remote_ref]).is_ok() {
+        remote_ref
+    } else {
+        base.to_string()
+    }
+}

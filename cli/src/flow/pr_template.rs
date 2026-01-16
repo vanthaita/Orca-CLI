@@ -196,14 +196,12 @@ pub fn check_existing_pr(branch: &str, base: &str) -> Result<Option<String>> {
             // gh command not available or failed to execute
             Ok(None)
         }
-    }
-}
-
 /// Get commit messages between base and current branch
 pub fn get_commits_since_base(base: &str) -> Result<Vec<String>> {
+    let effective_base = crate::git::resolve_base_ref(base);
     let output = crate::git::run_git(&[
         "log",
-        &format!("{}..HEAD", base),
+        &format!("{}..HEAD", effective_base),
         "--pretty=format:%s",
     ])?;
 
@@ -219,9 +217,10 @@ pub fn get_commits_since_base(base: &str) -> Result<Vec<String>> {
 /// Get commit hashes and messages between base and current branch
 /// Returns Vec<(hash, message)> in chronological order (newest first)
 pub fn get_commits_with_hashes_since_base(base: &str) -> Result<Vec<(String, String)>> {
+    let effective_base = crate::git::resolve_base_ref(base);
     let output = crate::git::run_git(&[
         "log",
-        &format!("{}..HEAD", base),
+        &format!("{}..HEAD", effective_base),
         "--pretty=format:%H@@@@%s",
     ])?;
 
