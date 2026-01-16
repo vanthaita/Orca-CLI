@@ -32,8 +32,7 @@
       <ComponentGroupRef Id="OrcaShortcuts" />
     </Feature>
 
-    <ui:UIRef Id="WixUI_InstallDir" />
-    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLDIR" />
     <WixVariable Id="WixUILicenseRtf" Value="installer/License.rtf" />
     <WixVariable Id="WixUIBannerBmp" Value="client\app\favicon.ico" />
 
