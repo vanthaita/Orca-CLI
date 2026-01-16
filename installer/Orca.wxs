@@ -16,7 +16,7 @@
     <Icon Id="OrcaAppIcon" SourceFile="client\app\favicon.ico" />
     <Property Id="ARPPRODUCTICON" Value="OrcaAppIcon" />
 
-    <StandardDirectory Id="ProgramFilesFolder">
+    <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="INSTALLDIR" Name="Orca">
         <Directory Id="INSTALLFOLDER" Name="bin" />
       </Directory>

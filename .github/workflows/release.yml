@@ -47,7 +47,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          repository: vanthaita/orca-releases
+          repository: vanthaita/Orca-CLI
           token: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
           draft: false
           prerelease: false
@@ -153,7 +153,7 @@ jobs:
         shell: pwsh
         run: |
           $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
-          wix build installer\Orca.wxs -ext WixToolset.UI.wixext -d Version=$env:VERSION -o OrcaSetup-$env:VERSION.msi
+          wix build installer\Orca.wxs -ext WixToolset.UI.wixext -arch x64 -d Version=$env:VERSION -o OrcaSetup-$env:VERSION.msi
 
       - name: Upload to Public GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
@@ -161,7 +161,7 @@ jobs:
         with:
           files: |
             orca-${{ matrix.target }}.${{ matrix.archive }}
-          repository: vanthaita/orca-releases
+          repository: vanthaita/Orca-CLI
           token: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
           make_latest: false
 
@@ -171,7 +171,7 @@ jobs:
         with:
           files: |
             OrcaSetup-*.msi
-          repository: vanthaita/orca-releases
+          repository: vanthaita/Orca-CLI
           token: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
           make_latest: false
 
@@ -352,7 +352,7 @@ jobs:
           GH_TOKEN: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
         run: |
           gh release download $GITHUB_REF_NAME \
-            --repo vanthaita/orca-releases \
+            --repo vanthaita/Orca-CLI \
             --pattern "orca-x86_64-apple-darwin.tar.gz" \
             --pattern "orca-x86_64-unknown-linux-gnu.tar.gz"
 
