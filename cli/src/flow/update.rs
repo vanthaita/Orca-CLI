@@ -28,7 +28,7 @@ pub async fn run_update_flow() -> Result<()> {
     let current_version = env!("CARGO_PKG_VERSION");
     
     // 2. Fetch latest version from GitHub
-    let releases_url = "https://api.github.com/repos/vanthaita/orca-releases/releases/latest";
+    let releases_url = "https://api.github.com/repos/vanthaita/Orca/releases/latest";
 
     println!("Checking: {}", style(releases_url).dim());
     let client = reqwest::Client::new();
@@ -67,7 +67,7 @@ pub async fn run_update_flow() -> Result<()> {
         println!(
             "\n{}\n{}\n{}",
             style("Update on this platform will run the official installer script:").yellow().bold(),
-            style("curl -fsSL https://raw.githubusercontent.com/vanthaita/orca-releases/main/install.sh | sh").cyan(),
+            style("curl -fsSL https://raw.githubusercontent.com/vanthaita/Orca/main/install.sh | sh").cyan(),
             style("This will modify files on your system.").yellow()
         );
 
@@ -83,7 +83,7 @@ pub async fn run_update_flow() -> Result<()> {
         let status = Command::new("sh")
             .args([
                 "-c",
-                "curl -fsSL https://raw.githubusercontent.com/vanthaita/orca-releases/main/install.sh | sh",
+                "curl -fsSL https://raw.githubusercontent.com/vanthaita/Orca/main/install.sh | sh",
             ])
             .status()
             .context("Failed to run installer script (requires: sh, curl)")?;
