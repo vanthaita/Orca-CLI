@@ -25,7 +25,7 @@ import {
 
 const Home = () => {
   useAuth();
-  const repo = "vanthaita/orca-releases";
+  const repo = "vanthaita/Orca";
 
   const [releases, setReleases] = useState<any[]>([]);
   const [latestRelease, setLatestRelease] = useState<any>(null);
@@ -118,7 +118,7 @@ const Home = () => {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText("npm install -g @vanthaita/orca");
+                      navigator.clipboard.writeText("npm install -g orcacli");
                       const btn = document.getElementById("npm-install-btn-text");
                       if (btn) {
                         const original = btn.innerText;

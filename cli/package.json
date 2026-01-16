@@ -1,6 +1,6 @@
 {
-    "name": "@vanthaita/orca",
-    "version": "0.1.28",
+    "name": "orcacli",
+    "version": "0.1.29",
     "description": "AI-powered Git workflow CLI for modern developers. Intelligent commits, workflow orchestration, and zero-friction releases.",
     "preferGlobal": true,
     "scripts": {
@@ -32,11 +32,11 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/vanthaita/orca-releases.git"
+        "url": "https://github.com/vanthaita/Orca.git"
     },
     "homepage": "https://orcacli.codes",
     "bugs": {
-        "url": "https://github.com/vanthaita/orca-releases/issues"
+        "url": "https://github.com/vanthaita/Orca/issues"
     },
     "engines": {
         "node": ">=14.0.0"

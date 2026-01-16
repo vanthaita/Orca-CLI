@@ -5,9 +5,9 @@
 
   **AI-powered Git workflow for modern developers.**
 
-  [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-  [![Rust](https://img.shields.io/badge/built_with-Rust-d83018.svg)](https://www.rust-lang.org/)
-  [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+  [![License](https://img.shields.io/github/license/vanthaita/Orca)](LICENSE)
+  [![Release](https://img.shields.io/github/v/release/vanthaita/Orca)](https://github.com/vanthaita/Orca/releases)
+  [![Rust](https://img.shields.io/badge/built_with-Rust-d09968.svg)](https://www.rust-lang.org)
 </div>
 
 <br />
@@ -131,8 +131,8 @@ which orca  # macOS/Linux
 where orca  # Windows
 
 # Reinstall if needed:
-npm uninstall -g @vanthaita/orca
-npm install -g @vanthaita/orca
+npm uninstall -g orcacli
+npm install -g orcacli
 ```
 
 ### MSI and NPM Conflicts
@@ -239,4 +239,4 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for deta
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache-2.0 License - see the [LICENSE](LICENSE) file for details.

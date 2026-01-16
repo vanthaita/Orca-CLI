@@ -18,11 +18,11 @@ export const SiteFooter = () => {
                 </Link>
                 <Link
                     className="hover:text-white transition-colors"
-                    href="https://github.com/vanthaita/orca-releases"
+                    href="https://github.com/vanthaita/Orca"
                     target="_blank"
                     rel="noreferrer"
                 >
-                    GitHub (Releases)
+                    GitHub
                 </Link>
             </div>
         </footer>

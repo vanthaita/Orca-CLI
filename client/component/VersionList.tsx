@@ -137,10 +137,10 @@ export const VersionList = ({ releases, className = "" }: VersionListProps) => {
                         <div className="relative group">
                             <div className="absolute inset-0 rounded-lg blur-sm transition-all" />
                             <div className="relative bg-black/40 border-2 border-dashed border-white/20 rounded-lg p-3 font-mono text-xs text-neutral-300 overflow-x-auto flex items-center justify-between gap-4">
-                                <code className="whitespace-pre">npm install -g @vanthaita/orca</code>
+                                <code className="whitespace-pre">npm install -g orcacli</code>
                                 <button
                                     onClick={() => {
-                                        navigator.clipboard.writeText("npm install -g @vanthaita/orca");
+                                        navigator.clipboard.writeText("npm install -g orcacli");
                                     }}
                                     className="p-1.5 hover:bg-white/10 rounded-md transition-colors text-neutral-400 hover:text-white"
                                     title="Copy command"
@@ -199,10 +199,10 @@ export const VersionList = ({ releases, className = "" }: VersionListProps) => {
                         <div className="relative group">
                             <div className="absolute inset-0 rounded-lg blur-sm  transition-all" />
                             <div className="relative bg-black/40 border-2 border-dashed border-white/20 rounded-lg p-3 font-mono text-xs text-neutral-300 overflow-x-auto flex items-center justify-between gap-4">
-                                <code className="whitespace-pre">curl -fsSL https://raw.githubusercontent.com/vanthaita/orca-releases/main/install.sh | sh</code>
+                                <code className="whitespace-pre">curl -fsSL https://raw.githubusercontent.com/vanthaita/Orca/main/install.sh | sh</code>
                                 <button
                                     onClick={() => {
-                                        navigator.clipboard.writeText("curl -fsSL https://raw.githubusercontent.com/vanthaita/orca-releases/main/install.sh | sh");
+                                        navigator.clipboard.writeText("curl -fsSL https://raw.githubusercontent.com/vanthaita/Orca/main/install.sh | sh");
                                     }}
                                     className="p-1.5 hover:bg-white/10 rounded-md transition-colors text-neutral-400 hover:text-white"
                                     title="Copy command"
@@ -226,10 +226,10 @@ export const VersionList = ({ releases, className = "" }: VersionListProps) => {
                         <div className="relative group">
                             <div className="absolute inset-0 rounded-lg blur-sm transition-all" />
                             <div className="relative bg-black/40 border-2 border-dashed border-white/20 rounded-lg p-3 font-mono text-xs text-neutral-300 overflow-x-auto flex items-center justify-between gap-4">
-                                <code className="whitespace-pre">bun install -g @vanthaita/orca</code>
+                                <code className="whitespace-pre">bun install -g orcacli</code>
                                 <button
                                     onClick={() => {
-                                        navigator.clipboard.writeText("bun install -g @vanthaita/orca");
+                                        navigator.clipboard.writeText("bun install -g orcacli");
                                     }}
                                     className="p-1.5 hover:bg-white/10 rounded-md transition-colors text-neutral-400 hover:text-white"
                                     title="Copy command"
