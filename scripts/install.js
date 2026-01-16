@@ -15,7 +15,7 @@ const zlib = require('zlib');
 
 const streamPipeline = promisify(pipeline);
 
-const REPO = 'vanthaita/orca-releases';
+const REPO = 'vanthaita/Orca';
 const BINARY_NAME = process.platform === 'win32' ? 'orca.exe' : 'orca';
 // BIN_DIR is detected dynamically in install()
 

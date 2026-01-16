@@ -2,7 +2,7 @@
 set -e
 
 # Define variables
-REPO="vanthaita/orca-releases"
+REPO="vanthaita/Orca"
 BINARY_NAME="orca"
 INSTALL_DIR="/usr/local/bin"
 

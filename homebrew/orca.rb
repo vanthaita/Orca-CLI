@@ -9,18 +9,18 @@ class Orca < Formula
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/vanthaita/orca-releases/releases/download/v0.1.14/orca-x86_64-apple-darwin.tar.gz"
+      url "https://github.com/vanthaita/Orca/releases/download/v0.1.14/orca-x86_64-apple-darwin.tar.gz"
       sha256 "REPLACE_WITH_ACTUAL_SHA256_INTEL"
     else
       # Apple Silicon - fallback to Intel with Rosetta
-      url "https://github.com/vanthaita/orca-releases/releases/download/v0.1.14/orca-x86_64-apple-darwin.tar.gz"
+      url "https://github.com/vanthaita/Orca/releases/download/v0.1.14/orca-x86_64-apple-darwin.tar.gz"
       sha256 "REPLACE_WITH_ACTUAL_SHA256_ARM"
     end
   end
 
   on_linux do
     if Hardware::CPU.intel?
-      url "https://github.com/vanthaita/orca-releases/releases/download/v0.1.14/orca-x86_64-unknown-linux-gnu.tar.gz"
+      url "https://github.com/vanthaita/Orca/releases/download/v0.1.14/orca-x86_64-unknown-linux-gnu.tar.gz"
       sha256 "REPLACE_WITH_ACTUAL_SHA256_LINUX"
     end
   end

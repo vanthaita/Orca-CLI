@@ -28,7 +28,7 @@ function getAssetName() {
 }
 
 const assetName = getAssetName();
-const downloadUrl = `https://github.com/vanthaita/orca-releases/releases/download/v${version}/${assetName}`;
+const downloadUrl = `https://github.com/vanthaita/Orca/releases/download/v${version}/${assetName}`;
 const binDir = path.join(__dirname, 'bin');
 const downloadPath = path.join(binDir, assetName);
 
