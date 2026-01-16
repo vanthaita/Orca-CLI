@@ -15,7 +15,7 @@ InstallModes:
 UpgradeBehavior: install
 Installers:
 - Architecture: x64
-  InstallerUrl: https://github.com/vanthaita/Orca/releases/download/v0.1.29/OrcaSetup-0.1.29.msi
+  InstallerUrl: https://github.com/vanthaita/Orca-CLI/releases/download/v0.1.29/OrcaSetup-0.1.29.msi
   InstallerSha256: 7021208748444145528513775698030824205147814275764742577423484107
   ProductCode: '{6E7B76E3-2D0A-45A0-8E6C-0E0B3F8C8C15}'
 ManifestType: installer
