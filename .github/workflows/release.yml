@@ -146,7 +146,7 @@ jobs:
 
           wix -?
 
-          wix extension add -g WixToolset.UI.wixext/4.0.4
+          wix extension add -g WixToolset.UI.wixext
 
       - name: Build MSI (Windows)
         if: matrix.os == 'windows-latest'
@@ -442,7 +442,7 @@ jobs:
           GH_TOKEN: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
         run: |
           gh release download ${{ github.ref_name }} `
-            --repo vanthaita/orca-releases `
+            --repo vanthaita/Orca-CLI `
             --pattern "OrcaSetup-*.msi"
 
       - name: Compute SHA256
@@ -464,15 +464,15 @@ jobs:
           # Update installer manifest
           (Get-Content winget/vanthaita.Orca.installer.yaml) `
             -replace 'PackageVersion: .*', "PackageVersion: $env:VERSION" `
-            -replace 'InstallerUrl: .*', "InstallerUrl: https://github.com/vanthaita/orca-releases/releases/download/${{ github.ref_name }}/$env:MSI_FILENAME" `
+            -replace 'InstallerUrl: .*', "InstallerUrl: https://github.com/vanthaita/Orca-CLI/releases/download/${{ github.ref_name }}/$env:MSI_FILENAME" `
             -replace 'InstallerSha256: .*', "InstallerSha256: $env:MSI_SHA256" |
             Set-Content winget/vanthaita.Orca.installer.yaml
 
           # Update locale manifest
           (Get-Content winget/vanthaita.Orca.locale.en-US.yaml) `
             -replace 'PackageVersion: .*', "PackageVersion: $env:VERSION" `
-            -replace 'ReleaseNotes: .*', "ReleaseNotes: |-`n  See release notes at: https://github.com/vanthaita/orca-releases/releases/tag/${{ github.ref_name }}" `
-            -replace 'ReleaseNotesUrl: .*', "ReleaseNotesUrl: https://github.com/vanthaita/orca-releases/releases/tag/${{ github.ref_name }}" |
+            -replace 'ReleaseNotes: .*', "ReleaseNotes: |-`n  See release notes at: https://github.com/vanthaita/Orca-CLI/releases/tag/${{ github.ref_name }}" `
+            -replace 'ReleaseNotesUrl: .*', "ReleaseNotesUrl: https://github.com/vanthaita/Orca-CLI/releases/tag/${{ github.ref_name }}" |
             Set-Content winget/vanthaita.Orca.locale.en-US.yaml
 
       - name: Create PR to winget-pkgs
