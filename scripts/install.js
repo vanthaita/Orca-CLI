@@ -15,7 +15,7 @@ const zlib = require('zlib');
 
 const streamPipeline = promisify(pipeline);
 
-const REPO = 'vanthaita/Orca';
+const REPO = 'vanthaita/Orca-CLI';
 const BINARY_NAME = process.platform === 'win32' ? 'orca.exe' : 'orca';
 // BIN_DIR is detected dynamically in install()
 
@@ -263,7 +263,7 @@ async function install() {
         console.log('Run "orca --help" to get started.');
     } catch (error) {
         console.error('Installation failed:', error.message);
-        console.error('\nPlease install manually from: https://github.com/vanthaita/orca-releases/releases/latest');
+        console.error('\nPlease install manually from: https://github.com/vanthaita/Orca-CLI/releases/latest');
         process.exit(1);
     }
 }
