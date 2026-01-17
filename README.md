@@ -5,8 +5,8 @@
 
   **AI-powered Git workflow for modern developers.**
 
-  [![License](https://img.shields.io/github/license/vanthaita/Orca)](LICENSE)
-  [![Release](https://img.shields.io/github/v/release/vanthaita/Orca)](https://github.com/vanthaita/Orca/releases)
+  [![License](https://img.shields.io/github/license/vanthaita/Orca-CLI)](LICENSE)
+  [![Release](https://img.shields.io/github/v/release/vanthaita/Orca-CLI)](https://github.com/vanthaita/Orca-CLI/releases)
   [![Rust](https://img.shields.io/badge/built_with-Rust-d09968.svg)](https://www.rust-lang.org)
 </div>
 
@@ -91,7 +91,7 @@ Requirements: [Rust](https://rustup.rs/) (stable)
 
 ```bash
 # Clone the repository
-git clone https://github.com/vanthaita/Orca.git
+git clone https://github.com/vanthaita/Orca-CLI.git
 cd Orca/cli
 
 # Build and install

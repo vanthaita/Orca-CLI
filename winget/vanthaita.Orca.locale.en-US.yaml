@@ -6,11 +6,13 @@ PackageVersion: 0.1.29
 PackageLocale: en-US
 Publisher: vanthaita
 PublisherUrl: https://github.com/vanthaita
-PublisherSupportUrl: https://github.com/vanthaita/Orca/issues
-PackageName: Orca CLI
+PublisherSupportUrl: https://github.com/vanthaita/Orca-CLI/issues
+PrivacyUrl: https://orcacli.codes/privacy
+Author: vanthaita
+PackageName: Orca
 PackageUrl: https://orcacli.codes
 License: MIT
-LicenseUrl: https://github.com/vanthaita/Orca/blob/main/LICENSE
+LicenseUrl: https://github.com/vanthaita/Orca-CLI/blob/main/LICENSE
 Copyright: Copyright (c) 2026 vanthaita
 ShortDescription: AI-native Git workflow automation for modern developers
 Description: |-
@@ -32,7 +34,7 @@ Tags:
 - rust
 - workflow
 ReleaseNotes: |-
-  See release notes at: https://github.com/vanthaita/Orca/releases/tag/v0.1.29
-ReleaseNotesUrl: https://github.com/vanthaita/Orca/releases/tag/v0.1.29
+  See release notes at: https://github.com/vanthaita/Orca-CLI/releases/tag/v0.1.29
+ReleaseNotesUrl: https://github.com/vanthaita/Orca-CLI/releases/tag/v0.1.29
 ManifestType: defaultLocale
 ManifestVersion: 1.6.0

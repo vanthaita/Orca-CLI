@@ -32,11 +32,11 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/vanthaita/Orca.git"
+        "url": "https://github.com/vanthaita/Orca-CLI.git"
     },
     "homepage": "https://orcacli.codes",
     "bugs": {
-        "url": "https://github.com/vanthaita/Orca/issues"
+        "url": "https://github.com/vanthaita/Orca-CLI/issues"
     },
     "engines": {
         "node": ">=14.0.0"
