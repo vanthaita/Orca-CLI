@@ -168,8 +168,8 @@ async function install() {
         console.log(`Target version: ${version}`);
 
         // Construct Download URL
-        // Latest: https://github.com/vanthaita/orca-releases/releases/latest/download/orca-target.archive
-        // Tagged: https://github.com/vanthaita/orca-releases/releases/download/v1.2.3/orca-target.archive
+        // Latest: https://github.com/vanthaita/Orca-CLI/releases/latest/download/orca-target.archive
+        // Tagged: https://github.com/vanthaita/Orca-CLI/releases/download/v1.2.3/orca-target.archive
 
         let downloadBase;
         if (version === 'latest') {

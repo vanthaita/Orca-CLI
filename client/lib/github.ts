@@ -14,7 +14,7 @@ export interface Asset {
 export async function getReleases(): Promise<Release[]> {
     try {
         const response = await fetch(
-            "https://api.github.com/repos/vanthaita/orca/releases"
+            "https://api.github.com/repos/vanthaita/Orca-CLI/releases"
         );
         if (!response.ok) {
             console.error("Failed to fetch releases:", response.statusText);

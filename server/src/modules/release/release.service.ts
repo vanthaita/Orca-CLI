@@ -11,7 +11,7 @@ export class ReleaseService {
   getLatestRelease(): ReleaseInfoDto {
     return {
       version: '0.1.12',
-      url: 'https://github.com/vanthaita/Orca/releases/download/v0.1.12/Orca.msi',
+      url: 'https://github.com/vanthaita/Orca-CLI/releases/download/v0.1.12/Orca.msi',
       notes: 'New version with auto-update capability!',
     };
   }
