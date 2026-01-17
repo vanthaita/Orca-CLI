@@ -18,7 +18,7 @@ export const SiteFooter = () => {
                 </Link>
                 <Link
                     className="hover:text-white transition-colors"
-                    href="https://github.com/vanthaita/Orca"
+                    href="https://github.com/vanthaita/Orca-CLI"
                     target="_blank"
                     rel="noreferrer"
                 >

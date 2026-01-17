@@ -74,14 +74,14 @@ winget install vanthaita.Orca
 ### Shell Script (Linux/macOS)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/vanthaita/orca-releases/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/vanthaita/Orca-CLI/main/scripts/install.sh | sh
 ```
 
 ### Windows MSI Installer
 
 **Recommended for Windows users**
 
-1. Download the latest `OrcaSetup-<version>.msi` from [Releases](https://github.com/vanthaita/orca-releases/releases/latest).
+1. Download the latest `OrcaSetup-<version>.msi` from [Releases](https://github.com/vanthaita/Orca-CLI/releases/latest).
 2. Run the installer.
 3. Open a new terminal and type `orca --help`.
 
@@ -147,7 +147,7 @@ npm install -g orcacli
 
 **To update an MSI installation:**
 
-Download and run the latest MSI installer from [Releases](https://github.com/vanthaita/orca-releases/releases/latest).
+Download and run the latest MSI installer from [Releases](https://github.com/vanthaita/Orca-CLI/releases/latest).
 
 ## 🛠️ Usage
 

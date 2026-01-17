@@ -25,7 +25,7 @@ import {
 
 const Home = () => {
   useAuth();
-  const repo = "vanthaita/Orca";
+  const repo = "vanthaita/Orca-CLI";
 
   const [releases, setReleases] = useState<any[]>([]);
   const [latestRelease, setLatestRelease] = useState<any>(null);
