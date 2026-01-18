@@ -1,10 +1,10 @@
 ## Summary
 
-- 
+{commit_summary}
 
 ## Changes
 
-- 
+{commit_list}
 
 ## How to test
 
