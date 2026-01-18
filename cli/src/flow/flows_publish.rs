@@ -489,6 +489,10 @@ async fn run_stack_pr_workflow(base: &str, pr: bool, commits: &[String], selecte
         
         if let Err(e) = cherry_result {
             pb.finish_and_clear();
+            
+            // Abort the cherry-pick to clean up
+            let _ = run_git(&["cherry-pick", "--abort"]);
+            
             eprintln!(
                 "{} {}",
                 style("  [×]").red().bold(),
@@ -516,8 +520,9 @@ async fn run_stack_pr_workflow(base: &str, pr: bool, commits: &[String], selecte
         }
         pb.finish_and_clear();
 
-        // Generate PR description
-        let base_description = pr_template::generate_pr_description(&stack_pr.base_branch)
+        // Generate PR description using the specific commit for this PR
+        let commit_messages = vec![stack_pr.commit_message.clone()];
+        let base_description = pr_template::generate_pr_description_from_commits(&commit_messages)
             .unwrap_or_else(|_| pr_template::get_default_template());
 
         // Add stack info
