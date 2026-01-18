@@ -46,59 +46,44 @@ async fn dispatch_command(
 ) -> Result<()> {
     match command {
         crate::cli::Commands::Commit {
+            plan_only,
+            from_plan,
             confirm,
             dry_run,
-            model,
-        } => flows::run_commit_flow(confirm, dry_run, &model).await?,
-        crate::cli::Commands::Plan {
             model,
             json_only,
             out,
-        } => flows::run_plan_flow(&model, json_only, out).await?,
-        crate::cli::Commands::PublishCurrent { branch, base, no_pr, mode, select } => {
-            flows::run_publish_current_flow(branch.as_deref(), &base, !no_pr, mode.as_deref(), select).await?
-        }
-        crate::cli::Commands::Apply {
-            file,
-            confirm,
-            dry_run,
             push,
             publish,
             branch,
             base,
             pr,
         } => {
-            run_apply_flow(
-                &file,
-                confirm,
-                dry_run,
-                push,
-                publish,
-                branch.as_deref(),
-                &base,
-                pr,
-            )
-            .await?
+            // Handle different modes of the commit command
+            if plan_only {
+                // New way to do: orca commit --plan-only
+                flows::run_plan_flow(&model, json_only, out).await?
+            } else if let Some(plan_file) = from_plan {
+                // New way to do: orca commit --from-plan plan.json
+                run_apply_flow(
+                    &plan_file,
+                    confirm,
+                    dry_run,
+                    push,
+                    publish,
+                    branch.as_deref(),
+                    &base,
+                    pr,
+                )
+                .await?
+            } else {
+                // Regular commit flow
+                flows::run_commit_flow(confirm, dry_run, &model).await?
+            }
         }
-        crate::cli::Commands::Publish {
-            file,
-            confirm,
-            dry_run,
-            branch,
-            base,
-            pr,
-        } => {
-            run_apply_flow(
-                &file,
-                confirm,
-                dry_run,
-                false,
-                true,
-                branch.as_deref(),
-                &base,
-                pr,
-            )
-            .await?
+        crate::cli::Commands::Publish { branch, base, no_pr, mode, select } => {
+            // New main command for publishing (renamed from publish-current)
+            flows::run_publish_current_flow(branch.as_deref(), &base, !no_pr, mode.as_deref(), select).await?
         }
         crate::cli::Commands::Setup {
             provider,
@@ -120,6 +105,49 @@ async fn dispatch_command(
         crate::cli::Commands::Release(release_cmd) => dispatch_release_command(yes, release_cmd).await?,
         crate::cli::Commands::Stack(stack_cmd) => dispatch_stack_command(yes, yes_pr, stack_cmd).await?,
         crate::cli::Commands::Safe(safe_cmd) => dispatch_safe_command(safe_cmd).await?,
+
+        // ============ BACKWARD COMPATIBILITY (DEPRECATED) ============
+        crate::cli::Commands::PublishCurrent { branch, base, no_pr, mode, select } => {
+            eprintln!("⚠️  Warning: 'publish-current' is deprecated. Use 'publish' instead.");
+            eprintln!("   Example: orca publish -b {} {}\n", 
+                base, 
+                if no_pr { "--no-pr" } else { "" }
+            );
+            flows::run_publish_current_flow(branch.as_deref(), &base, !no_pr, mode.as_deref(), select).await?
+        }
+        crate::cli::Commands::Plan {
+            model,
+            json_only,
+            out,
+        } => {
+            eprintln!("⚠️  Warning: 'plan' is deprecated. Use 'commit --plan-only' instead.");
+            eprintln!("   Example: orca commit --plan-only --out plan.json\n");
+            flows::run_plan_flow(&model, json_only, out).await?
+        }
+        crate::cli::Commands::Apply {
+            file,
+            confirm,
+            dry_run,
+            push,
+            publish,
+            branch,
+            base,
+            pr,
+        } => {
+            eprintln!("⚠️  Warning: 'apply' is deprecated. Use 'commit --from-plan' instead.");
+            eprintln!("   Example: orca commit --from-plan plan.json\n");
+            run_apply_flow(
+                &file,
+                confirm,
+                dry_run,
+                push,
+                publish,
+                branch.as_deref(),
+                &base,
+                pr,
+            )
+            .await?
+        }
     }
 
     Ok(())

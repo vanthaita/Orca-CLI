@@ -28,8 +28,18 @@ pub(crate) struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub(crate) enum Commands {
-    /// Analyze changes and create grouped commits
+    // ============ CORE COMMANDS ============
+    #[command(next_help_heading = "Core Commands")]
+    /// Create AI-grouped commits from changes
     Commit {
+        /// Generate plan only without committing (equivalent to old 'plan' command)
+        #[arg(long, conflicts_with_all = ["from_plan", "confirm"])]
+        plan_only: bool,
+
+        /// Apply commits from a previously generated plan file (equivalent to old 'apply' command)
+        #[arg(long, value_name = "FILE", conflicts_with = "plan_only")]
+        from_plan: Option<PathBuf>,
+
         /// Show proposed commit groups and ask for confirmation before running git commands
         #[arg(long, default_value_t = true)]
         confirm: bool,
@@ -38,63 +48,42 @@ pub(crate) enum Commands {
         #[arg(long, default_value_t = false)]
         dry_run: bool,
 
-        /// Model name (used when no plan file is provided)
-        #[arg(long, default_value_t = default_model())]
-        model: String,
-    },
-
-    /// Generate a commit plan (no git add/commit)
-    Plan {
-        /// Model name
+        /// Model name for AI (used when generating new plan)
         #[arg(long, default_value_t = default_model())]
         model: String,
 
-        /// Print JSON only
-        #[arg(long, default_value_t = false)]
+        /// Print JSON only (when using --plan-only)
+        #[arg(long, default_value_t = false, requires = "plan_only")]
         json_only: bool,
 
-        /// Write JSON plan to a file
-        #[arg(long)]
+        /// Write JSON plan to a file (when using --plan-only)
+        #[arg(long, requires = "plan_only")]
         out: Option<PathBuf>,
-    },
 
-    /// Apply a previously generated plan JSON file
-    Apply {
-        /// Path to plan JSON file
-        #[arg(long)]
-        file: PathBuf,
-
-        /// Ask for confirmation before running git commands
-        #[arg(long, default_value_t = true)]
-        confirm: bool,
-
-        /// Do not run any git commands (prints the plan only)
-        #[arg(long, default_value_t = false)]
-        dry_run: bool,
-
-        /// After committing, prompt to git push (Enter = push)
-        #[arg(long, default_value_t = false)]
+        /// After committing, prompt to git push (when using --from-plan)
+        #[arg(long, default_value_t = false, requires = "from_plan")]
         push: bool,
 
-        /// Professional GitHub flow: create/switch to a feature branch, push -u, and propose creating a PR
-        #[arg(long, default_value_t = false)]
+        /// Professional GitHub flow: create/switch to a feature branch, push -u, and create PR (when using --from-plan)
+        #[arg(long, default_value_t = false, requires = "from_plan")]
         publish: bool,
 
         /// Branch name to use when --publish is set (e.g. feat/my-change)
-        #[arg(long)]
+        #[arg(long, requires = "publish")]
         branch: Option<String>,
 
         /// Base branch for PR when --publish is set (default: main)
-        #[arg(long, default_value_t = default_base_branch())]
+        #[arg(long, default_value_t = default_base_branch(), requires = "publish")]
         base: String,
 
-        /// Create PR via GitHub CLI (gh) when --publish is set (if gh is not available, a URL will be printed)
-        #[arg(long, default_value_t = true)]
+        /// Create PR via GitHub CLI (gh) when --publish is set
+        #[arg(long, default_value_t = true, requires = "publish")]
         pr: bool,
     },
 
-    /// Publish current commits: create/switch branch, push -u, and create PR
-    PublishCurrent {
+    #[command(next_help_heading = "Core Commands")]
+    /// Push commits and create PR (supports single PR or stacked PRs)
+    Publish {
         /// Branch name to use (e.g. feat/my-change). If omitted, derived from the latest commit message.
         #[arg(short, long)]
         branch: Option<String>,
@@ -116,32 +105,7 @@ pub(crate) enum Commands {
         select: bool,
     },
 
-    /// Apply a plan and publish to GitHub (create/switch branch, push -u, create PR)
-    Publish {
-        /// Path to plan JSON file
-        file: PathBuf,
-
-        /// Ask for confirmation before running git commands
-        #[arg(long, default_value_t = true)]
-        confirm: bool,
-
-        /// Do not run any git commands (prints the plan only)
-        #[arg(long, default_value_t = false)]
-        dry_run: bool,
-
-        /// Branch name to use (e.g. feat/my-change). If omitted, derived from the first commit message.
-        #[arg(long)]
-        branch: Option<String>,
-
-        /// Base branch for PR (default: main)
-        #[arg(long, default_value_t = default_base_branch())]
-        base: String,
-
-        /// Create PR via GitHub CLI (gh) (if gh is not available, a URL will be printed)
-        #[arg(long, default_value_t = true)]
-        pr: bool,
-    },
-
+    #[command(next_help_heading = "Core Commands")]
     /// Setup local git identity and check required tools (gh)
     Setup {
         /// Provider to configure or switch to (gemini, openai, zai, deepseek)
@@ -165,49 +129,112 @@ pub(crate) enum Commands {
         local: bool,
     },
 
-    /// Login via browser to obtain a CLI token (remote Orca server mode)
-    Login,
-
-    /// Interactive menu for account management and settings
-    Menu,
-
-    /// Check environment (git repo, working tree, API key)
-    Doctor,
-
-    /// Check for updates and auto-upgrade
-    Update,
-
-    /// Git wrapper commands with enhanced output
-    #[command(alias = "g", subcommand)]
-    Git(GitCommands),
-
-    /// Branch management commands
-    #[command(alias = "br", subcommand)]
-    Branch(BranchCommands),
-
-    /// Workflow orchestration commands
+    // ============ WORKFLOW COMMANDS ============
+    #[command(next_help_heading = "Workflow Commands")]
+    /// Workflow orchestration (start/finish feature flows)
     #[command(alias = "fl", subcommand)]
     Flow(FlowCommands),
 
-    /// History cleanup commands (rebase, squash, fixup)
+    #[command(next_help_heading = "Workflow Commands")]
+    /// Branch management
+    #[command(alias = "br", subcommand)]
+    Branch(BranchCommands),
+
+    #[command(next_help_heading = "Workflow Commands")]
+    /// Clean up commit history (rebase, squash, fixup, amend)
     #[command(alias = "td", subcommand)]
     Tidy(TidyCommands),
 
-    /// Conflict resolution helper commands
-    #[command(alias = "cf", subcommand)]
-    Conflict(ConflictCommands),
+    // ============ ADVANCED COMMANDS ============
+    #[command(next_help_heading = "Advanced Commands")]
+    /// Git wrapper with enhanced output
+    #[command(alias = "g", subcommand)]
+    Git(GitCommands),
 
-    /// Release and tag management
-    #[command(alias = "rl", subcommand)]
-    Release(ReleaseCommands),
-
+    #[command(next_help_heading = "Advanced Commands")]
     /// Stacked branch workflows
     #[command(alias = "sk", subcommand)]
     Stack(StackCommands),
 
+    #[command(next_help_heading = "Advanced Commands")]
+    /// Conflict resolution helpers
+    #[command(alias = "cf", subcommand)]
+    Conflict(ConflictCommands),
+
+    #[command(next_help_heading = "Advanced Commands")]
+    /// Release and tag management
+    #[command(alias = "rl", subcommand)]
+    Release(ReleaseCommands),
+
+    #[command(next_help_heading = "Advanced Commands")]
     /// Git safety checks (secret scanning, preflight)
     #[command(subcommand)]
     Safe(SafeCommands),
+
+    // ============ UTILITY COMMANDS ============
+    #[command(next_help_heading = "Utility Commands")]
+    /// Login via browser to obtain CLI token
+    Login,
+
+    #[command(next_help_heading = "Utility Commands")]
+    /// Interactive menu for account management
+    Menu,
+
+    #[command(next_help_heading = "Utility Commands")]
+    /// Check environment (git repo, working tree, API key)
+    Doctor,
+
+    #[command(next_help_heading = "Utility Commands")]
+    /// Check for updates and auto-upgrade
+    Update,
+
+    // ============ BACKWARD COMPATIBILITY (HIDDEN) ============
+    #[command(hide = true, alias = "publish-current")]
+    /// (Deprecated: use 'publish' instead) Publish current commits
+    PublishCurrent {
+        #[arg(short, long)]
+        branch: Option<String>,
+        #[arg(short = 'b', long, default_value_t = default_base_branch())]
+        base: String,
+        #[arg(long = "no-pr")]
+        no_pr: bool,
+        #[arg(short, long)]
+        mode: Option<String>,
+        #[arg(short = 's', long)]
+        select: bool,
+    },
+
+    #[command(hide = true)]
+    /// (Deprecated: use 'commit --plan-only' instead) Generate a commit plan
+    Plan {
+        #[arg(long, default_value_t = default_model())]
+        model: String,
+        #[arg(long, default_value_t = false)]
+        json_only: bool,
+        #[arg(long)]
+        out: Option<PathBuf>,
+    },
+
+    #[command(hide = true)]
+    /// (Deprecated: use 'commit --from-plan' instead) Apply a plan JSON file
+    Apply {
+        #[arg(long)]
+        file: PathBuf,
+        #[arg(long, default_value_t = true)]
+        confirm: bool,
+        #[arg(long, default_value_t = false)]
+        dry_run: bool,
+        #[arg(long, default_value_t = false)]
+        push: bool,
+        #[arg(long, default_value_t = false)]
+        publish: bool,
+        #[arg(long)]
+        branch: Option<String>,
+        #[arg(long, default_value_t = default_base_branch())]
+        base: String,
+        #[arg(long, default_value_t = true)]
+        pr: bool,
+    },
 }
 
 #[derive(Subcommand, Debug)]
