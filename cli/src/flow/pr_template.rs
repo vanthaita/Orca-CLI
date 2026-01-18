@@ -296,11 +296,9 @@ pub fn prompt_select_commits(commits: &[(String, String)]) -> Result<Vec<(String
     Ok(selected)
 }
 
-/// Generate PR description from template or default
-pub fn generate_pr_description(base: &str) -> Result<String> {
-    // Get commits
-    let commits = get_commits_since_base(base)?;
-
+/// Generate PR description from explicit list of commits
+/// This is useful when you already have the commits and don't want to query them again
+pub fn generate_pr_description_from_commits(commits: &[String]) -> Result<String> {
     // Find template or use default
     let template = if let Some(template_path) = find_pr_template()? {
         read_pr_template(&template_path)?
@@ -308,6 +306,16 @@ pub fn generate_pr_description(base: &str) -> Result<String> {
         get_default_template()
     };
 
-    // Populate template with commit data
-    Ok(populate_template(&template, &commits))
+    // Populate template with provided commit data
+    Ok(populate_template(&template, commits))
+}
+
+/// Generate PR description from template or default
+/// Queries commits from base..HEAD
+pub fn generate_pr_description(base: &str) -> Result<String> {
+    // Get commits
+    let commits = get_commits_since_base(base)?;
+    
+    // Use the new function
+    generate_pr_description_from_commits(&commits)
 }
