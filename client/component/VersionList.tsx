@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
-import { DownloadIcon, PackageIcon, TerminalIcon } from "./icons";
+import { PackageIcon, TerminalIcon } from "./icons";
 
 interface ReleaseAsset {
     name: string;
@@ -20,11 +21,9 @@ interface VersionListProps {
     className?: string;
 }
 
-import { cn } from "@/lib/utils";
-// ... imports
 
 export const VersionList = ({ releases, className = "" }: VersionListProps) => {
-    const [viewMode, setViewMode] = useState<"download" | "cli" | "npm" | "bun" | "brew" | "winget">("npm");
+    const [viewMode, setViewMode] = useState<"download" | "cli" | "npm" | "bun">("npm");
 
     if (!releases || releases.length === 0) return null;
 
@@ -87,32 +86,7 @@ export const VersionList = ({ releases, className = "" }: VersionListProps) => {
                             bun
                         </span>
                     </button>
-                    <button
-                        type="button"
-                        disabled
-                        className="px-4 py-3 text-sm font-medium text-neutral-500 cursor-not-allowed opacity-70"
-                        title="Coming soon"
-                    >
-                        <span className="inline-flex items-center gap-2">
-                            <PackageIcon className="h-4 w-4" />
-                            brew
-                        </span>
-                        <span className="ml-2 text-[10px] uppercase tracking-wider">Coming soon</span>
-                    </button>
-                    <button
-                        onClick={() => setViewMode("winget")}
-                        className={cn(
-                            "px-4 py-3 text-sm font-medium transition-colors",
-                            viewMode === "winget"
-                                ? "text-emerald-400 border-b-2 border-emerald-400"
-                                : "text-neutral-400 hover:text-neutral-200"
-                        )}
-                    >
-                        <span className="inline-flex items-center gap-2">
-                            <PackageIcon className="h-4 w-4" />
-                            winget
-                        </span>
-                    </button>
+
                     <button
                         onClick={() => setViewMode("cli")}
                         className={cn(
@@ -246,33 +220,7 @@ export const VersionList = ({ releases, className = "" }: VersionListProps) => {
                         </p>
                     </div>
                 </div>
-            ) : viewMode === "winget" ? (
-                <div className="p-6">
-                    <div className="mb-4">
-                        <h4 className="text-sm font-medium text-neutral-300 mb-2">Winget Install (Windows)</h4>
-                        <div className="relative group">
-                            <div className="absolute inset-0 rounded-lg blur-sm transition-all" />
-                            <div className="relative bg-black/40 border-2 border-dashed border-white/20 rounded-lg p-3 font-mono text-xs text-neutral-300 overflow-x-auto flex items-center justify-between gap-4">
-                                <code className="whitespace-pre">winget install vanthaita.Orca</code>
-                                <button
-                                    onClick={() => {
-                                        navigator.clipboard.writeText("winget install vanthaita.Orca");
-                                    }}
-                                    className="p-1.5 hover:bg-white/10 rounded-md transition-colors text-neutral-400 hover:text-white"
-                                    title="Copy command"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-                                        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <p className="mt-2 text-[10px] text-neutral-500">
-                            Install via Windows Package Manager.
-                        </p>
-                    </div>
-                </div>
+
             ) : (
                 <div className="p-6">
                     <div className="rounded-lg border-2 border-dashed border-white/20 bg-black/30 p-4">
