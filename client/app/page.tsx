@@ -21,6 +21,7 @@ import {
   SiteFooter,
   WorkflowSection,
   PackageIcon,
+  ByokSection,
 } from "@/component";
 
 const Home = () => {
@@ -198,6 +199,8 @@ const Home = () => {
           <IntroductionSection />
 
           <ModelShowcase />
+
+          <ByokSection />
 
 
           <section className="grid gap-16 py-10">
