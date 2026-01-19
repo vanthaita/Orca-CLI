@@ -13,6 +13,7 @@ export * from "./TerminalWindow";
 export * from "./VersionList";
 export * from "./icons";
 export * from "./WorkflowSection";
+export * from "./ByokSection";
 
 export * from "./PricingCard";
 export * from "./SiteHeader";
