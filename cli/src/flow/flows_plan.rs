@@ -6,9 +6,13 @@ use console::style;
 use super::flows_spinner::spinner;
 use std::path::PathBuf;
 
-pub(crate) async fn generate_plan(model: &str, status: &str, diff: &str, log: &str) -> Result<CommitPlan> {
+pub(crate) async fn generate_plan(model: &str, status: &str, diff: &str, log: &str, style: Option<String>) -> Result<CommitPlan> {
     let provider = crate::ai::create_provider().await?;
-    let prompt = build_prompt(status, diff, log);
+
+    let config = crate::config::load_config()?;
+    let resolved_style = style.or(config.git.commit_style);
+
+    let prompt = build_prompt(status, diff, log, resolved_style.as_deref());
 
     // Default system prompt. You can customize this or make it configurable.
     let system_prompt = "You are a senior software engineer. Your task is to propose a commit plan.";
@@ -71,7 +75,13 @@ fn extract_json(input: &str) -> Option<String> {
     Some(s[start..=end].trim().to_string())
 }
 
-fn build_prompt(status: &str, diff: &str, log: &str) -> String {
+fn build_prompt(status: &str, diff: &str, log: &str, style: Option<&str>) -> String {
+    let style_instruction = if let Some(s) = style {
+        format!("- Commit Message Style: {}\n", s)
+    } else {
+        String::new()
+    };
+
     format!(
         "Task: Propose a commit plan for the current git working tree.
     Rules:
@@ -79,7 +89,7 @@ fn build_prompt(status: &str, diff: &str, log: &str) -> String {
     - JSON schema: {{\"commits\":[{{\"message\":string,\"files\":[string],\"commands\":[string]}}]}}
     - Group files into logical commits by feature/responsibility.
     - Commit messages should be concise, imperative, and conventional (e.g. feat:, fix:, refactor:, chore:).
-    - Each file path must exist in git status output.
+    {}    - Each file path must exist in git status output.
     - For each commit, commands must contain EXACTLY 2 commands in this order:
       1) git add -- <files...>
       2) git commit -m \"<message>\"
@@ -97,7 +107,7 @@ fn build_prompt(status: &str, diff: &str, log: &str) -> String {
     )
 }
 
-pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<PathBuf>) -> Result<()> {
+pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<PathBuf>, style: Option<String>) -> Result<()> {
     crate::git::ensure_git_repo()?;
 
     println!("{}", style("[orca plan]").bold().cyan());
@@ -138,7 +148,7 @@ pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<Path
         diff.to_string()
     };
     
-    let mut plan = generate_plan(model, &status, &effective_diff, &log).await?;
+    let mut plan = generate_plan(model, &status, &effective_diff, &log, style).await?;
     pb.finish_and_clear();
     
     if diff.len() > max_diff_len {

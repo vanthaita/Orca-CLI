@@ -9,8 +9,9 @@ pub(crate) async fn generate_plan(
     status: &str,
     diff: &str,
     log: &str,
+    style: Option<String>,
 ) -> Result<CommitPlan> {
-    super::flows_plan::generate_plan(model, status, diff, log).await
+    super::flows_plan::generate_plan(model, status, diff, log, style).await
 }
 
 #[allow(dead_code)]
@@ -26,7 +27,7 @@ pub(crate) fn print_friendly_error(err: &anyhow::Error) {
     super::flows_error::print_friendly_error(err);
 }
 
-pub(crate) async fn run_commit_flow(confirm: bool, dry_run: bool, model: &str) -> Result<()> {
+pub(crate) async fn run_commit_flow(confirm: bool, dry_run: bool, model: &str, style: Option<String>) -> Result<()> {
     ensure_git_repo()?;
 
     super::flows_error::print_flow_header("[orca commit]");
@@ -61,7 +62,7 @@ pub(crate) async fn run_commit_flow(confirm: bool, dry_run: bool, model: &str) -
         )
     };
     let pb = spinner(&spinner_msg);
-    let mut plan = generate_plan(model, &status, &diff, &log).await?;
+    let mut plan = generate_plan(model, &status, &diff, &log, style).await?;
     pb.finish_and_clear();
     eprintln!("{} {}", style("[✓]").green().bold(), style("Plan received").green());
     normalize_plan_files(&mut plan, &changed_files);
@@ -121,8 +122,8 @@ pub(crate) async fn run_menu_flow() -> Result<()> {
     super::flows_menu::run_menu_flow().await
 }
 
-pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<PathBuf>) -> Result<()> {
-    super::flows_plan::run_plan_flow(model, json_only, out).await
+pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<PathBuf>, style: Option<String>) -> Result<()> {
+    super::flows_plan::run_plan_flow(model, json_only, out, style).await
 }
 
 pub(crate) async fn run_apply_flow(
