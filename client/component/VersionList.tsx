@@ -37,23 +37,6 @@ export const VersionList = ({ releases, className = "" }: VersionListProps) => {
         day: "numeric",
     });
 
-    const assets = latestRelease.assets || [];
-
-    const windowsAsset =
-        assets.find((a) => a.name.toLowerCase().endsWith(".msi")) ||
-        assets.find((a) => a.name.toLowerCase().endsWith(".exe"));
-
-    const macAsset =
-        assets.find((a) => /mac|osx|darwin/i.test(a.name) && a.name.toLowerCase().endsWith(".dmg")) ||
-        assets.find((a) => /mac|osx|darwin/i.test(a.name) && a.name.toLowerCase().endsWith(".pkg")) ||
-        assets.find((a) => /mac|osx|darwin/i.test(a.name) && a.name.toLowerCase().endsWith(".zip"));
-
-    const linuxAsset =
-        assets.find((a) => /linux/i.test(a.name) && a.name.toLowerCase().endsWith(".tar.gz")) ||
-        assets.find((a) => /linux/i.test(a.name) && a.name.toLowerCase().endsWith(".appimage")) ||
-        assets.find((a) => /linux/i.test(a.name) && a.name.toLowerCase().endsWith(".deb")) ||
-        assets.find((a) => /linux/i.test(a.name) && a.name.toLowerCase().endsWith(".rpm"));
-
     return (
         <div className={cn("w-full overflow-hidden rounded-xl border-2 border-dashed border-white/20 bg-white/5", className)}>
             <div className="flex items-center justify-between border-b border-white/15 bg-white/5 px-4">
@@ -129,41 +112,6 @@ export const VersionList = ({ releases, className = "" }: VersionListProps) => {
                         <p className="mt-2 text-[10px] text-neutral-500">
                             Requires Node.js. Install globally (-g) for system-wide access.
                         </p>
-                    </div>
-
-                    <div className="mt-6 border-t border-white/10 pt-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h4 className="text-sm font-medium text-neutral-300">Direct Downloads</h4>
-                            <div className="flex flex-col gap-1 text-right">
-                                <span className="font-mono text-xs font-bold text-emerald-400">
-                                    {latestRelease.tag_name}
-                                </span>
-                                <span className="text-[10px] text-neutral-500">{date}</span>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                            <Link
-                                href={windowsAsset?.browser_download_url || latestRelease.html_url}
-                                target="_blank"
-                                className="text-xs bg-white/10 hover:bg-white/20 text-neutral-300 px-3 py-2 rounded-md transition-colors font-medium text-center"
-                            >
-                                Windows
-                            </Link>
-                            <Link
-                                href={macAsset?.browser_download_url || latestRelease.html_url}
-                                target="_blank"
-                                className="text-xs bg-white/10 hover:bg-white/20 text-neutral-300 px-3 py-2 rounded-md transition-colors font-medium text-center"
-                            >
-                                macOS
-                            </Link>
-                            <Link
-                                href={linuxAsset?.browser_download_url || latestRelease.html_url}
-                                target="_blank"
-                                className="text-xs bg-white/10 hover:bg-white/20 text-neutral-300 px-3 py-2 rounded-md transition-colors font-medium text-center"
-                            >
-                                Linux
-                            </Link>
-                        </div>
                     </div>
                 </div>
             ) : viewMode === "cli" ? (

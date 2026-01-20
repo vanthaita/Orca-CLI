@@ -1,8 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useAuth } from "@/lib/auth";
+import { useGithubReleases } from "@/hook/useGithub";
+import type { Asset, Release } from "@/lib/github";
 
 import {
   CodeCard,
@@ -16,7 +19,6 @@ import {
   TerminalTypewriter,
   VersionList,
   WindowsIcon,
-  IntroductionSection,
   SiteHeader,
   SiteFooter,
   WorkflowSection,
@@ -28,56 +30,37 @@ const Home = () => {
   useAuth();
   const repo = "vanthaita/Orca-CLI";
 
-  const [releases, setReleases] = useState<any[]>([]);
-  const [latestRelease, setLatestRelease] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchReleases = async () => {
-      try {
-        const res = await fetch(`https://api.github.com/repos/${repo}/releases`);
-        if (!res.ok) throw new Error("Failed to fetch releases");
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setReleases(data);
-          setLatestRelease(data[0]);
-        }
-      } catch (error) {
-        console.error("Error fetching releases:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchReleases();
-  }, [repo]);
+  const releasesQuery = useGithubReleases(repo);
+  const releases = releasesQuery.data ?? [];
+  const latestRelease: Release | null = releases[0] ?? null;
+  const isLoading = releasesQuery.isLoading;
 
   const msiUrl = useMemo(() => {
     if (!latestRelease) return "#";
-    const asset = latestRelease.assets?.find((a: any) => a.name.endsWith(".msi"));
+    const asset = latestRelease.assets?.find((a: Asset) => a.name.endsWith(".msi"));
     return asset ? asset.browser_download_url : latestRelease.html_url;
   }, [latestRelease]);
 
   const linuxUrl = useMemo(() => {
     if (!latestRelease) return "#";
-    const asset = latestRelease.assets?.find((a: any) => a.name.includes("linux") && a.name.endsWith(".tar.gz"));
+    const asset = latestRelease.assets?.find(
+      (a: Asset) => a.name.includes("linux") && a.name.endsWith(".tar.gz")
+    );
     return asset ? asset.browser_download_url : latestRelease.html_url;
   }, [latestRelease]);
 
   const versionString = isLoading ? "..." : (latestRelease?.tag_name || "v0.1.2");
 
-  const [isWindows, setIsWindows] = useState(false);
-  useEffect(() => {
-    if (typeof navigator !== "undefined") {
-      setIsWindows(/Win/i.test(navigator.userAgent));
-    }
+  const isWindows = useMemo(() => {
+    if (typeof navigator === "undefined") return false;
+    return /Win/i.test(navigator.userAgent);
   }, []);
 
   const dailyWorkflow = useMemo(
     () =>
       [
         "# Setup & Health Check",
-        "orca setup --name \"Your Name\" --email \"you@example.com\"",
+        "orca setup --provider gemini --api-key YOUR_API_KEY",
         "orca doctor",
         "",
         "# AI-Powered Commit Workflow",
@@ -86,35 +69,42 @@ const Home = () => {
         "orca apply --file plan.json    # Apply saved plan",
         "",
         "# Publish to GitHub",
-        "orca publish-current --pr      # Push & create PR",
-        "orca publish plan.json --pr    # Apply plan & publish",
+        "orca publish                   # Commit → Push → Create PR",
       ].join("\n"),
     []
   );
 
   return (
     <div className="relative min-h-screen bg-[#0c0c0c] overflow-hidden text-neutral-100 font-sans selection:bg-emerald-500/30">
-      <div className="relative mx-auto max-w-[80rem] px-6 py-14 sm:py-20">
+      <div className="relative mx-auto max-w-7xl py-4">
         <SiteHeader />
 
         <main className="mt-2 grid gap-16" id="top">
           <section className="grid gap-16">
-            <div className="inline-flex w-fit items-center gap-3 border-b-2 border-dashed border-white/20 pb-2 text-xs font-mono uppercase tracking-widest text-emerald-400">
-              <span className={isLoading ? "animate-pulse" : ""}>{versionString}</span>
-              <span className="h-3 w-px bg-white/20"></span>
-              <span>Rust CLI</span>
-            </div>
+           
 
-            <div className="grid items-center gap-16 xl:grid-cols-[1.1fr_1.3fr]">
+            <div className="grid items-start gap-16 xl:grid-cols-[1.1fr_1.3fr]">
               <div className="grid gap-8">
                 <h1 className="text-balance text-6xl font-bold leading-none tracking-tight sm:text-8xl">
-                  Command the <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Deep Work.</span>
+                  Commit code, <br />
+                  <span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-400 to-cyan-400">not commit messages.</span>
                 </h1>
                 <p className="max-w-xl text-pretty text-xl leading-relaxed text-neutral-400">
-                  Orca is an AI-powered CLI that intelligently groups your changes into semantic commits using multiple AI models.
-                  Automate git workflows, generate execution plans, and streamline your GitHub releases.
+                  An open-source, free CLI that writes better commit messages and helps you publish Pull Requests without the ceremony.
                 </p>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="border border-white/10 bg-white/5 px-3 py-1 text-xs font-mono uppercase tracking-widest text-neutral-400">
+                    AI commit messages
+                  </span>
+                  <span className="border border-white/10 bg-white/5 px-3 py-1 text-xs font-mono uppercase tracking-widest text-neutral-400">
+                    Semantic commits
+                  </span>
+                  <span className="border border-white/10 bg-white/5 px-3 py-1 text-xs font-mono uppercase tracking-widest text-neutral-400">
+                    Publish Pull Requests
+                  </span>
+                  <span className="text-xs font-mono uppercase tracking-widest text-neutral-600">No paywall. No lock-in.</span>
+                </div>
 
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                   <button
@@ -151,13 +141,93 @@ const Home = () => {
                   <div className="text-xs font-mono text-emerald-500/80 uppercase tracking-wider flex items-center gap-2">
                     <span>★ Recommmended for your system</span>
                     <span className="text-neutral-600">|</span>
-                    <span className="text-neutral-500">v0.1.2</span>
+                    <span className={`text-neutral-500 ${isLoading ? "animate-pulse" : ""}`}>{versionString}</span>
                   </div>
                 )}
               </div>
 
-              <div id="hero-image" className="relative group perspective-1000">
-                <TerminalTypewriter />
+              <div id="hero-image" className="relative group perspective-1000 xl:pt-3">
+                <div className="mx-auto w-full max-w-2xl">
+                  <TerminalTypewriter />
+
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                    <div className="group flex items-center gap-3 rounded border-dashed border-2 border-white/10 bg-white/5 px-3 py-3 transition-all hover:bg-white/10">
+                      <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded p-0.5">
+                        <Image
+                          src="https://res.cloudinary.com/dq2z27agv/image/upload/q_auto,f_webp,w_1200/v1767428247/afcaw4zhiob0xlgmg8um.svg"
+                          alt="Claude Code"
+                          width={28}
+                          height={28}
+                          className="h-full w-full object-contain opacity-80 transition-opacity group-hover:opacity-100"
+                          unoptimized
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[10px] font-mono uppercase tracking-widest text-neutral-500">AI Model</div>
+                        <div className="mt-1 truncate font-mono text-sm font-medium text-neutral-300 group-hover:text-emerald-400">
+                          Claude Code
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="group flex items-center gap-3 rounded border-dashed border-2 border-white/10 bg-white/5 px-3 py-3 transition-all hover:bg-white/10">
+                      <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded p-0.5">
+                        <Image
+                          src="https://res.cloudinary.com/dq2z27agv/image/upload/q_auto,f_webp,w_1200/v1767428249/tan9tm21vyenfic85o0m.svg"
+                          alt="OpenAI"
+                          width={28}
+                          height={28}
+                          className="h-full w-full object-contain opacity-80 transition-opacity group-hover:opacity-100"
+                          unoptimized
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[10px] font-mono uppercase tracking-widest text-neutral-500">AI Model</div>
+                        <div className="mt-1 truncate font-mono text-sm font-medium text-neutral-300 group-hover:text-emerald-400">
+                          OpenAI
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="group flex items-center gap-3 rounded border-dashed border-2 border-white/10 bg-white/5 px-3 py-3 transition-all hover:bg-white/10">
+                      <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded p-0.5">
+                        <Image
+                          src="https://res.cloudinary.com/dq2z27agv/image/upload/q_auto,f_webp,w_1200/v1767428251/qzrsdmghvpw8pjeyamhk.svg"
+                          alt="Gemini"
+                          width={28}
+                          height={28}
+                          className="h-full w-full object-contain opacity-80 transition-opacity group-hover:opacity-100"
+                          unoptimized
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[10px] font-mono uppercase tracking-widest text-neutral-500">AI Model</div>
+                        <div className="mt-1 truncate font-mono text-sm font-medium text-neutral-300 group-hover:text-emerald-400">
+                          Gemini
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="group flex items-center gap-3 rounded border-dashed border-2 border-white/10 bg-white/5 px-3 py-3 transition-all hover:bg-white/10">
+                      <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded p-0.5">
+                        <Image
+                          src="https://res.cloudinary.com/dq2z27agv/image/upload/q_auto,f_webp,w_1200/v1767428254/xl1be5fiepwlbtytyu8b.svg"
+                          alt="Zai"
+                          width={28}
+                          height={28}
+                          className="h-full w-full object-contain opacity-80 transition-opacity group-hover:opacity-100"
+                          unoptimized
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[10px] font-mono uppercase tracking-widest text-neutral-500">AI Model</div>
+                        <div className="mt-1 truncate font-mono text-sm font-medium text-neutral-300 group-hover:text-emerald-400">
+                          Zai
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -195,9 +265,6 @@ const Home = () => {
             </div>
 
           </section>
-
-          <IntroductionSection />
-
           <ModelShowcase />
 
           <ByokSection />
