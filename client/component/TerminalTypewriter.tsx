@@ -84,6 +84,17 @@ export const TerminalTypewriter = () => {
         return () => clearTimeout(timeoutId);
     }, [currentCharIndex, currentLineIndex, isFinished]);
 
+    useEffect(() => {
+        if (!isFinished) return;
+
+        const timeoutId = setTimeout(() => {
+            setCurrentLineIndex(0);
+            setCurrentCharIndex(0);
+        }, 5000);
+
+        return () => clearTimeout(timeoutId);
+    }, [isFinished]);
+
     // Helper to render a partially typed line with segments
     const renderPartialLine = (line: Line, charCount: number) => {
         let charsRemaining = charCount;
@@ -106,14 +117,14 @@ export const TerminalTypewriter = () => {
 
     return (
         <TerminalWindow title="User@Orca-Dev: ~/projects/orca">
-            <div className="flex flex-col gap-1 min-h-[360px]">
+            <div className="flex flex-col gap-1 min-h-[320px]">
                 {TERMINAL_CONTENT.map((line, idx) => {
                     if (idx > currentLineIndex) return null;
 
                     // If it's a past line, render fully
                     if (idx < currentLineIndex) {
                         return (
-                            <div key={idx} className="whitespace-pre-wrap break-all min-h-[1.5em]">
+                            <div key={idx} className="whitespace-pre-wrap wrap-break-word min-h-[1.5em]">
                                 {line.map((seg, sIdx) => (
                                     <span key={sIdx} className={seg.className}>
                                         {seg.text}
@@ -125,7 +136,7 @@ export const TerminalTypewriter = () => {
 
                     // If it's the current line, render partially
                     return (
-                        <div key={idx} className="whitespace-pre-wrap break-all min-h-[1.5em]">
+                        <div key={idx} className="whitespace-pre-wrap wrap-break-word min-h-[1.5em]">
                             {renderPartialLine(line, currentCharIndex)}
                             <span className="animate-pulse inline-block w-2 h-4 bg-emerald-500 align-middle ml-1" />
                         </div>
