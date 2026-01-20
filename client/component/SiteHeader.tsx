@@ -1,23 +1,59 @@
 "use client";
 
 import Link from "next/link";
+import { useGithubReleases, useGithubRepo } from "@/hook/useGithub";
 import { useAuth } from "@/lib/auth";
 import { BookIcon, HelpIcon, InfoIcon, PackageIcon } from "@/component/icons";
 
 export const SiteHeader = () => {
     const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+    const repo = "vanthaita/Orca-CLI";
+    const repoUrl = "https://github.com/vanthaita/Orca-CLI";
 
+    const repoQuery = useGithubRepo(repo);
+    const releasesQuery = useGithubReleases(repo);
+
+    const repoStars = typeof repoQuery.data?.stargazers_count === 'number' ? repoQuery.data.stargazers_count : null;
+    const versionString = releasesQuery.isLoading ? "..." : (releasesQuery.data?.[0]?.tag_name || "v0.1.2");
     return (
-        <header className="flex items-center justify-between gap-4">
-            <Link className="flex items-center gap-3 group" href="/">
-                <div className="leading-tight">
-                    <div className="text-2xl font-black tracking-tighter text-white uppercase italic group-hover:text-emerald-400 transition-colors">
-                        Orca Cli
-                    </div>
+        <header className="grid gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-xs font-mono uppercase tracking-widest text-neutral-500">
+                    Free & open-source. BYOK: use your own AI token.
                 </div>
-            </Link>
+                <Link
+                    href={repoUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 border border-white/10 bg-white/5 px-3 py-2 text-xs font-mono uppercase tracking-widest text-neutral-400 transition hover:bg-white/10"
+                    style={{ clipPath: "polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)" }}
+                >
+                    <span className="text-neutral-300">GitHub</span>
+                    <span className="text-neutral-600">|</span>
+                    <span className={repoQuery.isLoading ? "animate-pulse" : ""}>
+                        ★{" "}
+                        {repoStars === null
+                            ? "-"
+                            : new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(repoStars)}
+                    </span>
+                </Link>
+            </div>
 
-            <nav className="hidden items-center gap-6 sm:flex">
+            <div className="flex items-center justify-between gap-4">
+                <Link className="flex items-center gap-3 group" href="/">
+                    <div className="leading-tight">
+                        <div className="text-2xl font-black tracking-tighter text-white uppercase italic group-hover:text-emerald-400 transition-colors">
+                            Orca Cli
+                        </div>
+                         <div className="inline-flex w-fit items-center gap-3 border-b-2 border-dashed border-white/20 pb-2 text-xs font-mono uppercase tracking-widest text-emerald-400">
+                            <span className={releasesQuery.isLoading ? "animate-pulse" : ""}>{versionString}</span>
+                            <span className="h-3 w-px bg-white/20"></span>
+                            <span>Rust CLI</span>
+                        </div>
+                    </div>
+                </Link>
+
+                <nav className="hidden items-center gap-6 sm:flex">
                 <Link
                     className="text-sm font-medium text-neutral-400 hover:text-white transition-colors inline-flex items-center gap-2"
                     href="/"
@@ -58,7 +94,8 @@ export const SiteHeader = () => {
                         {isAuthenticated ? "Dashboard" : "Login"}
                     </Link>
                 )}
-            </nav>
+                </nav>
+            </div>
         </header>
     );
 };
