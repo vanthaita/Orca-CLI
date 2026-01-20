@@ -58,11 +58,12 @@ async fn dispatch_command(
             branch,
             base,
             pr,
+            style,
         } => {
             // Handle different modes of the commit command
             if plan_only {
                 // New way to do: orca commit --plan-only
-                flows::run_plan_flow(&model, json_only, out).await?
+                flows::run_plan_flow(&model, json_only, out, style).await?
             } else if let Some(plan_file) = from_plan {
                 // New way to do: orca commit --from-plan plan.json
                 run_apply_flow(
@@ -78,7 +79,7 @@ async fn dispatch_command(
                 .await?
             } else {
                 // Regular commit flow
-                flows::run_commit_flow(confirm, dry_run, &model).await?
+                flows::run_commit_flow(confirm, dry_run, &model, style).await?
             }
         }
         crate::cli::Commands::Publish { branch, base, no_pr, mode, select } => {
@@ -122,7 +123,7 @@ async fn dispatch_command(
         } => {
             eprintln!("⚠️  Warning: 'plan' is deprecated. Use 'commit --plan-only' instead.");
             eprintln!("   Example: orca commit --plan-only --out plan.json\n");
-            flows::run_plan_flow(&model, json_only, out).await?
+            flows::run_plan_flow(&model, json_only, out, None).await?
         }
         crate::cli::Commands::Apply {
             file,

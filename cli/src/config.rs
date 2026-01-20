@@ -65,6 +65,7 @@ fn default_provider() -> String {
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub(crate) struct GitConfig {
     pub(crate) default_model: Option<String>,
+    pub(crate) commit_style: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

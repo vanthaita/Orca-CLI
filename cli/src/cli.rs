@@ -52,6 +52,10 @@ pub(crate) enum Commands {
         #[arg(long, default_value_t = default_model())]
         model: String,
 
+        /// Style instruction for commit messages (e.g. "conventional commits with emojis")
+        #[arg(long)]
+        style: Option<String>,
+
         /// Print JSON only (when using --plan-only)
         #[arg(long, default_value_t = false, requires = "plan_only")]
         json_only: bool,
