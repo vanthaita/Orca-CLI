@@ -11,15 +11,15 @@ export const metadata: Metadata = {
 export default function GuidePage() {
     return (
         <div className="min-h-screen bg-[#0c0c0c] text-neutral-100 font-sans selection:bg-emerald-500/30">
-            <div className="max-w-[80rem] mx-auto px-6 py-14 sm:py-20">
+            <div className="max-w-7xl mx-auto px-6 py-14 sm:py-20">
                 <SiteHeader />
                 <main className="mt-16">
                     <div className="text-center max-w-2xl mx-auto mb-16">
                         <h1 className="text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl mb-6">
-                            Documentation
+                            Docs
                         </h1>
                         <p className="text-lg text-neutral-400">
-                            Everything you need to know about Orca Shell, from installation to advanced workflows.
+                            Learn how to generate semantic commit messages and publish Pull Requests with Orca CLI.
                         </p>
                     </div>
 
