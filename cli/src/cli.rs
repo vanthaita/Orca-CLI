@@ -107,6 +107,10 @@ pub(crate) enum Commands {
         /// Interactively select specific commits to publish (default: all commits)
         #[arg(short = 's', long)]
         select: bool,
+
+        /// Skip fetching from remote before comparing commits (use if you know your refs are current)
+        #[arg(long = "no-fetch")]
+        no_fetch: bool,
     },
 
     #[command(next_help_heading = "Core Commands")]
@@ -206,6 +210,8 @@ pub(crate) enum Commands {
         mode: Option<String>,
         #[arg(short = 's', long)]
         select: bool,
+        #[arg(long = "no-fetch")]
+        no_fetch: bool,
     },
 
     #[command(hide = true)]

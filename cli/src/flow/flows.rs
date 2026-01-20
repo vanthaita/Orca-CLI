@@ -100,8 +100,9 @@ pub(crate) async fn run_publish_current_flow(
     pr: bool,
     mode: Option<&str>,
     select_commits: bool,
+    should_fetch: bool,
 ) -> Result<()> {
-    super::flows_publish::run_publish_current_flow(branch, base, pr, mode, select_commits).await
+    super::flows_publish::run_publish_current_flow(branch, base, pr, mode, select_commits, should_fetch).await
 }
 
 pub(crate) async fn run_setup_flow(

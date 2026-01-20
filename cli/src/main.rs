@@ -82,9 +82,9 @@ async fn dispatch_command(
                 flows::run_commit_flow(confirm, dry_run, &model, style).await?
             }
         }
-        crate::cli::Commands::Publish { branch, base, no_pr, mode, select } => {
+        crate::cli::Commands::Publish { branch, base, no_pr, mode, select, no_fetch } => {
             // New main command for publishing (renamed from publish-current)
-            flows::run_publish_current_flow(branch.as_deref(), &base, !no_pr, mode.as_deref(), select).await?
+            flows::run_publish_current_flow(branch.as_deref(), &base, !no_pr, mode.as_deref(), select, !no_fetch).await?
         }
         crate::cli::Commands::Setup {
             provider,
@@ -108,13 +108,13 @@ async fn dispatch_command(
         crate::cli::Commands::Safe(safe_cmd) => dispatch_safe_command(safe_cmd).await?,
 
         // ============ BACKWARD COMPATIBILITY (DEPRECATED) ============
-        crate::cli::Commands::PublishCurrent { branch, base, no_pr, mode, select } => {
+        crate::cli::Commands::PublishCurrent { branch, base, no_pr, mode, select, no_fetch } => {
             eprintln!("⚠️  Warning: 'publish-current' is deprecated. Use 'publish' instead.");
             eprintln!("   Example: orca publish -b {} {}\n", 
                 base, 
                 if no_pr { "--no-pr" } else { "" }
             );
-            flows::run_publish_current_flow(branch.as_deref(), &base, !no_pr, mode.as_deref(), select).await?
+            flows::run_publish_current_flow(branch.as_deref(), &base, !no_pr, mode.as_deref(), select, !no_fetch).await?
         }
         crate::cli::Commands::Plan {
             model,
