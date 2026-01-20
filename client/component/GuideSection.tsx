@@ -1,342 +1,243 @@
 
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import type { ReactNode } from "react";
 import { TerminalWindow } from "./TerminalWindow";
 import { BookIcon } from "./icons";
 
-type GuideKey = "basics" | "power" | "team" | "config" | "reference";
-
 export const GuideSection = () => {
-    const [activeGuide, setActiveGuide] = useState<GuideKey>("basics");
+    const toc = [
+        { id: "quickstart", title: "Quickstart" },
+        { id: "install", title: "Install" },
+        { id: "setup", title: "Setup (BYOK)" },
+        { id: "commit", title: "orca commit" },
+        { id: "publish", title: "orca publish" },
+        { id: "planning", title: "Planning (plan/apply)" },
+        { id: "tips", title: "Troubleshooting & Tips" },
+        { id: "reference", title: "Command Reference" },
+    ] as const;
 
     return (
         <section id="guides" className="grid gap-16 py-10 border-t-2 border-dashed border-white/20">
             <div className="text-center max-w-2xl mx-auto">
                 <h2 className="text-3xl font-bold tracking-tight mb-4 uppercase inline-flex items-center gap-2 justify-center">
                     <BookIcon className="h-5 w-5 text-emerald-400" />
-                    User Guides
+                    Documentation
                 </h2>
                 <p className="text-neutral-400">
-                    Master the Orca workflow, from your first commit to team collaboration.
+                    Practical docs for Orca CLI: commit messages, semantic commits, and publishing Pull Requests.
                 </p>
             </div>
 
             <div className="grid gap-8 lg:grid-cols-[1fr_2.5fr]">
                 {/* Sidebar Navigation */}
                 <div className="flex flex-col gap-2">
-                    <GuideButton
-                        active={activeGuide === "basics"}
-                        onClick={() => setActiveGuide("basics")}
-                        title="The Basics"
-                        description="Everyday commit & push"
-                    />
-                    <GuideButton
-                        active={activeGuide === "power"}
-                        onClick={() => setActiveGuide("power")}
-                        title="Power User"
-                        description="Planning & Editing"
-                    />
-                    <GuideButton
-                        active={activeGuide === "team"}
-                        onClick={() => setActiveGuide("team")}
-                        title="Team Workflow"
-                        description="Publishing & PRs"
-                    />
-                    <GuideButton
-                        active={activeGuide === "config"}
-                        onClick={() => setActiveGuide("config")}
-                        title="Configuration"
-                        description="AI Models & Keys"
-                    />
-                    <GuideButton
-                        active={activeGuide === "reference"}
-                        onClick={() => setActiveGuide("reference")}
-                        title="Command Reference"
-                        description="Full CLI Options"
-                    />
+                    <div className="rounded-xl border-2 border-dashed border-white/20 bg-neutral-900/30 p-4">
+                        <div className="mb-3 text-xs font-mono uppercase tracking-widest text-neutral-500">On this page</div>
+                        <div className="grid gap-2">
+                            {toc.map((item) => (
+                                <a
+                                    key={item.id}
+                                    href={`#${item.id}`}
+                                    className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-neutral-300 transition hover:bg-white/10 hover:text-white"
+                                >
+                                    {item.title}
+                                </a>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Content Area */}
                 <div className="min-h-[500px] border-2 border-dashed border-white/20 bg-neutral-900/30 rounded-xl p-8 lg:p-12">
-                    {activeGuide === "basics" && <BasicsGuide />}
-                    {activeGuide === "power" && <PowerUserGuide />}
-                    {activeGuide === "team" && <TeamWorkflowGuide />}
-                    {activeGuide === "config" && <ConfigurationGuide />}
-                    {activeGuide === "reference" && <ReferenceGuide />}
+                    <div className="grid gap-14">
+                        <DocSection id="quickstart" title="Quickstart">
+                            <p className="text-neutral-400 leading-relaxed">
+                                The fastest path: install Orca, run <code className="text-emerald-300">orca commit</code>, then publish a Pull Request with <code className="text-emerald-300">orca publish</code>.
+                            </p>
+                            <TerminalWindow title="Quickstart">
+                                <div className="space-y-2">
+                                    <div><span className="text-green-400">➜</span> npm install -g orcacli</div>
+                                    <div><span className="text-green-400">➜</span> orca setup</div>
+                                    <div><span className="text-green-400">➜</span> orca commit</div>
+                                    <div className="text-neutral-500">== orca: commit ==</div>
+                                    <div className="text-emerald-400">AI plan received</div>
+                                    <div className="text-neutral-500">Proposed plan: 2 commits</div>
+                                    <div className="text-emerald-500">Commits created</div>
+                                    <br />
+                                    <div><span className="text-green-400">➜</span> orca publish --pr</div>
+                                    <div className="text-emerald-500">✔ PR Created</div>
+                                </div>
+                            </TerminalWindow>
+                        </DocSection>
+
+                        <DocSection id="install" title="Install">
+                            <div className="grid gap-4">
+                                <div>
+                                    <div className="text-xs font-mono uppercase tracking-widest text-neutral-500">Node (recommended)</div>
+                                    <div className="mt-2 bg-black/50 p-4 rounded border-2 border-dashed border-white/20 font-mono text-sm text-neutral-300">
+                                        npm install -g orcacli
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="text-xs font-mono uppercase tracking-widest text-neutral-500">Bun</div>
+                                    <div className="mt-2 bg-black/50 p-4 rounded border-2 border-dashed border-white/20 font-mono text-sm text-neutral-300">
+                                        bun install -g orcacli
+                                    </div>
+                                </div>
+                            </div>
+                        </DocSection>
+
+                        <DocSection id="setup" title="Setup (BYOK)">
+                            <p className="text-neutral-400 leading-relaxed">
+                                Orca is open-source and works best with BYOK (Bring Your Own Key). Your code stays local; only diffs are sent for analysis.
+                            </p>
+                            <TerminalWindow title="Setup">
+                                <div className="space-y-2">
+                                    <div><span className="text-green-400">➜</span> orca setup --name "Your Name" --email "you@example.com"</div>
+                                    <div><span className="text-green-400">➜</span> orca setup --provider openai --api-key sk-...</div>
+                                    <div className="text-neutral-500">Saved config.</div>
+                                </div>
+                            </TerminalWindow>
+                        </DocSection>
+
+                        <DocSection id="commit" title="orca commit">
+                            <p className="text-neutral-400 leading-relaxed">
+                                <code className="text-emerald-300">orca commit</code> groups your changes into semantic commits and writes clean messages automatically.
+                            </p>
+                            <TerminalWindow title="orca commit">
+                                <div className="space-y-2">
+                                    <div><span className="text-green-400">➜</span> orca commit</div>
+                                    <div className="text-neutral-500">== orca: commit ==</div>
+                                    <div className="text-emerald-400">AI plan received</div>
+                                    <div className="underline decoration-neutral-700 underline-offset-4">Proposed plan</div>
+                                    <div className="text-blue-400 font-bold">Commit #1 (3 file(s))</div>
+                                    <div className="pl-4 border-l-2 border-dashed border-white/20">
+                                        <div><span className="text-neutral-500">message:</span> <span className="text-emerald-300">feat(auth): add OAuth callback + session storage</span></div>
+                                    </div>
+                                    <div className="text-blue-400 font-bold">Commit #2 (2 file(s))</div>
+                                    <div className="pl-4 border-l-2 border-dashed border-white/20">
+                                        <div><span className="text-neutral-500">message:</span> <span className="text-emerald-300">fix(ui): align header + update hero layout</span></div>
+                                    </div>
+                                    <div className="text-neutral-500">Apply this plan? (yes/no)</div>
+                                    <div className="text-emerald-500">Commits created</div>
+                                </div>
+                            </TerminalWindow>
+                        </DocSection>
+
+                        <DocSection id="publish" title="orca publish">
+                            <p className="text-neutral-400 leading-relaxed">
+                                <code className="text-emerald-300">orca publish</code> automates branch creation, push, and PR creation (via GitHub CLI).
+                            </p>
+                            <TerminalWindow title="orca publish">
+                                <div className="space-y-2">
+                                    <div><span className="text-green-400">➜</span> orca publish --pr</div>
+                                    <div className="text-neutral-500">Checking branch status... OK</div>
+                                    <div className="text-neutral-500">Pushing to origin/feat/your-branch... Done</div>
+                                    <div className="text-neutral-500">Creating Pull Request...</div>
+                                    <div className="text-emerald-500">✔ PR Created</div>
+                                </div>
+                            </TerminalWindow>
+                            <p className="text-sm text-neutral-500">
+                                Tip: install GitHub CLI first: <code className="text-neutral-300">gh auth login</code>
+                            </p>
+                        </DocSection>
+
+                        <DocSection id="planning" title="Planning (plan/apply)">
+                            <p className="text-neutral-400 leading-relaxed">
+                                Use planning mode when you want reviewable artifacts. Generate a plan file, edit it, then apply.
+                            </p>
+                            <TerminalWindow title="Plan & Apply">
+                                <div className="space-y-2">
+                                    <div><span className="text-green-400">➜</span> orca plan --out plan.json</div>
+                                    <div className="text-neutral-500">Plan saved to ./plan.json</div>
+                                    <div><span className="text-green-400">➜</span> orca apply --file plan.json</div>
+                                    <div className="text-emerald-500">Applied plan successfully.</div>
+                                </div>
+                            </TerminalWindow>
+                        </DocSection>
+
+                        <DocSection id="tips" title="Troubleshooting & Tips">
+                            <div className="grid gap-4 text-neutral-400">
+                                <div>
+                                    <div className="text-sm font-semibold text-neutral-200">No changes detected</div>
+                                    <div className="text-sm">Run <code className="text-neutral-200">git status</code> first; Orca only commits modified files in a git repo.</div>
+                                </div>
+                                <div>
+                                    <div className="text-sm font-semibold text-neutral-200">Rate limits / API errors</div>
+                                    <div className="text-sm">Switch provider/model or use your own token (BYOK). Check your key and quota.</div>
+                                </div>
+                            </div>
+                        </DocSection>
+
+                        <DocSection id="reference" title="Command Reference">
+                            <div className="grid gap-4">
+                                <ReferenceItem
+                                    command="orca commit"
+                                    description="Analyze changes, propose semantic commits, and generate commit messages."
+                                    examples={["orca commit", "orca commit --dry-run"]}
+                                />
+                                <ReferenceItem
+                                    command="orca publish"
+                                    description="Commit + push + open a Pull Request (GitHub CLI)."
+                                    examples={["orca publish --pr", "orca publish --branch feat/x --base main --pr"]}
+                                />
+                                <ReferenceItem
+                                    command="orca plan"
+                                    description="Generate a plan file to review/edit before applying."
+                                    examples={["orca plan --out plan.json"]}
+                                />
+                                <ReferenceItem
+                                    command="orca apply"
+                                    description="Apply an existing plan file (plan.json)."
+                                    examples={["orca apply --file plan.json"]}
+                                />
+                                <ReferenceItem
+                                    command="orca setup"
+                                    description="Configure name/email, provider, model, and API keys (global or local)."
+                                    examples={["orca setup", "orca setup --local --provider openai --api-key sk-..."]}
+                                />
+                                <ReferenceItem
+                                    command="orca doctor"
+                                    description="Check your environment and repository health."
+                                    examples={["orca doctor"]}
+                                />
+                            </div>
+
+                            <div className="mt-8 text-sm text-neutral-500">
+                                Looking for more? Visit the repo on GitHub: <Link className="underline text-emerald-400" href="https://github.com/vanthaita/Orca-CLI" target="_blank" rel="noreferrer">vanthaita/Orca-CLI</Link>
+                            </div>
+                        </DocSection>
+                    </div>
                 </div>
             </div>
         </section>
     );
 };
 
-const GuideButton = ({ active, onClick, title, description }: { active: boolean, onClick: () => void, title: string, description: string }) => (
-    <button
-        onClick={onClick}
-        className={`text-left p-4 rounded-lg border-2 border-dashed transition-all duration-200 group ${active ? "bg-emerald-500/10 border-emerald-500/50" : "bg-transparent border-white/20 hover:bg-white/5"}`}
-    >
-        <div className={`font-bold mb-1 ${active ? "text-emerald-400" : "text-neutral-300 group-hover:text-white"}`}>
-            {title}
+const DocSection = ({ id, title, children }: { id: string; title: string; children: ReactNode }) => (
+    <section id={id} className="scroll-mt-28">
+        <div className="mb-4">
+            <h3 className="text-2xl font-bold text-white">{title}</h3>
+            <div className="mt-2 h-px w-full bg-white/10" />
         </div>
-        <div className="text-xs text-neutral-500 font-mono">
-            {description}
-        </div>
-    </button>
+        <div className="grid gap-5">{children}</div>
+    </section>
 );
 
-const BasicsGuide = () => (
-    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-        <div>
-            <h3 className="text-2xl font-bold text-white mb-4">The Daily Driver</h3>
-            <p className="text-neutral-400 leading-relaxed">
-                For 90% of your work, you just want to save your progress without thinking too hard about message formatting.
-            </p>
-        </div>
-
-        <div className="grid gap-6">
-            <div className="grid gap-2">
-                <div className="text-emerald-400 font-mono font-bold text-sm">STEP 01</div>
-                <div className="font-medium text-white">Stage & Run</div>
-                <p className="text-sm text-neutral-400">Make your changes, then run the commit command. Orca will detect all modified files.</p>
-                <div className="mt-2 bg-black/50 p-4 rounded border-2 border-dashed border-white/20 font-mono text-sm text-neutral-300">
-                    $ orca commit
-                </div>
-            </div>
-
-            <div className="grid gap-2">
-                <div className="text-emerald-400 font-mono font-bold text-sm">STEP 02</div>
-                <div className="font-medium text-white">Review the Plan</div>
-                <p className="text-sm text-neutral-400">Orca proposes a set of commits. You can say &apos;yes&apos; to apply them immediately.</p>
-            </div>
-        </div>
-    </div>
-);
-
-const PowerUserGuide = () => (
-    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-        <div>
-            <h3 className="text-2xl font-bold text-white mb-4">Planning Mode</h3>
-            <p className="text-neutral-400 leading-relaxed">
-                Sometimes you need precise control. Generate a plan file, edit it manually, and then execute it.
-            </p>
-        </div>
-
-        <div className="space-y-6">
-            <TerminalWindow title="Planning Workflow">
-                <div className="space-y-2">
-                    <div><span className="text-green-400">➜</span> orca plan --out plan.json</div>
-                    <div className="text-neutral-500">Analysis complete. Plan saved to ./plan.json</div>
-                    <br />
-                    <div><span className="text-green-400">➜</span> code plan.json <span className="text-neutral-500"># Edit manually</span></div>
-                    <br />
-                    <div><span className="text-green-400">➜</span> orca apply --file plan.json</div>
-                    <div className="text-emerald-400">Successfully applied 3 commits.</div>
-                </div>
-            </TerminalWindow>
-
-            <p className="text-sm text-neutral-400">
-                The `plan.json` file contains an array of changes. You can move files between commits, rename messages, or even split commits down to the hunk level (coming soon).
-            </p>
-        </div>
-    </div>
-);
-
-const TeamWorkflowGuide = () => (
-    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-        <div>
-            <h3 className="text-2xl font-bold text-white mb-4">Zero-Friction Releases</h3>
-            <p className="text-neutral-400 leading-relaxed">
-                Stop fighting with git branches and PR descriptions. Let Orca handle the choreography.
-            </p>
-        </div>
-
-        <div className="grid gap-8">
-            <div className="border-l-2 border-emerald-500/30 pl-6 py-2">
-                <h4 className="font-bold text-white mb-2">The &quot;Publish&quot; Command</h4>
-                <p className="text-neutral-400 text-sm mb-4">
-                    `orca publish` is a macro that performs the following:
-                </p>
-                <ul className="list-disc list-inside text-sm text-neutral-400 space-y-1 font-mono">
-                    <li>Checks out a new branch (if needed)</li>
-                    <li>Commits any pending changes</li>
-                    <li> pushes to origin</li>
-                    <li>Uses `gh pr create` to open a Pull Request</li>
-                    <li>Generates a PR summary from your commit history</li>
-                </ul>
-            </div>
-
-            <div className="bg-black/40 rounded-lg p-4 border-2 border-dashed border-white/20">
-                <code className="text-emerald-300">
-                    orca publish --branch feat/user-auth --base main
-                </code>
-            </div>
-        </div>
-    </div>
-);
-
-const ConfigurationGuide = () => (
-    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-        <div>
-            <h3 className="text-2xl font-bold text-white mb-4">Configuration</h3>
-            <p className="text-neutral-400 leading-relaxed">
-                Configure your AI models, API keys, and local repository settings.
-            </p>
-        </div>
-
-        <div className="grid gap-6">
-            <div className="grid gap-2">
-                <div className="text-emerald-400 font-mono font-bold text-sm">GLOBAL</div>
-                <div className="font-medium text-white">Switch AI Provider</div>
-                <p className="text-sm text-neutral-400">Set the default AI provider and API key globally.</p>
-                <div className="mt-2 bg-black/50 p-4 rounded border-2 border-dashed border-white/20 font-mono text-sm text-neutral-300">
-                    $ orca setup --provider openai --api-key sk-...
-                </div>
-            </div>
-
-            <div className="grid gap-2">
-                <div className="text-emerald-400 font-mono font-bold text-sm">LOCAL</div>
-                <div className="font-medium text-white">Repository Config</div>
-                <p className="text-sm text-neutral-400">Override settings for the current repository only.</p>
-                <div className="mt-2 bg-black/50 p-4 rounded border-2 border-dashed border-white/20 font-mono text-sm text-neutral-300">
-                    $ orca setup --local --model gpt-4
-                </div>
-            </div>
-        </div>
-    </div>
-);
-
-const ReferenceGuide = () => (
-    <div className="space-y-12 animate-in fade-in slide-in-from-right-4 duration-500">
-        <div>
-            <h3 className="text-2xl font-bold text-white mb-4">Command Reference</h3>
-            <p className="text-neutral-400 leading-relaxed">
-                Complete list of available Orca commands, flags, and their usage.
-            </p>
-        </div>
-
-        <div className="space-y-8">
-            {/* Core Workflow */}
-            <div>
-                <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    Core Workflow
-                </h4>
-                <div className="grid gap-4">
-                    <CommandItem
-                        command="orca commit"
-                        tag="core"
-                        description="Intelligently analyzes changes, stages files, and generates a commit message based on your work."
-                        flags={[
-                            { name: "--no-confirm", desc: "Skip confirmation prompt" },
-                            { name: "--dry-run", desc: "Show plan without executing" },
-                            { name: "--model <name>", desc: "Use specific AI model" }
-                        ]}
-                    />
-                    <CommandItem
-                        command="orca publish"
-                        tag="workflow"
-                        description="Handles the full release flow: commits pending changes, pushes to origin, and creates a GitHub PR."
-                        flags={[
-                            { name: "--branch <name>", desc: "Target branch name" },
-                            { name: "--base <name>", desc: "Base branch (default: main)" },
-                            { name: "--dry-run", desc: "Preview actions" }
-                        ]}
-                    />
-                </div>
-            </div>
-
-            {/* Advanced Planning */}
-            <div>
-                <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                    Advanced Planning
-                </h4>
-                <div className="grid gap-4">
-                    <CommandItem
-                        command="orca plan"
-                        tag="advanced"
-                        description="Generates a plan.json for complex tasks. Useful when you want to manually review or edit the AI's proposed strategy."
-                        flags={[
-                            { name: "--out <file>", desc: "Output file (default: stdout)" },
-                            { name: "--model <name>", desc: "Use specific AI model" }
-                        ]}
-                    />
-                    <CommandItem
-                        command="orca apply"
-                        tag="advanced"
-                        description="Executes a plan file generated by 'orca plan'."
-                        flags={[
-                            { name: "--file <path>", desc: "Path to plan.json" },
-                            { name: "--publish", desc: "Auto-publish after applying" }
-                        ]}
-                    />
-                </div>
-            </div>
-
-            {/* System & Configuration */}
-            <div>
-                <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-neutral-500"></span>
-                    System & Config
-                </h4>
-                <div className="grid gap-4">
-                    <CommandItem
-                        command="orca setup"
-                        tag="config"
-                        description="Configures AI providers, API keys, and local repository settings."
-                        flags={[
-                            { name: "--provider <name>", desc: "openai, gemini, etc." },
-                            { name: "--api-key <key>", desc: "Set API key" },
-                            { name: "--local", desc: "Apply to current repo only" }
-                        ]}
-                    />
-                    <CommandItem
-                        command="orca login"
-                        tag="auth"
-                        description="Authenticates with Orca Cloud services using your terminal."
-                    />
-                    <CommandItem
-                        command="orca doctor"
-                        tag="system"
-                        description="Checks your environment for potential issues (git repo, API keys, dependencies)."
-                    />
-                    <CommandItem
-                        command="orca update"
-                        tag="system"
-                        description="Updates Orca to the latest version."
-                    />
-                </div>
-            </div>
-        </div>
-    </div>
-);
-
-const CommandItem = ({ command, tag, description, flags }: { command: string, tag: string, description: string, flags?: { name: string, desc: string }[] }) => (
+const ReferenceItem = ({ command, description, examples }: { command: string; description: string; examples: string[] }) => (
     <div className="p-5 rounded-xl bg-neutral-900/50 border border-white/10 hover:border-white/20 transition-colors">
         <div className="flex flex-wrap items-center gap-3 mb-3">
             <code className="text-emerald-400 font-bold bg-emerald-950/30 px-3 py-1 rounded text-sm">{command}</code>
-            <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border ${tag === 'core' ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' :
-                    tag === 'workflow' ? 'border-purple-500/30 text-purple-400 bg-purple-500/10' :
-                        tag === 'advanced' ? 'border-blue-500/30 text-blue-400 bg-blue-500/10' :
-                            'border-neutral-500/30 text-neutral-400 bg-neutral-500/10'
-                }`}>
-                {tag}
-            </span>
         </div>
-        <p className="text-sm text-neutral-300 mb-3 leading-relaxed">{description}</p>
-
-        {flags && flags.length > 0 && (
-            <div className="mt-4 pt-3 border-t border-white/5">
-                <div className="text-xs font-semibold text-neutral-500 mb-2 uppercase tracking-wide">Common Flags</div>
-                <div className="grid gap-1.5">
-                    {flags.map((flag, i) => (
-                        <div key={i} className="grid grid-cols-[1fr_2fr] gap-4 text-xs font-mono">
-                            <span className="text-emerald-300/80">{flag.name}</span>
-                            <span className="text-neutral-500">{flag.desc}</span>
-                        </div>
-                    ))}
+        <p className="text-sm text-neutral-300 mb-4 leading-relaxed">{description}</p>
+        <div className="grid gap-2">
+            {examples.map((ex) => (
+                <div key={ex} className="bg-black/40 border border-white/10 rounded px-3 py-2 font-mono text-xs text-neutral-300 overflow-x-auto">
+                    {ex}
                 </div>
-            </div>
-        )}
+            ))}
+        </div>
     </div>
 );
