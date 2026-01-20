@@ -676,15 +676,3 @@ async fn run_stack_pr_workflow(base: &str, pr: bool, commits: &[String], selecte
     Ok(())
 }
 
-/// Update a PR description to add the "Next" link
-fn update_pr_with_next_link(
-    _pr_idx: usize,
-    _created_prs: &[(String, String)],
-    _stack: &[pr_workflow::StackPr],
-) -> Result<()> {
-    // This would require editing PR description via gh API
-    // For now, we skip this to keep implementation simpler
-    // Future enhancement: use `gh pr edit` to update description
-    Ok(())
-}
-

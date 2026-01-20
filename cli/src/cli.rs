@@ -189,7 +189,7 @@ pub(crate) enum Commands {
     Update,
 
     // ============ BACKWARD COMPATIBILITY (HIDDEN) ============
-    #[command(hide = true, alias = "publish-current")]
+    #[command(hide = true)]
     /// (Deprecated: use 'publish' instead) Publish current commits
     PublishCurrent {
         #[arg(short, long)]
