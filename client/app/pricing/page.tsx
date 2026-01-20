@@ -19,7 +19,7 @@ const TIERS: PricingTier[] = [
 export default function PricingPage() {
     return (
         <main className="min-h-screen bg-[#0A0A0A] selection:bg-emerald-500/30">
-            <div className="container mx-auto px-4 py-8">
+            <div className="mx-auto max-w-7xl px-4 py-8">
                 <SiteHeader />
 
                 <div className="py-16">
@@ -32,7 +32,7 @@ export default function PricingPage() {
                         </p>
                     </div>
 
-                    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto">
+                    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                         {TIERS.map((tier) => (
                             <PricingCard key={tier.name} tier={tier} />
                         ))}
