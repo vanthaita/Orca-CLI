@@ -53,6 +53,10 @@ pub fn get_default_template() -> String {
 
 {commit_list}
 
+## Statistics
+
+{stats}
+
 ## Type of Change
 
 - [ ] Bug fix
@@ -68,27 +72,209 @@ pub fn get_default_template() -> String {
     .to_string()
 }
 
+/// Commit category information
+#[derive(Debug)]
+struct CommitCategory {
+    name: String,
+    emoji: String,
+    commits: Vec<String>,
+}
+
+/// Analyze commits and extract metadata
+fn analyze_commits(commits: &[String]) -> (Vec<CommitCategory>, Vec<String>) {
+    use std::collections::HashMap;
+    
+    let mut categories: HashMap<String, Vec<String>> = HashMap::new();
+    let mut issue_refs = Vec::new();
+    
+    for commit in commits {
+        // Extract commit type (feat, fix, docs, etc.)
+        let (commit_type, message) = if let Some((prefix, rest)) = commit.split_once(':') {
+            (prefix.trim().to_lowercase(), rest.trim().to_string())
+        } else {
+            ("other".to_string(), commit.clone())
+        };
+        
+        // Extract issue references (#123, GH-123, etc.)
+        for word in commit.split_whitespace() {
+            if word.starts_with('#') || word.starts_with("GH-") {
+                issue_refs.push(word.to_string());
+            }
+        }
+        
+        categories.entry(commit_type).or_insert_with(Vec::new).push(message);
+    }
+    
+    // Convert to structured categories with emojis
+    let mut result = Vec::new();
+    
+    // Define category order and styling
+    let category_info = [
+        ("feat", "✨ Features"),
+        ("feature", "✨ Features"),
+        ("fix", "🐛 Bug Fixes"),
+        ("bugfix", "🐛 Bug Fixes"),
+        ("docs", "📝 Documentation"),
+        ("doc", "📝 Documentation"),
+        ("style", "💄 Styling"),
+        ("refactor", "♻️ Refactoring"),
+        ("perf", "⚡ Performance"),
+        ("test", "✅ Tests"),
+        ("build", "🔧 Build"),
+        ("ci", "👷 CI/CD"),
+        ("chore", "🔨 Chores"),
+    ];
+    
+    for (key, display) in &category_info {
+        if let Some(commits) = categories.remove(*key) {
+            let parts: Vec<&str> = display.splitn(2, ' ').collect();
+            result.push(CommitCategory {
+                name: parts.get(1).unwrap_or(&"Other").to_string(),
+                emoji: parts.get(0).unwrap_or(&"📌").to_string(),
+                commits,
+            });
+        }
+    }
+    
+    // Add any other categories not in the standard list
+    for (key, commits) in categories {
+        result.push(CommitCategory {
+            name: key.chars().next().map(|c| c.to_uppercase().collect::<String>() + &key[1..]).unwrap_or(key),
+            emoji: "📌".to_string(),
+            commits,
+        });
+    }
+    
+    issue_refs.sort();
+    issue_refs.dedup();
+    
+    (result, issue_refs)
+}
+
+/// Generate smart summary from commits
+fn generate_smart_summary(commits: &[String], categories: &[CommitCategory]) -> String {
+    if commits.is_empty() {
+        return "No changes".to_string();
+    }
+    
+    if commits.len() == 1 {
+        // Single commit - use its message directly
+        return commits[0].clone();
+    }
+    
+    // Multiple commits - create intelligent summary
+    if categories.len() == 1 {
+        // All commits are same category
+        let cat = &categories[0];
+        let count = cat.commits.len();
+        
+        // Get common theme if possible
+        if count <= 3 {
+            // List them briefly
+            let items = cat.commits.iter()
+                .take(3)
+                .map(|s| s.to_lowercase())
+                .collect::<Vec<_>>()
+                .join(", ");
+            format!("{}: {}", cat.name, items)
+        } else {
+            format!("Multiple {} ({} changes)", cat.name.to_lowercase(), count)
+        }
+    } else {
+        // Mixed categories - summarize by category
+        let category_summary = categories.iter()
+            .map(|cat| format!("{} {}", cat.commits.len(), cat.name.to_lowercase()))
+            .collect::<Vec<_>>()
+            .join(", ");
+        
+        format!("Multiple changes: {}", category_summary)
+    }
+}
+
+/// Format changes by category
+fn format_changes_by_category(categories: &[CommitCategory]) -> String {
+    let mut result = Vec::new();
+    
+    for category in categories {
+        result.push(format!("\n### {} {}", category.emoji, category.name));
+        for commit in &category.commits {
+            result.push(format!("- {}", commit));
+        }
+    }
+    
+    result.join("\n")
+}
+
+/// Get commit statistics
+fn get_commit_stats(commits: &[String]) -> String {
+    let count = commits.len();
+    
+    // Try to get file change stats from git
+    let stats_output = crate::git::run_git(&["diff", "--shortstat", "@{u}..HEAD"])
+        .ok()
+        .and_then(|s| {
+            if s.trim().is_empty() {
+                None
+            } else {
+                Some(s.trim().to_string())
+            }
+        });
+    
+    let mut stats = vec![format!("- **Commits**: {}", count)];
+    
+    if let Some(stat_line) = stats_output {
+        // Parse git shortstat output (e.g., "5 files changed, 120 insertions(+), 30 deletions(-)")
+        stats.push(format!("- **Changes**: {}", stat_line));
+    }
+    
+    stats.join("\n")
+}
+
 /// Populate template with commit data
 pub fn populate_template(template: &str, commits: &[String]) -> String {
     if commits.is_empty() {
         return template
             .replace("{commit_summary}", "No commits found")
-            .replace("{commit_list}", "- No changes");
+            .replace("{commit_list}", "- No changes")
+            .replace("{stats}", "- **Commits**: 0");
     }
 
-    // Use first commit as summary
-    let summary = commits.first().map(|s| s.as_str()).unwrap_or("Changes");
-
-    // Create list of all commits
-    let commit_list = commits
-        .iter()
-        .map(|c| format!("- {}", c))
-        .collect::<Vec<_>>()
-        .join("\n");
-
-    template
-        .replace("{commit_summary}", summary)
+    // Analyze commits to extract categories and metadata
+    let (categories, issue_refs) = analyze_commits(commits);
+    
+    // Generate smart summary
+    let summary = generate_smart_summary(commits, &categories);
+    
+    // Format changes by category
+    let commit_list = if categories.is_empty() {
+        commits
+            .iter()
+            .map(|c| format!("- {}", c))
+            .collect::<Vec<_>>()
+            .join("\n")
+    } else {
+        format_changes_by_category(&categories)
+    };
+    
+    // Get statistics
+    let stats = get_commit_stats(commits);
+    
+    // Build final description
+    let mut result = template
+        .replace("{commit_summary}", &summary)
         .replace("{commit_list}", &commit_list)
+        .replace("{stats}", &stats);
+    
+    // Add related issues if found
+    if !issue_refs.is_empty() {
+        let issues_section = format!(
+            "\n\n## Related Issues\n\n{}",
+            issue_refs.iter().map(|i| format!("- {}", i)).collect::<Vec<_>>().join("\n")
+        );
+        result.push_str(&issues_section);
+    }
+    
+    result
 }
 
 /// Generate smart PR title from multiple commits
