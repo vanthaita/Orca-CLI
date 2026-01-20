@@ -80,6 +80,7 @@ pub(crate) async fn run_publish_current_flow(
     pr: bool,
     mode: Option<&str>,
     select_commits: bool,
+    should_fetch: bool,
 ) -> Result<()> {
     // Check if user has Pro/Team plan for auto-publish feature
     crate::plan_guard::require_feature(crate::plan_types::FeaturePermission::AutoPublish).await?;
@@ -90,6 +91,33 @@ pub(crate) async fn run_publish_current_flow(
 
     if !flows_error::ensure_has_git_remote()? {
         return Ok(());
+    }
+
+    // Fetch from remote to ensure accurate commit comparison (unless --no-fetch is used)
+    if should_fetch {
+        let pb = spinner(&format!("Fetching latest from remote..."));
+        match crate::git::fetch_remote("origin") {
+            Ok(_) => {
+                pb.finish_and_clear();
+                eprintln!(
+                    "{} {}",
+                    style("[✓]").green().bold(),
+                    style("Remote refs updated").green()
+                );
+            }
+            Err(e) => {
+                pb.finish_and_clear();
+                eprintln!(
+                    "{} {}",
+                    style("Warning:").yellow().bold(),
+                    style(format!("Failed to fetch from remote: {}", e)).yellow()
+                );
+                eprintln!(
+                    "   {}",
+                    style("Continuing with possibly stale refs. Use --no-fetch to suppress this warning.").dim()
+                );
+            }
+        }
     }
 
     // Get commits to publish
