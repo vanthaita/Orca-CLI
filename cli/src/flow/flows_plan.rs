@@ -6,11 +6,11 @@ use console::style;
 use super::flows_spinner::spinner;
 use std::path::PathBuf;
 
-pub(crate) async fn generate_plan(model: &str, status: &str, diff: &str, log: &str, style: Option<String>) -> Result<CommitPlan> {
+pub(crate) async fn generate_plan(model: &str, status: &str, diff: &str, log: &str, commit_style: Option<String>) -> Result<CommitPlan> {
     let provider = crate::ai::create_provider().await?;
 
     let config = crate::config::load_config()?;
-    let resolved_style = style.or(config.git.commit_style);
+    let resolved_style = commit_style.or(config.git.commit_style);
 
     let prompt = build_prompt(status, diff, log, resolved_style.as_deref());
 
@@ -89,7 +89,7 @@ fn build_prompt(status: &str, diff: &str, log: &str, style: Option<&str>) -> Str
     - JSON schema: {{\"commits\":[{{\"message\":string,\"files\":[string],\"commands\":[string]}}]}}
     - Group files into logical commits by feature/responsibility.
     - Commit messages should be concise, imperative, and conventional (e.g. feat:, fix:, refactor:, chore:).
-    {}    - Each file path must exist in git status output.
+    {style_instruction}    - Each file path must exist in git status output.
     - For each commit, commands must contain EXACTLY 2 commands in this order:
       1) git add -- <files...>
       2) git commit -m \"<message>\"
@@ -107,7 +107,7 @@ fn build_prompt(status: &str, diff: &str, log: &str, style: Option<&str>) -> Str
     )
 }
 
-pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<PathBuf>, style: Option<String>) -> Result<()> {
+pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<PathBuf>, commit_style: Option<String>) -> Result<()> {
     crate::git::ensure_git_repo()?;
 
     println!("{}", style("[orca plan]").bold().cyan());
@@ -148,7 +148,7 @@ pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<Path
         diff.to_string()
     };
     
-    let mut plan = generate_plan(model, &status, &effective_diff, &log, style).await?;
+    let mut plan = generate_plan(model, &status, &effective_diff, &log, commit_style).await?;
     pb.finish_and_clear();
     
     if diff.len() > max_diff_len {
