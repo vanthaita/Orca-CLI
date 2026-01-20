@@ -16,7 +16,6 @@ struct GithubAsset {
 #[derive(Deserialize, Debug)]
 struct GithubRelease {
     tag_name: String,
-    html_url: String,
     body: String,
     assets: Vec<GithubAsset>,
 }
