@@ -1,3 +1,5 @@
+import { Fragment } from "react";
+
 export function FeatureComparison() {
     const features = [
         {
@@ -79,8 +81,8 @@ export function FeatureComparison() {
                     </thead>
                     <tbody>
                         {features.map((category, categoryIdx) => (
-                            <>
-                                <tr key={`category-${categoryIdx}`} className="border-b-2 border-dashed border-white/10 bg-white/5">
+                            <Fragment key={`category-${categoryIdx}`}>
+                                <tr className="border-b-2 border-dashed border-white/10 bg-white/5">
                                     <td colSpan={4} className="p-3 text-sm font-bold text-white uppercase tracking-wide">
                                         {category.category}
                                     </td>
@@ -96,7 +98,7 @@ export function FeatureComparison() {
                                         <td className="p-4 text-center">{renderValue(item.team)}</td>
                                     </tr>
                                 ))}
-                            </>
+                            </Fragment>
                         ))}
                     </tbody>
                 </table>
