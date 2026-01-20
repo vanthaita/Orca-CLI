@@ -93,7 +93,7 @@ pub(crate) enum Commands {
         branch: Option<String>,
 
         /// Base branch for PR (default: main)
-        #[arg(short = 'b', long, default_value_t = default_base_branch())]
+        #[arg(short = 'B', long, default_value_t = default_base_branch())]
         base: String,
 
         /// Skip creating PR (only push branch)
@@ -198,7 +198,7 @@ pub(crate) enum Commands {
     PublishCurrent {
         #[arg(short, long)]
         branch: Option<String>,
-        #[arg(short = 'b', long, default_value_t = default_base_branch())]
+        #[arg(short = 'B', long, default_value_t = default_base_branch())]
         base: String,
         #[arg(long = "no-pr")]
         no_pr: bool,
