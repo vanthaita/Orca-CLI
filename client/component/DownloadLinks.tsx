@@ -1,22 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getReleases, Release } from "@/lib/github";
+import { useGithubReleases } from "@/hook/useGithub";
 
 export function DownloadLinks() {
-    const [releases, setReleases] = useState<Release[]>([]);
-    const [loading, setLoading] = useState(true);
+    const releasesQuery = useGithubReleases('vanthaita/Orca-CLI');
+    const releases = releasesQuery.data ?? [];
 
-    useEffect(() => {
-        async function fetchReleases() {
-            const data = await getReleases();
-            setReleases(data);
-            setLoading(false);
-        }
-        fetchReleases();
-    }, []);
-
-    if (loading) {
+    if (releasesQuery.isLoading) {
         return <div className="text-sm text-gray-500">Loading versions...</div>;
     }
 
