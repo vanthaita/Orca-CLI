@@ -83,16 +83,21 @@ fn build_prompt(status: &str, diff: &str, log: &str, style: Option<&str>) -> Str
     };
 
     format!(
-        "Task: Propose a commit plan for the current git working tree.
+        r#"Task: Propose a detailed commit plan for the current git working tree.
     Rules:
     - Output ONLY valid JSON. No markdown. No commentary.
-    - JSON schema: {{\"commits\":[{{\"message\":string,\"files\":[string],\"commands\":[string]}}]}}
+    - JSON schema: {{"commits":[{{"message":string,"files":[string],"commands":[string],"description":{{"summary":string,"changes":[string],"impact":{{"level":string,"explanation":string,"affected_areas":[string]}},"breaking_changes":[string]}}}}]}}
     - Group files into logical commits by feature/responsibility.
     - Commit messages should be concise, imperative, and conventional (e.g. feat:, fix:, refactor:, chore:).
-    {style_instruction}    - Each file path must exist in git status output.
+    {style_instruction}    - For each commit, provide a detailed description:
+      * summary: 2-3 sentences describing what changed and why (in Vietnamese or English based on the changes)
+      * changes: Bullet point list of the main changes
+      * impact: Assessment of impact level (low/medium/high) with explanation
+      * breaking_changes: List of breaking changes if any (empty array if none)
+    - Each file path must exist in git status output.
     - For each commit, commands must contain EXACTLY 2 commands in this order:
       1) git add -- <files...>
-      2) git commit -m \"<message>\"
+      2) git commit -m "<message>"
 
     Context:
     GIT_STATUS_PORCELAIN:
@@ -103,11 +108,18 @@ fn build_prompt(status: &str, diff: &str, log: &str, style: Option<&str>) -> Str
 
     RECENT_GIT_LOG (for style):
 {log}
-",
+"#,
     )
 }
 
-pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<PathBuf>, commit_style: Option<String>) -> Result<()> {
+pub(crate) async fn run_plan_flow(
+    model: &str, 
+    json_only: bool, 
+    out: Option<PathBuf>, 
+    commit_style: Option<String>,
+    use_cache: bool,
+    regenerate: bool,
+) -> Result<()> {
     crate::git::ensure_git_repo()?;
 
     println!("{}", style("[orca plan]").bold().cyan());
@@ -128,38 +140,23 @@ pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<Path
     }
 
     let changed_files = files_from_status_porcelain(&status);
-    let spinner_msg = if crate::config::get_provider() == "orca" {
-        "Asking Orca Server to analyze changes and propose commit plan...".to_string()
-    } else {
-        format!(
-            "Asking model '{}' to analyze changes and propose commit plan...",
-            model
-        )
-    };
-    let pb = spinner(&spinner_msg);
     
-    // Truncate diff if it's extremely large (safety limit ~20MB)
-    // Server now supports up to 50MB
-    let max_diff_len = 20_000_000;
-    let effective_diff = if diff.len() > max_diff_len {
-        let truncated = diff.chars().take(max_diff_len).collect::<String>();
-        format!("{}\n\n... (Diff truncated due to extreme size > 20MB)", truncated)
+    // Try to load from cache if requested and not regenerating
+    let mut plan = if use_cache && !regenerate {
+        if let Ok(Some(cached_plan)) = crate::commit_cache::load_cached_plan(&diff) {
+            eprintln!(
+                "{} {}",
+                style("[✓]").green().bold(),
+                style("Loaded plan from cache").green()
+            );
+            cached_plan
+        } else {
+            generate_and_cache_plan(model, &status, &diff, &log, commit_style).await?
+        }
     } else {
-        diff.to_string()
+        generate_and_cache_plan(model, &status, &diff, &log, commit_style).await?
     };
     
-    let mut plan = generate_plan(model, &status, &effective_diff, &log, commit_style).await?;
-    pb.finish_and_clear();
-    
-    if diff.len() > max_diff_len {
-        eprintln!(
-            "{} {}",
-            style("[!]").yellow().bold(),
-            style("Diff was truncated because it exceeded 20MB. This is extremely large!").yellow()
-        );
-    }
-    
-    eprintln!("{} {}", style("[✓]").green().bold(), style("Plan received").green());
     normalize_plan_files(&mut plan, &changed_files);
 
     let plan_json = serde_json::to_string_pretty(&plan)?;
@@ -183,4 +180,56 @@ pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<Path
     }
 
     Ok(())
+}
+
+async fn generate_and_cache_plan(
+    model: &str,
+    status: &str,
+    diff: &str,
+    log: &str,
+    commit_style: Option<String>,
+) -> Result<CommitPlan> {
+    let spinner_msg = if crate::config::get_provider() == "orca" {
+        "Asking Orca Server to analyze changes and propose commit plan...".to_string()
+    } else {
+        format!(
+            "Asking model '{}' to analyze changes and propose commit plan...",
+            model
+        )
+    };
+    let pb = spinner(&spinner_msg);
+    
+    // Truncate diff if it's extremely large (safety limit ~20MB)
+    // Server now supports up to 50MB
+    let max_diff_len = 20_000_000;
+    let effective_diff = if diff.len() > max_diff_len {
+        let truncated = diff.chars().take(max_diff_len).collect::<String>();
+        format!("{}\n\n... (Diff truncated due to extreme size > 20MB)", truncated)
+    } else {
+        diff.to_string()
+    };
+    
+    let plan = generate_plan(model, status, &effective_diff, log, commit_style).await?;
+    pb.finish_and_clear();
+    
+    if diff.len() > max_diff_len {
+        eprintln!(
+            "{} {}",
+            style("[!]").yellow().bold(),
+            style("Diff was truncated because it exceeded 20MB. This is extremely large!").yellow()
+        );
+    }
+    
+    eprintln!("{} {}", style("[✓]").green().bold(), style("Plan received").green());
+    
+    // Cache the plan
+    if let Err(e) = crate::commit_cache::cache_plan(&plan, diff) {
+        eprintln!(
+            "{} {}",
+            style("Warning:").yellow(),
+            style(format!("Failed to cache plan: {}", e)).yellow()
+        );
+    }
+    
+    Ok(plan)
 }

@@ -3,17 +3,44 @@ use anyhow::Result;
 use console::style;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub(crate) struct CommitPlan {
     pub(crate) commits: Vec<PlannedCommit>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub(crate) struct PlannedCommit {
     pub(crate) message: String,
     pub(crate) files: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub(crate) commands: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) description: Option<CommitDescription>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub(crate) struct CommitDescription {
+    /// Summary chi tiết về những thay đổi
+    pub(crate) summary: String,
+    /// Danh sách các thay đổi quan trọng
+    pub(crate) changes: Vec<String>,
+    /// Đánh giá tác động
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) impact: Option<ImpactAnalysis>,
+    /// Breaking changes (nếu có)
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) breaking_changes: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub(crate) struct ImpactAnalysis {
+    /// Mức độ tác động: low, medium, high
+    pub(crate) level: String,
+    /// Giải thích về tác động
+    pub(crate) explanation: String,
+    /// Các modules/components bị ảnh hưởng
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) affected_areas: Vec<String>,
 }
 
 pub(crate) fn print_plan_human(plan: &CommitPlan) {
@@ -25,7 +52,42 @@ pub(crate) fn print_plan_human(plan: &CommitPlan) {
             style(format!("{} file(s)", c.files.len())).dim()
         );
         println!("  {} {}", style("Message:").bold(), style(&c.message).green());
-        println!("  {}", style("Files:").bold());
+        
+        // Hiển thị description nếu có
+        if let Some(desc) = &c.description {
+            println!("\n  {}", style("Description:").bold());
+            println!("    {}", style(&desc.summary).white());
+            
+            if !desc.changes.is_empty() {
+                println!("\n    {}", style("Changes:").bold());
+                for change in &desc.changes {
+                    println!("      {} {}", style("•").cyan(), style(change).white());
+                }
+            }
+            
+            if let Some(impact) = &desc.impact {
+                println!("\n    {}", style("Impact:").bold());
+                let level_color = match impact.level.as_str() {
+                    "high" => style(&impact.level).red(),
+                    "medium" => style(&impact.level).yellow(),
+                    _ => style(&impact.level).green(),
+                };
+                println!("      Level: {}", level_color);
+                println!("      {}", style(&impact.explanation).dim());
+                if !impact.affected_areas.is_empty() {
+                    println!("      Affected: {}", impact.affected_areas.join(", "));
+                }
+            }
+            
+            if !desc.breaking_changes.is_empty() {
+                println!("\n    {} {}", style("⚠").red().bold(), style("Breaking Changes:").red().bold());
+                for bc in &desc.breaking_changes {
+                    println!("      {} {}", style("!").red(), style(bc).white());
+                }
+            }
+        }
+        
+        println!("\n  {}", style("Files:").bold());
         for f in &c.files {
             println!("    {} {}", style("→").cyan(), style(f).white());
         }
@@ -136,9 +198,48 @@ pub(crate) fn apply_plan(plan: &CommitPlan) -> Result<()> {
             }
         }
 
-        run_git(&["commit", "-m", &c.message])?;
+        // Tạo commit message với body (description)
+        if let Some(desc) = &c.description {
+            let commit_body = format_commit_body(desc);
+            let full_message = format!("{}\n\n{}", c.message, commit_body);
+            run_git(&["commit", "-m", &full_message])?;
+        } else {
+            run_git(&["commit", "-m", &c.message])?;
+        }
     }
     Ok(())
+}
+
+fn format_commit_body(desc: &CommitDescription) -> String {
+    let mut body = vec![];
+    
+    body.push(desc.summary.clone());
+    body.push(String::new());
+    
+    if !desc.changes.is_empty() {
+        body.push("Changes:".to_string());
+        for change in &desc.changes {
+            body.push(format!("- {}", change));
+        }
+        body.push(String::new());
+    }
+    
+    if let Some(impact) = &desc.impact {
+        body.push(format!("Impact: {} - {}", impact.level.to_uppercase(), impact.explanation));
+        if !impact.affected_areas.is_empty() {
+            body.push(format!("Affected areas: {}", impact.affected_areas.join(", ")));
+        }
+        body.push(String::new());
+    }
+    
+    if !desc.breaking_changes.is_empty() {
+        body.push("BREAKING CHANGES:".to_string());
+        for bc in &desc.breaking_changes {
+            body.push(format!("- {}", bc));
+        }
+    }
+    
+    body.join("\n")
 }
 
 #[cfg(test)]
