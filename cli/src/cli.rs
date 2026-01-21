@@ -83,6 +83,14 @@ pub(crate) enum Commands {
         /// Create PR via GitHub CLI (gh) when --publish is set
         #[arg(long, default_value_t = true, requires = "publish")]
         pr: bool,
+
+        /// Use cached plan if available (default: true)
+        #[arg(long, default_value_t = true)]
+        cache: bool,
+
+        /// Regenerate plan even if cache exists
+        #[arg(long, default_value_t = false)]
+        regenerate: bool,
     },
 
     #[command(next_help_heading = "Core Commands")]
@@ -223,6 +231,14 @@ pub(crate) enum Commands {
         json_only: bool,
         #[arg(long)]
         out: Option<PathBuf>,
+
+        /// Use cached plan if available
+        #[arg(long, default_value_t = true)]
+        cache: bool,
+
+        /// Regenerate plan even if cache exists
+        #[arg(long, default_value_t = false)]
+        regenerate: bool,
     },
 
     #[command(hide = true)]

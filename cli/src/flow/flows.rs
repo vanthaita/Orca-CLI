@@ -123,8 +123,15 @@ pub(crate) async fn run_menu_flow() -> Result<()> {
     super::flows_menu::run_menu_flow().await
 }
 
-pub(crate) async fn run_plan_flow(model: &str, json_only: bool, out: Option<PathBuf>, commit_style: Option<String>) -> Result<()> {
-    super::flows_plan::run_plan_flow(model, json_only, out, commit_style).await
+pub(crate) async fn run_plan_flow(
+    model: &str, 
+    json_only: bool, 
+    out: Option<PathBuf>, 
+    commit_style: Option<String>,
+    use_cache: bool,
+    regenerate: bool,
+) -> Result<()> {
+    super::flows_plan::run_plan_flow(model, json_only, out, commit_style, use_cache, regenerate).await
 }
 
 pub(crate) async fn run_apply_flow(

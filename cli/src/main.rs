@@ -1,4 +1,5 @@
 mod cli;
+mod commit_cache;
 mod config;
 mod flow;
 mod ai;
@@ -59,11 +60,13 @@ async fn dispatch_command(
             base,
             pr,
             style,
+            cache,
+            regenerate,
         } => {
             // Handle different modes of the commit command
             if plan_only {
                 // New way to do: orca commit --plan-only
-                flows::run_plan_flow(&model, json_only, out, style).await?
+                flows::run_plan_flow(&model, json_only, out, style, cache, regenerate).await?
             } else if let Some(plan_file) = from_plan {
                 // New way to do: orca commit --from-plan plan.json
                 run_apply_flow(
@@ -120,10 +123,12 @@ async fn dispatch_command(
             model,
             json_only,
             out,
+            cache,
+            regenerate,
         } => {
             eprintln!("⚠️  Warning: 'plan' is deprecated. Use 'commit --plan-only' instead.");
             eprintln!("   Example: orca commit --plan-only --out plan.json\n");
-            flows::run_plan_flow(&model, json_only, out, None).await?
+            flows::run_plan_flow(&model, json_only, out, None, cache, regenerate).await?
         }
         crate::cli::Commands::Apply {
             file,
