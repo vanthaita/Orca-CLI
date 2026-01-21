@@ -19,7 +19,7 @@ const TIERS: PricingTier[] = [
 export default function PricingPage() {
     return (
         <main className="min-h-screen bg-[#0A0A0A] selection:bg-emerald-500/30">
-            <div className="mx-auto max-w-7xl px-4 py-8">
+            <div className="mx-auto max-w-7xl py-4">
                 <SiteHeader />
 
                 <div className="py-16">
