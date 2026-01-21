@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function RefundPage() {
     return (
         <main className="min-h-screen bg-[#0A0A0A] selection:bg-emerald-500/30 text-neutral-300">
-            <div className="mx-auto max-w-7xl px-4 py-8">
+            <div className="mx-auto max-w-7xl py-4">
                 <SiteHeader />
 
                 <div className="py-16 max-w-4xl mx-auto">
