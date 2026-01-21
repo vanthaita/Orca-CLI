@@ -44,58 +44,83 @@ pub(crate) struct ImpactAnalysis {
 }
 
 pub(crate) fn print_plan_human(plan: &CommitPlan) {
+    let total_commits = plan.commits.len();
+    let total_files: usize = plan.commits.iter().map(|c| c.files.len()).sum();
+    
+    println!("\n{}", style("╭──────────────────────────────────────────────────────────╮").cyan());
+    println!(
+        "{}   {}", 
+        style("│").cyan(),
+        style(format!("📋 Proposed Plan: {} commits, {} files", total_commits, total_files)).bold().white()
+    );
+    println!("{}", style("╰──────────────────────────────────────────────────────────╯").cyan());
+
     for (i, c) in plan.commits.iter().enumerate() {
-        println!(
-            "\n{} {} {}",
-            style(format!("Commit #{}", i + 1)).bold().cyan(),
-            style("•").dim(),
-            style(format!("{} file(s)", c.files.len())).dim()
-        );
-        println!("  {} {}", style("Message:").bold(), style(&c.message).green());
+        let is_last = i == total_commits - 1;
         
-        // Hiển thị description nếu có
+        println!(
+            "\n{} {}",
+            style(format!("Commit #{}", i + 1)).bold().magenta(),
+            style(format!("({} files)", c.files.len())).dim()
+        );
+        
+        println!("{}", style("─".repeat(60)).dim());
+        
+        // Message
+        println!("  {} {}", style("📝"), style(&c.message).bold().white());
+        
+        // Description
         if let Some(desc) = &c.description {
-            println!("\n  {}", style("Description:").bold());
-            println!("    {}", style(&desc.summary).white());
+            println!("\n  {}", style("📄 Description:").dim());
+            println!("  {}", style(&desc.summary).white());
             
             if !desc.changes.is_empty() {
-                println!("\n    {}", style("Changes:").bold());
+                println!();
                 for change in &desc.changes {
-                    println!("      {} {}", style("•").cyan(), style(change).white());
+                    println!("    {} {}", style("•").blue(), style(change).white());
                 }
             }
             
             if let Some(impact) = &desc.impact {
-                println!("\n    {}", style("Impact:").bold());
-                let level_color = match impact.level.as_str() {
-                    "high" => style(&impact.level).red(),
-                    "medium" => style(&impact.level).yellow(),
-                    _ => style(&impact.level).green(),
+                println!();
+                let level_badge = match impact.level.to_lowercase().as_str() {
+                    "high" => style(" IMPACT: HIGH ").on_red().white().bold(),
+                    "medium" => style(" IMPACT: MEDIUM ").on_yellow().black().bold(),
+                    _ => style(" IMPACT: LOW ").on_green().white().bold(),
                 };
-                println!("      Level: {}", level_color);
-                println!("      {}", style(&impact.explanation).dim());
+                
+                println!("    {}  {}", level_badge, style(&impact.explanation).dim());
                 if !impact.affected_areas.is_empty() {
-                    println!("      Affected: {}", impact.affected_areas.join(", "));
+                    println!("             {}: {}", style("Affected").dim(), style(impact.affected_areas.join(", ")).dim());
                 }
             }
             
             if !desc.breaking_changes.is_empty() {
-                println!("\n    {} {}", style("⚠").red().bold(), style("Breaking Changes:").red().bold());
+                println!();
+                println!("    {}", style("🚨 BREAKING CHANGES").red().bold());
                 for bc in &desc.breaking_changes {
-                    println!("      {} {}", style("!").red(), style(bc).white());
+                    println!("      {} {}", style("!").red(), style(bc).red());
                 }
             }
         }
         
-        println!("\n  {}", style("Files:").bold());
+        // Files
+        println!("\n  {}", style("📂 Files:").dim());
         for f in &c.files {
-            println!("    {} {}", style("→").cyan(), style(f).white());
+            println!("    {} {}", style("│").dim(), style(f).cyan());
         }
-        println!("  {}", style("Commands:").bold());
+        
+        // Commands
+        println!("\n  {}", style("⚙️  Commands:").dim());
         for cmd in &c.commands {
-            println!("    {} {}", style("$").yellow(), style(cmd).yellow());
+            println!("    {} {}", style("$").dim(), style(cmd).yellow());
+        }
+        
+        if !is_last {
+            println!("\n{}", style("  • • •").dim());
         }
     }
+    println!();
 }
 
 pub(crate) fn files_from_status_porcelain(status: &str) -> Vec<String> {
