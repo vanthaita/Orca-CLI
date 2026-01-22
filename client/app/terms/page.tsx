@@ -85,7 +85,7 @@ export default function TermsPage() {
                         <section className="mb-12">
                             <h2 className="text-2xl font-semibold text-white mb-4">8. Contact Us</h2>
                             <p className="mb-4">
-                                If you have any questions about these Terms, please contact us at support@orcacli.codes.
+                                If you have any questions about these Terms, please contact us at orcacli2026@gmail.com.
                             </p>
                         </section>
                     </div>
