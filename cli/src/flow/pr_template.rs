@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use dialoguer::MultiSelect;
 use console::style;
+use crate::plan::CommitDescription;
 
 /// Find PR template in common locations
 pub fn find_pr_template() -> Result<Option<PathBuf>> {
@@ -56,6 +57,15 @@ pub fn get_default_template() -> String {
 ## Statistics
 
 {stats}
+
+## How to test
+
+- [ ]
+
+## Checklist
+
+- [ ] I ran tests locally (if applicable)
+- [ ] I added/updated documentation (if applicable)
 
 ## Type of Change
 
@@ -244,6 +254,13 @@ pub fn populate_template(template: &str, commits: &[String]) -> String {
     
     // Generate smart summary
     let summary = generate_smart_summary(commits, &categories);
+
+    let cached_details = build_cached_commit_details(commits);
+    let summary_with_details = if cached_details.trim().is_empty() {
+        summary.clone()
+    } else {
+        format!("{}\n\n{}", summary, cached_details)
+    };
     
     // Format changes by category
     let commit_list = if categories.is_empty() {
@@ -261,7 +278,7 @@ pub fn populate_template(template: &str, commits: &[String]) -> String {
     
     // Build final description
     let mut result = template
-        .replace("{commit_summary}", &summary)
+        .replace("{commit_summary}", &summary_with_details)
         .replace("{commit_list}", &commit_list)
         .replace("{stats}", &stats);
     
@@ -275,6 +292,105 @@ pub fn populate_template(template: &str, commits: &[String]) -> String {
     }
     
     result
+}
+
+fn build_cached_commit_details(commits: &[String]) -> String {
+    let plan = match crate::commit_cache::load_latest_cached_plan().ok().flatten() {
+        Some(p) => p,
+        None => return String::new(),
+    };
+
+    let mut lines: Vec<String> = Vec::new();
+    for commit_msg in commits {
+        let planned = plan.commits.iter().find(|c| c.message.trim() == commit_msg.trim());
+        let Some(planned) = planned else {
+            continue;
+        };
+        let Some(desc) = planned.description.as_ref() else {
+            continue;
+        };
+
+        if lines.is_empty() {
+            lines.push("### Commit Details".to_string());
+            lines.push(String::new());
+        }
+
+        lines.push(format!(
+            "<details>\n<summary><code>{}</code></summary>",
+            planned.message.trim()
+        ));
+        lines.push(String::new());
+        lines.extend(format_commit_description_for_pr(desc));
+        lines.push(String::new());
+        lines.push("</details>".to_string());
+        lines.push(String::new());
+    }
+
+    lines.join("\n")
+}
+
+fn format_commit_description_for_pr(desc: &CommitDescription) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+
+    let summary = desc.summary.trim();
+    if !summary.is_empty() {
+        out.push(summary.to_string());
+    }
+
+    if !desc.changes.is_empty() {
+        out.push(String::new());
+        for change in &desc.changes {
+            let c = change.trim();
+            if !c.is_empty() {
+                out.push(format!("- {}", c));
+            }
+        }
+    }
+
+    if let Some(impact) = &desc.impact {
+        let level = impact.level.trim();
+        let explanation = impact.explanation.trim();
+        if !level.is_empty() || !explanation.is_empty() {
+            out.push(String::new());
+            if level.is_empty() {
+                out.push(format!("Impact: {}", explanation));
+            } else if explanation.is_empty() {
+                out.push(format!("Impact: {}", level.to_uppercase()));
+            } else {
+                out.push(format!("Impact: {} - {}", level.to_uppercase(), explanation));
+            }
+        }
+
+        if !impact.affected_areas.is_empty() {
+            let areas = impact
+                .affected_areas
+                .iter()
+                .map(|s| s.trim())
+                .filter(|s| !s.is_empty())
+                .collect::<Vec<_>>();
+            if !areas.is_empty() {
+                out.push(format!("Affected areas: {}", areas.join(", ")));
+            }
+        }
+    }
+
+    if !desc.breaking_changes.is_empty() {
+        let bcs = desc
+            .breaking_changes
+            .iter()
+            .map(|s| s.trim())
+            .filter(|s| !s.is_empty())
+            .collect::<Vec<_>>();
+        if !bcs.is_empty() {
+            out.push(String::new());
+            out.push("**BREAKING CHANGES**".to_string());
+            for bc in bcs {
+                out.push(format!("- {}", bc));
+            }
+        }
+    }
+
+    out
 }
 
 /// Generate smart PR title from multiple commits
