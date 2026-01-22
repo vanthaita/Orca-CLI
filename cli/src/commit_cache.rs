@@ -81,6 +81,27 @@ pub fn load_cached_plan(diff: &str) -> Result<Option<CommitPlan>> {
     Ok(Some(cached.plan))
 }
 
+pub fn load_latest_cached_plan() -> Result<Option<CommitPlan>> {
+    let cache_file = get_cache_file()?;
+
+    if !cache_file.exists() {
+        return Ok(None);
+    }
+
+    let content = std::fs::read_to_string(&cache_file)?;
+    let cached: CachedPlan = serde_json::from_str(&content)?;
+
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)?
+        .as_secs();
+    let age = now - cached.timestamp;
+    if age > 3600 {
+        return Ok(None);
+    }
+
+    Ok(Some(cached.plan))
+}
+
 /// Clear cache
 #[allow(dead_code)]
 pub fn clear_cache() -> Result<()> {
