@@ -11,6 +11,8 @@ pub(crate) struct CommitPlan {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub(crate) struct PlannedCommit {
     pub(crate) message: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) hash: Option<String>,
     pub(crate) files: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub(crate) commands: Vec<String>,
@@ -189,10 +191,10 @@ fn has_staged_changes() -> Result<bool> {
     Ok(!out.trim().is_empty())
 }
 
-pub(crate) fn apply_plan(plan: &CommitPlan) -> Result<()> {
+pub(crate) fn apply_plan(plan: &mut CommitPlan) -> Result<()> {
     let recent = recent_patch_ids(50)?;
 
-    for (idx, c) in plan.commits.iter().enumerate() {
+    for (idx, c) in plan.commits.iter_mut().enumerate() {
         if c.files.is_empty() {
             anyhow::bail!("Commit #{} has no files; refusing to continue", idx + 1);
         }
@@ -230,6 +232,12 @@ pub(crate) fn apply_plan(plan: &CommitPlan) -> Result<()> {
             run_git(&["commit", "-m", &full_message])?;
         } else {
             run_git(&["commit", "-m", &c.message])?;
+        }
+
+        let new_hash = run_git(&["rev-parse", "HEAD"])?;
+        let new_hash = new_hash.trim().to_string();
+        if !new_hash.is_empty() {
+            c.hash = Some(new_hash);
         }
     }
     Ok(())
@@ -289,6 +297,7 @@ mod tests {
         let mut plan = CommitPlan {
             commits: vec![PlannedCommit {
                 message: "feat: add \"quoted\" message".to_string(),
+                hash: None,
                 files: vec!["src/".to_string(), "  ".to_string(), "docs/guide.md".to_string()],
                 commands: vec![],
                 description: None,
