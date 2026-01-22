@@ -6,6 +6,11 @@ use dialoguer::MultiSelect;
 use console::style;
 use crate::plan::CommitDescription;
 
+struct CommitRef {
+    hash: Option<String>,
+    message: String,
+}
+
 /// Find PR template in common locations
 pub fn find_pr_template() -> Result<Option<PathBuf>> {
     let template_paths = [
@@ -249,11 +254,32 @@ pub fn populate_template(template: &str, commits: &[String]) -> String {
             .replace("{stats}", "- **Commits**: 0");
     }
 
+    let refs: Vec<CommitRef> = commits
+        .iter()
+        .map(|m| CommitRef {
+            hash: None,
+            message: m.clone(),
+        })
+        .collect();
+
+    populate_template_with_refs(template, &refs)
+}
+
+fn populate_template_with_refs(template: &str, commits: &[CommitRef]) -> String {
+    if commits.is_empty() {
+        return template
+            .replace("{commit_summary}", "No commits found")
+            .replace("{commit_list}", "- No changes")
+            .replace("{stats}", "- **Commits**: 0");
+    }
+
+    let messages: Vec<String> = commits.iter().map(|c| c.message.clone()).collect();
+
     // Analyze commits to extract categories and metadata
-    let (categories, issue_refs) = analyze_commits(commits);
+    let (categories, issue_refs) = analyze_commits(&messages);
     
     // Generate smart summary
-    let summary = generate_smart_summary(commits, &categories);
+    let summary = generate_smart_summary(&messages, &categories);
 
     let cached_details = build_cached_commit_details(commits);
     let summary_with_details = if cached_details.trim().is_empty() {
@@ -264,7 +290,7 @@ pub fn populate_template(template: &str, commits: &[String]) -> String {
     
     // Format changes by category
     let commit_list = if categories.is_empty() {
-        commits
+        messages
             .iter()
             .map(|c| format!("- {}", c))
             .collect::<Vec<_>>()
@@ -274,7 +300,7 @@ pub fn populate_template(template: &str, commits: &[String]) -> String {
     };
     
     // Get statistics
-    let stats = get_commit_stats(commits);
+    let stats = get_commit_stats(&messages);
     
     // Build final description
     let mut result = template
@@ -294,7 +320,7 @@ pub fn populate_template(template: &str, commits: &[String]) -> String {
     result
 }
 
-fn build_cached_commit_details(commits: &[String]) -> String {
+fn build_cached_commit_details(commits: &[CommitRef]) -> String {
     let plan = match crate::commit_cache::load_latest_cached_plan().ok().flatten() {
         Some(p) => p,
         None => return String::new(),
@@ -302,7 +328,15 @@ fn build_cached_commit_details(commits: &[String]) -> String {
 
     let mut lines: Vec<String> = Vec::new();
     for commit_msg in commits {
-        let planned = plan.commits.iter().find(|c| c.message.trim() == commit_msg.trim());
+        let planned = commit_msg
+            .hash
+            .as_deref()
+            .and_then(|h| plan.commits.iter().find(|c| c.hash.as_deref() == Some(h)))
+            .or_else(|| {
+                plan.commits
+                    .iter()
+                    .find(|c| c.message.trim() == commit_msg.message.trim())
+            });
         let Some(planned) = planned else {
             continue;
         };
@@ -612,12 +646,27 @@ pub fn generate_pr_description_from_commits(commits: &[String]) -> Result<String
     Ok(populate_template(&template, commits))
 }
 
+pub fn generate_pr_description_from_commits_with_hashes(commits: &[(String, String)]) -> Result<String> {
+    let template = if let Some(template_path) = find_pr_template()? {
+        read_pr_template(&template_path)?
+    } else {
+        get_default_template()
+    };
+
+    let refs: Vec<CommitRef> = commits
+        .iter()
+        .map(|(hash, msg)| CommitRef {
+            hash: Some(hash.clone()),
+            message: msg.clone(),
+        })
+        .collect();
+
+    Ok(populate_template_with_refs(&template, &refs))
+}
+
 /// Generate PR description from template or default
 /// Queries commits from base..HEAD
 pub fn generate_pr_description(base: &str) -> Result<String> {
-    // Get commits
-    let commits = get_commits_since_base(base)?;
-    
-    // Use the new function
-    generate_pr_description_from_commits(&commits)
+    let commits = get_commits_with_hashes_since_base(base)?;
+    generate_pr_description_from_commits_with_hashes(&commits)
 }

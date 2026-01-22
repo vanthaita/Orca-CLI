@@ -549,8 +549,8 @@ async fn run_stack_pr_workflow(base: &str, pr: bool, commits: &[String], selecte
         pb.finish_and_clear();
 
         // Generate PR description using the specific commit for this PR
-        let commit_messages = vec![stack_pr.commit_message.clone()];
-        let base_description = pr_template::generate_pr_description_from_commits(&commit_messages)
+        let commit_ref = vec![(commit_hash.clone(), stack_pr.commit_message.clone())];
+        let base_description = pr_template::generate_pr_description_from_commits_with_hashes(&commit_ref)
             .unwrap_or_else(|_| pr_template::get_default_template());
 
         // Add stack info
