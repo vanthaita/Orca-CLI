@@ -13,6 +13,52 @@ mod plan_guard;
 use anyhow::Result;
 use clap::Parser;
 use crate::flow::flows as flows;
+use dialoguer::{Input, Select};
+
+fn pick_commit_style(default: Option<crate::cli::CommitStylePreset>) -> Result<Option<String>> {
+    let presets: Vec<crate::cli::CommitStylePreset> = vec![
+        crate::cli::CommitStylePreset::Conventional,
+        crate::cli::CommitStylePreset::ConventionalEmojis,
+        crate::cli::CommitStylePreset::Gitmoji,
+        crate::cli::CommitStylePreset::Jira,
+        crate::cli::CommitStylePreset::Simple,
+    ];
+
+    let items: Vec<String> = presets
+        .iter()
+        .map(|p| format!("{:?}", p))
+        .chain(std::iter::once("Custom...".to_string()))
+        .chain(std::iter::once("No style (use config/default)".to_string()))
+        .collect();
+
+    let default_idx = default
+        .and_then(|d| presets.iter().position(|p| *p == d))
+        .unwrap_or(0);
+
+    let selection = Select::new()
+        .with_prompt("Pick commit message style")
+        .items(&items)
+        .default(default_idx)
+        .interact()?;
+
+    if selection < presets.len() {
+        return Ok(Some(presets[selection].instruction().to_string()));
+    }
+
+    if selection == presets.len() {
+        let v: String = Input::new()
+            .with_prompt("Enter custom commit message style instruction")
+            .allow_empty(true)
+            .interact_text()?;
+        let trimmed = v.trim();
+        if trimmed.is_empty() {
+            return Ok(None);
+        }
+        return Ok(Some(trimmed.to_string()));
+    }
+
+    Ok(None)
+}
 
 #[tokio::main]
 async fn main() {
@@ -60,13 +106,20 @@ async fn dispatch_command(
             base,
             pr,
             style,
+            style_preset,
+            style_pick,
             cache,
             regenerate,
         } => {
+            let resolved_style = if style_pick && style.is_none() {
+                pick_commit_style(style_preset)?
+            } else {
+                style.or_else(|| style_preset.map(|p| p.instruction().to_string()))
+            };
             // Handle different modes of the commit command
             if plan_only {
                 // New way to do: orca commit --plan-only
-                flows::run_plan_flow(&model, json_only, out, style, cache, regenerate).await?
+                flows::run_plan_flow(&model, json_only, out, resolved_style, cache, regenerate).await?
             } else if let Some(plan_file) = from_plan {
                 // New way to do: orca commit --from-plan plan.json
                 run_apply_flow(
@@ -82,7 +135,7 @@ async fn dispatch_command(
                 .await?
             } else {
                 // Regular commit flow
-                flows::run_commit_flow(confirm, dry_run, &model, style).await?
+                flows::run_commit_flow(confirm, dry_run, &model, resolved_style).await?
             }
         }
         crate::cli::Commands::Publish { branch, base, no_pr, mode, select, no_fetch } => {

@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use std::path::PathBuf;
 
 fn default_model() -> String {
@@ -7,6 +7,37 @@ fn default_model() -> String {
 
 fn default_base_branch() -> String {
     "main".to_string()
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, ValueEnum)]
+pub(crate) enum CommitStylePreset {
+    Conventional,
+    ConventionalEmojis,
+    Gitmoji,
+    Jira,
+    Simple,
+}
+
+impl CommitStylePreset {
+    pub(crate) fn instruction(self) -> &'static str {
+        match self {
+            CommitStylePreset::Conventional => {
+                "Conventional Commits only (feat/fix/refactor/chore/docs/test/build/ci). No emojis. Subject <= 72 chars. Use imperative mood."
+            }
+            CommitStylePreset::ConventionalEmojis => {
+                "Conventional Commits with emojis (✨ feat, 🐛 fix, ♻️ refactor, 🧹 chore, 📝 docs, ✅ test, 🔧 build, 👷 ci). Subject <= 72 chars."
+            }
+            CommitStylePreset::Gitmoji => {
+                "Use gitmoji-style commit messages (e.g. ✨ Add feature, 🐛 Fix bug). No Conventional Commits prefixes unless it fits naturally. Subject <= 72 chars."
+            }
+            CommitStylePreset::Jira => {
+                "Prefix the subject with a Jira key if it can be inferred (e.g. PROJ-123). Format: PROJ-123 feat: <subject>. If no key is obvious, omit it. Subject <= 72 chars."
+            }
+            CommitStylePreset::Simple => {
+                "Simple imperative subject line only. No prefixes, no emojis. Subject <= 72 chars."
+            }
+        }
+    }
 }
 
 #[derive(Parser, Debug)]
@@ -55,6 +86,14 @@ pub(crate) enum Commands {
         /// Style instruction for commit messages (e.g. "conventional commits with emojis")
         #[arg(long)]
         style: Option<String>,
+
+        /// Choose a preset commit message style (use --style to provide a custom instruction)
+        #[arg(long, value_enum)]
+        style_preset: Option<CommitStylePreset>,
+
+        /// Interactively pick a commit message style (arrow keys). Ignored if --style is provided.
+        #[arg(long, default_value_t = false)]
+        style_pick: bool,
 
         /// Print JSON only (when using --plan-only)
         #[arg(long, default_value_t = false, requires = "plan_only")]
@@ -519,7 +558,7 @@ mod tests {
     fn parses_plan_subcommand_and_out() {
         let cli = Cli::try_parse_from(["orca", "plan", "--out", "plan.json"]).expect("should parse");
         match cli.command.expect("expected subcommand") {
-            Commands::Plan { model, json_only, out } => {
+            Commands::Plan { model, json_only, out, .. } => {
                 assert_eq!(model, "gemini-2.5-flash");
                 assert!(!json_only);
                 assert_eq!(out.unwrap().to_string_lossy(), "plan.json");
