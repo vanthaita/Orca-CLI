@@ -23,6 +23,12 @@ export const SiteFooter = () => {
                     <div className="flex flex-wrap items-center gap-2">
                         <Link
                             className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-xs font-mono uppercase tracking-widest text-neutral-400 transition hover:bg-white/10 hover:text-white"
+                            href="mailto:orcacli2026@gmail.com"
+                        >
+                            Contact
+                        </Link>
+                        <Link
+                            className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-xs font-mono uppercase tracking-widest text-neutral-400 transition hover:bg-white/10 hover:text-white"
                             href="/terms"
                         >
                             Terms
