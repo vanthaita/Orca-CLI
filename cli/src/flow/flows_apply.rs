@@ -59,9 +59,11 @@ pub(crate) async fn run_apply_flow(
     }
 
     let pb = spinner("Applying plan (running git add and commit)...");
-    apply_plan(&plan)?;
+    apply_plan(&mut plan)?;
     pb.finish_and_clear();
     eprintln!("{} {}", style("[✓]").green().bold(), style("Commits created successfully").green());
+
+    let _ = crate::commit_cache::cache_latest_plan(&plan);
 
     if publish {
         if !flows_error::ensure_has_git_remote()? {

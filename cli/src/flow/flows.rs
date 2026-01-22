@@ -84,13 +84,15 @@ pub(crate) async fn run_commit_flow(confirm: bool, dry_run: bool, model: &str, c
     }
 
     let pb = spinner("Applying plan (running git add and commit)...");
-    apply_plan(&plan)?;
+    apply_plan(&mut plan)?;
     pb.finish_and_clear();
     eprintln!(
         "{} {}",
         style("[✓]").green().bold(),
         style("Commits created successfully").green()
     );
+
+    let _ = crate::commit_cache::cache_latest_plan(&plan);
     Ok(())
 }
 
