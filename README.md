@@ -85,8 +85,25 @@ Turn your local work into a Live Pull Request in seconds. Orca handles the entir
 **Commit → Push → Create PR**
 
 ```bash
-# Ship it!
-orca publish
+D:\Projects\2026\Orca Shell\orca>orca publish
+[orca publish-current]
+[✓] Remote refs updated
+
+ℹ️  Info: Your branch has 3 commit(s) since 'main'
+    (GitHub PR will show commits not yet on remote)
+
+Found 3 commits to publish
+
+How would you like to publish?: 📦 Single PR - All 3 commits in one pull request
+[✓] Branch pushed to origin
+[✓] PR description generated from template
+  Creating GitHub PR via gh...
+Creating pull request for refactor(plan)/update-commit-plan-output-and-readme-example into main in vanthaita/Orca-CLI
+
+https://github.com/vanthaita/Orca-CLI/pull/28
+[✓] Pull request created
+
+
 ```
 
 ## 🛠️ Other Powerful Commands
