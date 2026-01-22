@@ -243,6 +243,7 @@ mod tests {
             },
             git: GitConfig {
                 default_model: Some("gemini-2.5-flash".to_string()),
+                commit_style: None,
             },
             pr_workflow: PrWorkflowConfig::default(),
         };
