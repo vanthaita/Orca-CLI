@@ -53,6 +53,23 @@ pub fn cache_plan(plan: &CommitPlan, diff: &str) -> Result<()> {
     Ok(())
 }
 
+pub fn cache_latest_plan(plan: &CommitPlan) -> Result<()> {
+    let cache_file = get_cache_file()?;
+    let cached = CachedPlan {
+        timestamp: std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)?
+            .as_secs(),
+        diff_hash: String::new(),
+        plan: plan.clone(),
+    };
+
+    let json = serde_json::to_string_pretty(&cached)?;
+    std::fs::write(&cache_file, json)
+        .with_context(|| format!("Failed to write cache to {}", cache_file.display()))?;
+
+    Ok(())
+}
+
 /// Load plan từ cache nếu hợp lệ
 pub fn load_cached_plan(diff: &str) -> Result<Option<CommitPlan>> {
     let cache_file = get_cache_file()?;
