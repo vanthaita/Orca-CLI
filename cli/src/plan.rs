@@ -291,6 +291,7 @@ mod tests {
                 message: "feat: add \"quoted\" message".to_string(),
                 files: vec!["src/".to_string(), "  ".to_string(), "docs/guide.md".to_string()],
                 commands: vec![],
+                description: None,
             }],
         };
 

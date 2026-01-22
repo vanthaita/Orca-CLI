@@ -44,17 +44,40 @@ Just bring your own API key and pay the provider directly (or use their free tie
 No more `git add .` or straining to write "fix: bug". Orca analyzes your code changes and writes semantic, conventional commit messages for you.
 
 ```bash
-➜ ~/projects/orca git:(main) orca commit
-== orca: commit ==
-AI plan received
-Proposed plan
-Commit #1 (2 file(s))
-  message: feat(installer): Add Windows MSI build and release pipeline
-  files:
-    - .github/workflows/release.yml
-    - installer/
-Apply this plan? This will run git add/commit commands: yes
-Commits created
+D:\Projects\2026\Orca Shell\orca>orca commit
+[orca commit]
+[✓] Plan received
+
+Proposed Plan:
+
+╭──────────────────────────────────────────────────────────╮
+│   📋 Proposed Plan: 3 commits, 6 files
+╰──────────────────────────────────────────────────────────╯
+
+Commit #1 (3 files)
+───────────────────────────────────────────────────────────
+  📝 chore: Bump version and update license
+
+  📄 Description:
+  This commit updates the project version across `Cargo.toml`, `Cargo.lock`, and `package.json` to `0.1.30`. Additionally, it changes the project license in `package.json` from MIT to Apache-2.0, aligning with broader open-source licensing standards.
+
+    • Incremented project version from `0.1.29` to `0.1.30` in `cli/Cargo.toml` and `cli/package.json`.
+    • Updated `orca` package version in `cli/Cargo.lock` to reflect the new project version.
+    • Changed the project license from `MIT` to `Apache-2.0` in `cli/package.json`.
+
+     IMPACT: LOW   These are metadata and build configuration changes. They affect the project's release versioning and legal terms but do not alter application runtime behavior or functionality.
+              Affected: Project metadata, Build dependencies, Licensing
+
+  📂 Files:
+    │ cli/Cargo.lock
+    │ cli/Cargo.toml
+    │ cli/package.json
+
+  ⚙️  Commands:
+    $ git add -- cli/Cargo.lock cli/Cargo.toml cli/package.json
+    $ git commit -m "chore: Bump version and update license"
+
+  • • •
 ```
 
 ### 2. Instant Publishing (`orca publish`)
