@@ -66,6 +66,7 @@ fn default_provider() -> String {
 pub(crate) struct GitConfig {
     pub(crate) default_model: Option<String>,
     pub(crate) commit_style: Option<String>,
+    pub(crate) language: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -244,6 +245,7 @@ mod tests {
             git: GitConfig {
                 default_model: Some("gemini-2.5-flash".to_string()),
                 commit_style: None,
+                language: Some("Vietnamese".to_string()),
             },
             pr_workflow: PrWorkflowConfig::default(),
         };
@@ -253,6 +255,7 @@ mod tests {
 
         assert_eq!(parsed.api.gemini_api_key, Some("test-key".to_string()));
         assert_eq!(parsed.git.default_model, Some("gemini-2.5-flash".to_string()));
+        assert_eq!(parsed.git.language, Some("Vietnamese".to_string()));
     }
 
     #[test]

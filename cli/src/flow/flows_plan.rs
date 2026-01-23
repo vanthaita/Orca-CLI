@@ -11,8 +11,9 @@ pub(crate) async fn generate_plan(model: &str, status: &str, diff: &str, log: &s
 
     let config = crate::config::load_config()?;
     let resolved_style = commit_style.or(config.git.commit_style);
+    let language = config.git.language;
 
-    let prompt = build_prompt(status, diff, log, resolved_style.as_deref());
+    let prompt = build_prompt(status, diff, log, resolved_style.as_deref(), language.as_deref());
 
     // Default system prompt. You can customize this or make it configurable.
     let system_prompt = "You are a senior software engineer. Your task is to propose a commit plan.";
@@ -75,12 +76,14 @@ fn extract_json(input: &str) -> Option<String> {
     Some(s[start..=end].trim().to_string())
 }
 
-fn build_prompt(status: &str, diff: &str, log: &str, style: Option<&str>) -> String {
+fn build_prompt(status: &str, diff: &str, log: &str, style: Option<&str>, language: Option<&str>) -> String {
     let style_instruction = if let Some(s) = style {
         format!("- Commit Message Style: {}\n", s)
     } else {
         String::new()
     };
+
+    let lang_instruction = language.unwrap_or("Vietnamese or English based on the changes");
 
     format!(
         r#"Task: Propose a detailed commit plan for the current git working tree.
@@ -90,7 +93,7 @@ fn build_prompt(status: &str, diff: &str, log: &str, style: Option<&str>) -> Str
     - Group files into logical commits by feature/responsibility.
     - Commit messages should be concise, imperative, and conventional (e.g. feat:, fix:, refactor:, chore:).
     {style_instruction}    - For each commit, provide a detailed description:
-      * summary: 2-3 sentences describing what changed and why (in Vietnamese or English based on the changes)
+      * summary: 2-3 sentences describing what changed and why (in {lang_instruction})
       * changes: Bullet point list of the main changes
       * impact: Assessment of impact level (low/medium/high) with explanation
       * breaking_changes: List of breaking changes if any (empty array if none)
@@ -232,4 +235,21 @@ async fn generate_and_cache_plan(
     }
     
     Ok(plan)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_build_prompt_with_language() {
+        let prompt = build_prompt("status", "diff", "log", None, Some("French"));
+        assert!(prompt.contains("in French"));
+    }
+
+    #[test]
+    fn test_build_prompt_without_language() {
+        let prompt = build_prompt("status", "diff", "log", None, None);
+        assert!(prompt.contains("in Vietnamese or English based on the changes"));
+    }
 }
