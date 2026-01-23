@@ -1,6 +1,7 @@
 use crate::git::{
     checkout_branch, ensure_git_repo, github_repo_slug_from_remote, origin_url,
-    run_git,
+    run_git, validate_push_safety, safe_push, resolve_and_fetch_base_ref,
+    get_remote_branch_info, RemoteBranchStatus,
 };
 use anyhow::{Context, Result};
 use console::style;
@@ -8,6 +9,105 @@ use super::flows_spinner::spinner;
 use super::{flows_error, flows_setup, pr_template, pr_workflow};
 use std::process::Command;
 use std::fs;
+
+/// Validation result for publish preconditions
+#[derive(Debug)]
+struct PublishValidation {
+    can_proceed: bool,
+    warnings: Vec<String>,
+    errors: Vec<String>,
+    recommendations: Vec<String>,
+}
+
+/// Validation result for base branch status
+#[derive(Debug)]
+struct BaseValidation {
+    effective_base: String,
+    local_base_differs: bool,
+    commits_count: u32,
+    base_has_new_commits: bool,
+    base_ahead_count: u32,
+}
+
+/// Validate base branch and commit status
+fn validate_base_and_commits(base: &str) -> Result<BaseValidation> {
+    let effective_base = crate::git::resolve_base_ref(base);
+    
+    let mut local_base_differs = false;
+    
+    // Check if local base exists and differs from remote
+    let local_base_exists = crate::git::run_git(&["rev-parse", "--verify", base]).is_ok();
+    if local_base_exists && effective_base != base {
+        if let Ok((ahead, behind)) = crate::git::ahead_behind_between(&effective_base, base) {
+            if ahead > 0 || behind > 0 {
+                local_base_differs = true;
+                eprintln!();
+                eprintln!(
+                    "{} {}",
+                    style("⚠️  Warning:").yellow().bold(),
+                    style(format!(
+                        "Local '{}' differs from '{}' (local ahead {}, behind {}).",
+                        base, effective_base, behind, ahead
+                    ))
+                    .yellow()
+                );
+                eprintln!(
+                    "   {}",
+                    style("Tip: Update local base branch to avoid unexpected commits in PR.").dim()
+                );
+                eprintln!(
+                    "   {}",
+                    style("Run: git checkout {} && git pull --rebase", base).cyan()
+                );
+            }
+        }
+    }
+    
+    // Check HEAD vs base
+    let (base_ahead, head_ahead) = crate::git::ahead_behind_between(&effective_base, "HEAD")?;
+    
+    if base_ahead > 0 {
+        eprintln!();
+        eprintln!(
+            "{} {}",
+            style("⚠️  Warning:").yellow().bold(),
+            style(format!(
+                "Your branch is behind '{}' by {} commit(s).",
+                effective_base, base_ahead
+            ))
+            .yellow()
+        );
+        eprintln!(
+            "   {}",
+            style("These commits from base will appear in your PR!").yellow()
+        );
+        eprintln!(
+            "   {}",
+            style("Recommendation: Rebase or merge base into your branch first.").dim()
+        );
+        eprintln!(
+            "   {}",
+            style(format!("Run: git rebase {}", effective_base)).cyan()
+        );
+    }
+    
+    if head_ahead == 0 {
+        eprintln!();
+        eprintln!(
+            "{} {}",
+            style("ℹ️  Info:").cyan().bold(),
+            style(format!("No new commits to publish compared to '{}'", effective_base)).cyan()
+        );
+    }
+    
+    Ok(BaseValidation {
+        effective_base,
+        local_base_differs,
+        commits_count: head_ahead,
+        base_has_new_commits: base_ahead > 0,
+        base_ahead_count: base_ahead,
+    })
+}
 
 fn suggest_branch_from_message_impl(msg: &str) -> String {
     let msg = msg.trim();
@@ -119,6 +219,9 @@ pub(crate) async fn run_publish_current_flow(
             }
         }
     }
+
+    // Validate base branch status
+    let base_validation = validate_base_and_commits(base)?;
 
     // Get commits to publish
     let commits = pr_template::get_commits_since_base(base)?;
@@ -276,8 +379,49 @@ async fn run_single_pr_workflow(
         pb.finish_and_clear();
     }
 
+    // Validate push safety before pushing
+    let pb = spinner(&format!("Validating push to '{}'...", target_branch));
+    let push_validation = validate_push_safety(&target_branch, "origin")?;
+    pb.finish_and_clear();
+    
+    // Display warnings if any
+    if !push_validation.warnings.is_empty() {
+        eprintln!();
+        for warning in &push_validation.warnings {
+            eprintln!(
+                "{} {}",
+                style("⚠️ ").yellow(),
+                style(warning).yellow()
+            );
+        }
+    }
+    
+    // Handle force push if needed
+    let allow_force = if push_validation.needs_force {
+        eprintln!();
+        eprintln!(
+            "{} {}",
+            style("⚠️  Warning:").yellow().bold(),
+            style("Force push required - local and remote branches have diverged").yellow()
+        );
+        eprintln!(
+            "   {}",
+            style("This will overwrite the remote branch history").yellow()
+        );
+        
+        // Ask for confirmation
+        if !flows_error::confirm_or_abort("Proceed with force push?", false)? {
+            eprintln!("{}", style("Push cancelled by user").dim());
+            return Ok(());
+        }
+        true
+    } else {
+        false
+    };
+    
+    // Execute the push
     let pb = spinner(&format!("Pushing branch '{}' to origin...", target_branch));
-    run_git(&["push", "-u", "origin", &target_branch])?;
+    safe_push(&target_branch, "origin", allow_force)?;
     pb.finish_and_clear();
     eprintln!(
         "{} {}",
@@ -459,9 +603,10 @@ async fn run_stack_pr_workflow(base: &str, pr: bool, commits: &[String], selecte
 
     // Get all commit hashes first (in reverse order - oldest first)
     let effective_base = crate::git::resolve_base_ref(base);
+    let range_start = crate::git::merge_base(&effective_base, "HEAD").unwrap_or(effective_base);
     let all_commits_output = run_git(&[
         "log",
-        &format!("{}..HEAD", effective_base),
+        &format!("{}..HEAD", range_start),
         "--pretty=format:%H",
         "--reverse",
     ])?;
@@ -535,9 +680,10 @@ async fn run_stack_pr_workflow(base: &str, pr: bool, commits: &[String], selecte
         
         pb.finish_and_clear();
 
-        // Push branch
+        // Push branch with validation
         let pb = spinner(&format!("Pushing '{}'...", stack_pr.branch_name));
-        if let Err(e) = run_git(&["push", "-u", "origin", &stack_pr.branch_name]) {
+        // For stack workflow, allow force push without prompting (since these are new branches)
+        if let Err(e) = safe_push(&stack_pr.branch_name, "origin", true) {
             pb.finish_and_clear();
             eprintln!(
                 "{} {}",
