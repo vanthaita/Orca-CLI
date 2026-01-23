@@ -1,5 +1,5 @@
 use crate::git::{
-    checkout_branch, current_branch, ensure_git_repo, run_git,
+    ahead_behind_between, checkout_branch, current_branch, ensure_git_repo, resolve_base_ref, run_git,
     upstream_ahead_behind, upstream_ref,
 };
 use crate::plan::{apply_plan, files_from_status_porcelain, normalize_plan_files, print_plan_human, CommitPlan};
@@ -80,6 +80,48 @@ pub(crate) async fn run_apply_flow(
         } else {
             flows_publish::suggest_branch_from_plan(&plan)
         };
+
+        // Warn if base branch is stale/diverged to reduce unexpected extra commits in PR
+        let effective_base = resolve_base_ref(base);
+        let local_base_exists = run_git(&["rev-parse", "--verify", base]).is_ok();
+        if local_base_exists && effective_base != base {
+            if let Ok((ahead, behind)) = ahead_behind_between(&effective_base, base) {
+                if ahead > 0 || behind > 0 {
+                    eprintln!();
+                    eprintln!(
+                        "{} {}",
+                        style("Warning:").yellow().bold(),
+                        style(format!(
+                            "Local '{}' differs from '{}' (ahead {}, behind {}).",
+                            base, effective_base, behind, ahead
+                        ))
+                        .yellow()
+                    );
+                    eprintln!(
+                        "   {}",
+                        style("Tip: update your local base branch before publishing (e.g. 'orca git sync --rebase' or 'git fetch' + 'git pull --rebase').").dim()
+                    );
+                }
+            }
+        }
+        if let Ok((base_only, _head_only)) = ahead_behind_between(&effective_base, "HEAD") {
+            if base_only > 0 {
+                eprintln!();
+                eprintln!(
+                    "{} {}",
+                    style("Warning:").yellow().bold(),
+                    style(format!(
+                        "Your branch is behind '{}' by {} commit(s) (base has commits not in HEAD).",
+                        effective_base, base_only
+                    ))
+                    .yellow()
+                );
+                eprintln!(
+                    "   {}",
+                    style("Tip: rebase/merge the base branch into your branch before creating PR if you want a clean history.").dim()
+                );
+            }
+        }
 
         let pb = spinner("Switching to publish branch...");
         checkout_branch(&target_branch, true)?;
