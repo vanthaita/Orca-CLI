@@ -537,9 +537,10 @@ pub fn check_existing_pr(branch: &str, base: &str) -> Result<Option<String>> {
 /// Get commit messages between base and current branch
 pub fn get_commits_since_base(base: &str) -> Result<Vec<String>> {
     let effective_base = crate::git::resolve_base_ref(base);
+    let range_start = crate::git::merge_base(&effective_base, "HEAD").unwrap_or(effective_base);
     let output = crate::git::run_git(&[
         "log",
-        &format!("{}..HEAD", effective_base),
+        &format!("{}..HEAD", range_start),
         "--pretty=format:%s",
     ])?;
 
@@ -556,9 +557,10 @@ pub fn get_commits_since_base(base: &str) -> Result<Vec<String>> {
 /// Returns Vec<(hash, message)> in chronological order (newest first)
 pub fn get_commits_with_hashes_since_base(base: &str) -> Result<Vec<(String, String)>> {
     let effective_base = crate::git::resolve_base_ref(base);
+    let range_start = crate::git::merge_base(&effective_base, "HEAD").unwrap_or(effective_base);
     let output = crate::git::run_git(&[
         "log",
-        &format!("{}..HEAD", effective_base),
+        &format!("{}..HEAD", range_start),
         "--pretty=format:%H@@@@%s",
     ])?;
 
