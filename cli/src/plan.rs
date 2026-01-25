@@ -191,7 +191,29 @@ fn has_staged_changes() -> Result<bool> {
     Ok(!out.trim().is_empty())
 }
 
-pub(crate) fn apply_plan(plan: &mut CommitPlan) -> Result<()> {
+pub(crate) fn apply_plan(plan: &mut CommitPlan, style_preset: Option<crate::cli::CommitStylePreset>) -> Result<()> {
+    use crate::commit_validator::CommitMessageValidator;
+    
+    // Create validator based on style preset
+    let validator = CommitMessageValidator::new(style_preset);
+    
+    // Sanitize and validate all commit messages first
+    for (idx, c) in plan.commits.iter_mut().enumerate() {
+        // Auto-sanitize message
+        c.message = validator.auto_sanitize(&c.message);
+        
+        // Validate and show warnings (but don't block)
+        let validation = validator.validate(&c.message);
+        if !validation.warnings.is_empty() || !validation.errors.is_empty() {
+            eprintln!();
+            eprintln!("{} {}", 
+                style(format!("Commit #{}:", idx + 1)).cyan().bold(),
+                style(&c.message).white()
+            );
+            validator.print_validation(&c.message, &validation);
+        }
+    }
+    
     let recent = recent_patch_ids(50)?;
 
     for (idx, c) in plan.commits.iter_mut().enumerate() {
