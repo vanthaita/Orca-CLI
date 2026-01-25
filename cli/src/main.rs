@@ -1,6 +1,8 @@
 mod cli;
 mod commit_cache;
+mod commit_validator;
 mod config;
+mod diff_optimizer;
 mod flow;
 mod ai;
 mod git;

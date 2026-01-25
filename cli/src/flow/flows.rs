@@ -33,7 +33,10 @@ pub(crate) async fn run_commit_flow(confirm: bool, dry_run: bool, model: &str, c
     super::flows_error::print_flow_header("[orca commit]");
 
     let status = run_git(&["status", "--porcelain"])?;
-    let diff = run_git(&["diff"])?;
+    
+    // Use optimized diff (filters out binary/large files)
+    let diff = crate::diff_optimizer::get_diff_for_ai(crate::diff_optimizer::DiffMode::Filtered)?;
+    
     let log = match run_git(&["log", "-n", "20", "--pretty=oneline"]) {
         Ok(v) => v,
         Err(e) => {
@@ -84,7 +87,7 @@ pub(crate) async fn run_commit_flow(confirm: bool, dry_run: bool, model: &str, c
     }
 
     let pb = spinner("Applying plan (running git add and commit)...");
-    apply_plan(&mut plan)?;
+    apply_plan(&mut plan, None)?; // TODO: Extract preset from commit_style string
     pb.finish_and_clear();
     eprintln!(
         "{} {}",
