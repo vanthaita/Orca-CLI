@@ -57,7 +57,7 @@ fn validate_base_and_commits(base: &str) -> Result<BaseValidation> {
                 );
                 eprintln!(
                     "   {}",
-                    style("Run: git checkout {} && git pull --rebase", base).cyan()
+                    style(format!("Run: git checkout {} && git pull --rebase", base)).cyan()
                 );
             }
         }
