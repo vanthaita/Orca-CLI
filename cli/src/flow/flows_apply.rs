@@ -59,7 +59,7 @@ pub(crate) async fn run_apply_flow(
     }
 
     let pb = spinner("Applying plan (running git add and commit)...");
-    apply_plan(&mut plan)?;
+    apply_plan(&mut plan, None)?; // TODO: Pass style preset from plan metadata
     pb.finish_and_clear();
     eprintln!("{} {}", style("[✓]").green().bold(), style("Commits created successfully").green());
 
