@@ -96,11 +96,13 @@ function extractAsset() {
 }
 
 function checkConflict() {
+    let hasConflict = false;
     try {
         const cmd = process.platform === 'win32' ? 'where orca' : 'which orca';
         const existingPath = execSync(cmd, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim().split('\n')[0].trim();
 
         if (existingPath && !existingPath.includes('npm')) {
+            hasConflict = true;
             console.warn('\n\x1b[33m%s\x1b[0m', '-------------------------------------------------------');
             console.warn('\x1b[33m%s\x1b[0m', 'WARNING: Conflicting "orca" installation detected!');
             console.warn(`  - Existing path: ${existingPath}`);
@@ -111,4 +113,30 @@ function checkConflict() {
     } catch (e) {
         // Command failed (orca not found in PATH), which is good.
     }
+
+    // Show success message after conflict check
+    showSuccessMessage(hasConflict);
+}
+
+function showSuccessMessage(hasConflict) {
+    console.log('\n\x1b[32m%s\x1b[0m', '🎉 Orca CLI đã được cài đặt thành công!');
+    console.log('\x1b[36m%s\x1b[0m', `📦 Version: v${version}`);
+    console.log('\x1b[36m%s\x1b[0m', `🏠 Homepage: ${packageJson.homepage}`);
+    
+    if (!hasConflict) {
+        console.log('\n\x1b[1m%s\x1b[0m', '🚀 Bắt đầu sử dụng với các lệnh sau:');
+        console.log('  \x1b[33m%s\x1b[0m', 'orca --help          # Xem tất cả lệnh có sẵn');
+        console.log('  \x1b[33m%s\x1b[0m', 'orca setup           # Thiết lập cấu hình ban đầu');
+        console.log('  \x1b[33m%s\x1b[0m', 'orca login           # Đăng nhập tài khoản');
+        console.log('  \x1b[33m%s\x1b[0m', 'orca flow            # Tạo workflow tự động');
+        console.log('  \x1b[33m%s\x1b[0m', 'orca plan            # Tạo kế hoạch commit thông minh');
+        console.log('  \x1b[33m%s\x1b[0m', 'orca apply           # Áp dụng thay đổi');
+        console.log('  \x1b[33m%s\x1b[0m', 'orca release         # Tạo release');
+    } else {
+        console.log('\n\x1b[31m%s\x1b[0m', '⚠️  Vui lòng gỡ cài đặt phiên bản cũ trước khi sử dụng!');
+    }
+    
+    console.log('\n\x1b[2m%s\x1b[0m', '💡 Tip: Chạy "orca --help" để xem hướng dẫn chi tiết');
+    console.log('\x1b[2m%s\x1b[0m', '🐛 Báo lỗi tại: ' + packageJson.bugs.url);
+    console.log('');
 }
