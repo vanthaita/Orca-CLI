@@ -21,7 +21,7 @@ export class AiService {
     @InjectRepository(AiUsageDaily)
     private readonly usageRepo: Repository<AiUsageDaily>,
     private readonly planService: PlanService,
-  ) {}
+  ) { }
 
   async chat(userId: string, req: AiChatRequest): Promise<AiChatResponse> {
     if (!req || !req.model || !req.systemPrompt || !req.userPrompt) {
